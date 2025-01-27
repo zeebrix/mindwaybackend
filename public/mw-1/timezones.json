@@ -1,0 +1,494 @@
+{
+    "timezones": [
+      {
+        "name": "UTC",
+        "offset": "+00:00",
+        "zone": "(UTC+00:00) Coordinated Universal Time"
+      },
+      {
+        "name": "Pacific/Midway",
+        "offset": "-11:00",
+        "zone": "(UTC-11:00) Midway Island, Samoa"
+      },
+      {
+        "name": "Pacific/Niue",
+        "offset": "-11:00",
+        "zone": "(UTC-11:00) Niue"
+      },
+      {
+        "name": "Pacific/Honolulu",
+        "offset": "-10:00",
+        "zone": "(UTC-10:00) Hawaii"
+      },
+      {
+        "name": "Pacific/Tahiti",
+        "offset": "-10:00",
+        "zone": "(UTC-10:00) Tahiti"
+      },
+      {
+        "name": "Pacific/Marquesas",
+        "offset": "-09:30",
+        "zone": "(UTC-09:30) Marquesas Islands"
+      },
+      {
+        "name": "America/Anchorage",
+        "offset": "-09:00",
+        "zone": "(UTC-09:00) Alaska"
+      },
+      {
+        "name": "Pacific/Gambier",
+        "offset": "-09:00",
+        "zone": "(UTC-09:00) Gambier Islands"
+      },
+      {
+        "name": "America/Los_Angeles",
+        "offset": "-08:00",
+        "zone": "(UTC-08:00) Pacific Time (US & Canada)"
+      },
+      {
+        "name": "America/Tijuana",
+        "offset": "-08:00",
+        "zone": "(UTC-08:00) Tijuana, Baja California"
+      },
+      {
+        "name": "Pacific/Pitcairn",
+        "offset": "-08:00",
+        "zone": "(UTC-08:00) Pitcairn Islands"
+      },
+      {
+        "name": "America/Phoenix",
+        "offset": "-07:00",
+        "zone": "(UTC-07:00) Arizona"
+      },
+      {
+        "name": "America/Denver",
+        "offset": "-07:00",
+        "zone": "(UTC-07:00) Mountain Time (US & Canada)"
+      },
+      {
+        "name": "America/Chihuahua",
+        "offset": "-07:00",
+        "zone": "(UTC-07:00) Chihuahua, La Paz, Mazatlan"
+      },
+      {
+        "name": "America/Dawson_Creek",
+        "offset": "-07:00",
+        "zone": "(UTC-07:00) Dawson Creek"
+      },
+      {
+        "name": "America/Chicago",
+        "offset": "-06:00",
+        "zone": "(UTC-06:00) Central Time (US & Canada)"
+      },
+      {
+        "name": "America/Mexico_City",
+        "offset": "-06:00",
+        "zone": "(UTC-06:00) Mexico City"
+      },
+      {
+        "name": "America/Regina",
+        "offset": "-06:00",
+        "zone": "(UTC-06:00) Saskatchewan"
+      },
+      {
+        "name": "America/Belize",
+        "offset": "-06:00",
+        "zone": "(UTC-06:00) Belize"
+      },
+      {
+        "name": "America/Costa_Rica",
+        "offset": "-06:00",
+        "zone": "(UTC-06:00) Costa Rica"
+      },
+      {
+        "name": "America/Bogota",
+        "offset": "-05:00",
+        "zone": "(UTC-05:00) Bogota, Lima, Quito"
+      },
+      {
+        "name": "America/New_York",
+        "offset": "-05:00",
+        "zone": "(UTC-05:00) Eastern Time (US & Canada)"
+      },
+      {
+        "name": "America/Havana",
+        "offset": "-05:00",
+        "zone": "(UTC-05:00) Cuba"
+      },
+      {
+        "name": "America/Port-au-Prince",
+        "offset": "-05:00",
+        "zone": "(UTC-05:00) Haiti"
+      },
+      {
+        "name": "America/Caracas",
+        "offset": "-04:30",
+        "zone": "(UTC-04:30) Caracas"
+      },
+      {
+        "name": "America/Halifax",
+        "offset": "-04:00",
+        "zone": "(UTC-04:00) Atlantic Time (Canada)"
+      },
+      {
+        "name": "America/Santiago",
+        "offset": "-04:00",
+        "zone": "(UTC-04:00) Santiago"
+      },
+      {
+        "name": "America/La_Paz",
+        "offset": "-04:00",
+        "zone": "(UTC-04:00) La Paz"
+      },
+      {
+        "name": "America/Manaus",
+        "offset": "-04:00",
+        "zone": "(UTC-04:00) Manaus"
+      },
+      {
+        "name": "America/St_Johns",
+        "offset": "-03:30",
+        "zone": "(UTC-03:30) Newfoundland"
+      },
+      {
+        "name": "America/Sao_Paulo",
+        "offset": "-03:00",
+        "zone": "(UTC-03:00) Brasilia"
+      },
+      {
+        "name": "America/Argentina/Buenos_Aires",
+        "offset": "-03:00",
+        "zone": "(UTC-03:00) Buenos Aires"
+      },
+      {
+        "name": "America/Godthab",
+        "offset": "-03:00",
+        "zone": "(UTC-03:00) Greenland"
+      },
+      {
+        "name": "America/Montevideo",
+        "offset": "-03:00",
+        "zone": "(UTC-03:00) Montevideo"
+      },
+      {
+        "name": "America/Cayenne",
+        "offset": "-03:00",
+        "zone": "(UTC-03:00) French Guiana"
+      },
+      {
+        "name": "Atlantic/South_Georgia",
+        "offset": "-02:00",
+        "zone": "(UTC-02:00) Mid-Atlantic"
+      },
+      {
+        "name": "Atlantic/Azores",
+        "offset": "-01:00",
+        "zone": "(UTC-01:00) Azores"
+      },
+      {
+        "name": "Atlantic/Cape_Verde",
+        "offset": "-01:00",
+        "zone": "(UTC-01:00) Cape Verde Islands"
+      },
+      {
+        "name": "Europe/London",
+        "offset": "+00:00",
+        "zone": "(UTC+00:00) London, Edinburgh, Dublin"
+      },
+      {
+        "name": "Africa/Casablanca",
+        "offset": "+00:00",
+        "zone": "(UTC+00:00) Casablanca, Monrovia"
+      },
+      {
+        "name": "Africa/Dakar",
+        "offset": "+00:00",
+        "zone": "(UTC+00:00) Dakar"
+      },
+      {
+        "name": "Europe/Belgrade",
+        "offset": "+01:00",
+        "zone": "(UTC+01:00) Belgrade, Budapest, Ljubljana"
+      },
+      {
+        "name": "Europe/Paris",
+        "offset": "+01:00",
+        "zone": "(UTC+01:00) Paris, Berlin, Rome, Madrid"
+      },
+      {
+        "name": "Africa/Lagos",
+        "offset": "+01:00",
+        "zone": "(UTC+01:00) West Central Africa"
+      },
+      {
+        "name": "Africa/Windhoek",
+        "offset": "+01:00",
+        "zone": "(UTC+01:00) Windhoek"
+      },
+      {
+        "name": "Africa/Cairo",
+        "offset": "+02:00",
+        "zone": "(UTC+02:00) Cairo"
+      },
+      {
+        "name": "Europe/Helsinki",
+        "offset": "+02:00",
+        "zone": "(UTC+02:00) Helsinki, Kiev, Riga, Sofia"
+      },
+      {
+        "name": "Europe/Istanbul",
+        "offset": "+02:00",
+        "zone": "(UTC+02:00) Istanbul"
+      },
+      {
+        "name": "Asia/Jerusalem",
+        "offset": "+02:00",
+        "zone": "(UTC+02:00) Jerusalem"
+      },
+      {
+        "name": "Africa/Johannesburg",
+        "offset": "+02:00",
+        "zone": "(UTC+02:00) Johannesburg"
+      },
+      {
+        "name": "Asia/Baghdad",
+        "offset": "+03:00",
+        "zone": "(UTC+03:00) Baghdad"
+      },
+      {
+        "name": "Europe/Moscow",
+        "offset": "+03:00",
+        "zone": "(UTC+03:00) Moscow, St. Petersburg"
+      },
+      {
+        "name": "Asia/Kuwait",
+        "offset": "+03:00",
+        "zone": "(UTC+03:00) Kuwait, Riyadh"
+      },
+      {
+        "name": "Africa/Nairobi",
+        "offset": "+03:00",
+        "zone": "(UTC+03:00) Nairobi"
+      },
+      {
+        "name": "Asia/Qatar",
+        "offset": "+03:00",
+        "zone": "(UTC+03:00) Qatar"
+      },
+      {
+        "name": "Asia/Tehran",
+        "offset": "+03:30",
+        "zone": "(UTC+03:30) Tehran"
+      },
+      {
+        "name": "Asia/Dubai",
+        "offset": "+04:00",
+        "zone": "(UTC+04:00) Dubai, Abu Dhabi, Muscat"
+      },
+      {
+        "name": "Asia/Baku",
+        "offset": "+04:00",
+        "zone": "(UTC+04:00) Baku, Tbilisi, Yerevan"
+      },
+      {
+        "name": "Indian/Mauritius",
+        "offset": "+04:00",
+        "zone": "(UTC+04:00) Port Louis"
+      },
+      {
+        "name": "Asia/Kabul",
+        "offset": "+04:30",
+        "zone": "(UTC+04:30) Kabul"
+      },
+      {
+        "name": "Asia/Karachi",
+        "offset": "+05:00",
+        "zone": "(UTC+05:00) Karachi, Islamabad, Tashkent"
+      },
+      {
+        "name": "Asia/Yekaterinburg",
+        "offset": "+05:00",
+        "zone": "(UTC+05:00) Yekaterinburg"
+      },
+      {
+        "name": "Asia/Dushanbe",
+        "offset": "+05:00",
+        "zone": "(UTC+05:00) Dushanbe"
+      },
+      {
+        "name": "Asia/Kolkata",
+        "offset": "+05:30",
+        "zone": "(UTC+05:30) New Delhi, Mumbai, Chennai"
+      },
+      {
+        "name": "Asia/Colombo",
+        "offset": "+05:30",
+        "zone": "(UTC+05:30) Sri Jayawardenepura"
+      },
+      {
+        "name": "Asia/Kathmandu",
+        "offset": "+05:45",
+        "zone": "(UTC+05:45) Kathmandu"
+      },
+      {
+        "name": "Asia/Almaty",
+        "offset": "+06:00",
+        "zone": "(UTC+06:00) Almaty, Novosibirsk"
+      },
+      {
+        "name": "Asia/Dhaka",
+        "offset": "+06:00",
+        "zone": "(UTC+06:00) Dhaka, Astana"
+      },
+      {
+        "name": "Asia/Urumqi",
+        "offset": "+06:00",
+        "zone": "(UTC+06:00) Urumqi"
+      },
+      {
+        "name": "Asia/Yangon",
+        "offset": "+06:30",
+        "zone": "(UTC+06:30) Yangon (Rangoon)"
+      },
+      {
+        "name": "Asia/Bangkok",
+        "offset": "+07:00",
+        "zone": "(UTC+07:00) Bangkok, Hanoi, Jakarta"
+      },
+      {
+        "name": "Asia/Krasnoyarsk",
+        "offset": "+07:00",
+        "zone": "(UTC+07:00) Krasnoyarsk"
+      },
+      {
+        "name": "Asia/Phnom_Penh",
+        "offset": "+07:00",
+        "zone": "(UTC+07:00) Phnom Penh"
+      },
+      {
+        "name": "Asia/Hong_Kong",
+        "offset": "+08:00",
+        "zone": "(UTC+08:00) Hong Kong"
+      },
+      {
+        "name": "Asia/Singapore",
+        "offset": "+08:00",
+        "zone": "(UTC+08:00) Singapore, Kuala Lumpur"
+      },
+      {
+        "name": "Asia/Shanghai",
+        "offset": "+08:00",
+        "zone": "(UTC+08:00) Beijing, Shanghai, Taipei"
+      },
+      {
+        "name": "Asia/Perth",
+        "offset": "+08:00",
+        "zone": "(UTC+08:00) Perth"
+      },
+      {
+        "name": "Asia/Manila",
+        "offset": "+08:00",
+        "zone": "(UTC+08:00) Manila"
+      },
+      {
+        "name": "Asia/Ulaanbaatar",
+        "offset": "+08:00",
+        "zone": "(UTC+08:00) Ulaanbaatar"
+      },
+      {
+        "name": "Asia/Seoul",
+        "offset": "+09:00",
+        "zone": "(UTC+09:00) Seoul"
+      },
+      {
+        "name": "Asia/Tokyo",
+        "offset": "+09:00",
+        "zone": "(UTC+09:00) Tokyo, Osaka, Sapporo"
+      },
+      {
+        "name": "Asia/Yakutsk",
+        "offset": "+09:00",
+        "zone": "(UTC+09:00) Yakutsk"
+      },
+      {
+        "name": "Asia/Pyongyang",
+        "offset": "+09:00",
+        "zone": "(UTC+09:00) Pyongyang"
+      },
+      {
+        "name": "Australia/Darwin",
+        "offset": "+09:30",
+        "zone": "(UTC+09:30) Darwin"
+      },
+      {
+        "name": "Australia/Adelaide",
+        "offset": "+09:30",
+        "zone": "(UTC+09:30) Adelaide"
+      },
+      {
+        "name": "Australia/Sydney",
+        "offset": "+10:00",
+        "zone": "(UTC+10:00) Sydney, Melbourne, Brisbane"
+      },
+      {
+        "name": "Australia/Hobart",
+        "offset": "+10:00",
+        "zone": "(UTC+10:00) Hobart"
+      },
+      {
+        "name": "Asia/Vladivostok",
+        "offset": "+10:00",
+        "zone": "(UTC+10:00) Vladivostok"
+      },
+      {
+        "name": "Pacific/Port_Moresby",
+        "offset": "+10:00",
+        "zone": "(UTC+10:00) Port Moresby"
+      },
+      {
+        "name": "Pacific/Guadalcanal",
+        "offset": "+11:00",
+        "zone": "(UTC+11:00) Solomon Islands"
+      },
+      {
+        "name": "Pacific/Noumea",
+        "offset": "+11:00",
+        "zone": "(UTC+11:00) New Caledonia"
+      },
+      {
+        "name": "Pacific/Norfolk",
+        "offset": "+11:00",
+        "zone": "(UTC+11:00) Norfolk Island"
+      },
+      {
+        "name": "Pacific/Auckland",
+        "offset": "+12:00",
+        "zone": "(UTC+12:00) Auckland, Wellington"
+      },
+      {
+        "name": "Pacific/Fiji",
+        "offset": "+12:00",
+        "zone": "(UTC+12:00) Fiji"
+      },
+      {
+        "name": "Pacific/Nauru",
+        "offset": "+12:00",
+        "zone": "(UTC+12:00) Nauru"
+      },
+      {
+        "name": "Pacific/Tongatapu",
+        "offset": "+13:00",
+        "zone": "(UTC+13:00) Nuku'alofa"
+      },
+      {
+        "name": "Pacific/Apia",
+        "offset": "+13:00",
+        "zone": "(UTC+13:00) Samoa"
+      },
+      {
+        "name": "Pacific/Kiritimati",
+        "offset": "+14:00",
+        "zone": "(UTC+14:00) Kiritimati"
+      }
+    ]
+  }

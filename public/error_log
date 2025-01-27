@@ -1,0 +1,7 @@
+[10-May-2023 14:07:10 UTC] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, bool given in /home/mindw172/public_html/public/API.php on line 91
+[10-May-2023 14:07:20 UTC] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, bool given in /home/mindw172/public_html/public/API.php on line 91
+[10-May-2023 14:07:36 UTC] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, bool given in /home/mindw172/public_html/public/API.php on line 91
+[10-May-2023 14:08:03 UTC] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, bool given in /home/mindw172/public_html/public/API.php on line 91
+[09-Jul-2023 14:54:59 UTC] PHP Warning:  mysqli_connect(): (HY000/2002): Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2) in /home/mindw172/public_html/public/API.php on line 10
+[09-Jul-2023 14:54:59 UTC] PHP Warning:  mysqli_query() expects parameter 1 to be mysqli, bool given in /home/mindw172/public_html/public/API.php on line 90
+[09-Jul-2023 14:54:59 UTC] PHP Warning:  mysqli_num_rows() expects parameter 1 to be mysqli_result, null given in /home/mindw172/public_html/public/API.php on line 91
