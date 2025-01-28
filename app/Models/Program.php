@@ -33,4 +33,10 @@ class Program extends Authenticatable
     {
         return $this->hasOne(ProgramPlan::class,'program_id','id');
     }
+    
+    public function programDepartment()
+    {
+        return $this->hasMany(ProgramDepartment::class,'program_id','id');
+    }
+    
 }

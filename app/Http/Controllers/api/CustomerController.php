@@ -71,7 +71,7 @@ class CustomerController extends Controller
             return response()->json(['status' => false , 'message' => 'This email is already registered. Please try a different one or log in with this email instead.'], 400);
         }
         $customer = CustomreBrevoData::whereDoesntHave('customer')
-            ->with('program')
+            ->with('program.programDepartment')
             ->where("email", $request->email)
             ->first();
         if ($customer) {
@@ -256,8 +256,7 @@ class CustomerController extends Controller
             return response()->json(['code' => 401, 'status' => "failed", 'message' => "device_id is Required"]);
         }
 
-
-        $program = Program::where('code', $request->code)->first();
+        $program = Program::where('code', $request->code)->with('programDepartment')->first();
         if (!$program) {
             return response()->json(['code' => 401, 'status' => "failed", 'message' => "Code is not exits"]);
         }

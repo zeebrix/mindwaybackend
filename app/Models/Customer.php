@@ -40,6 +40,7 @@ class Customer extends Authenticatable
         'phone',
         'meditation_experience',
         'nick_name',
+        'department_id',
     ];
     
     protected $appends = ['single_program'];
