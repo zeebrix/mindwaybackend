@@ -260,32 +260,35 @@ class CustomerController extends Controller
         if (!$program) {
             return response()->json(['code' => 401, 'status' => "failed", 'message' => "Code is not exits"]);
         }
-        $user = Customer::where("id",$request->customer_id)->first();
+        if(isset($request->customer_id)){
+            $user = Customer::where("id",$request->customer_id)->first();
        
-        $brevoCustomer = CustomreBrevoData::where('app_customer_id',$user->id)->first();
-        if($brevoCustomer)
-        {
-                    $brevoCustomer->program_id = $program->id;
-                    $brevoCustomer->company_name = $program->company_name;
-                    $brevoCustomer->app_customer_id = $user->id;
-                    $brevoCustomer->is_app_user = true;
-                    $brevoCustomer->max_session = $program->max_session??0;
-                    $brevoCustomer->save();
-                    $user->max_session = $program->max_session??0;
-                    $user->save();
+            $brevoCustomer = CustomreBrevoData::where('app_customer_id',$user->id)->first();
+            if($brevoCustomer)
+            {
+                        $brevoCustomer->program_id = $program->id;
+                        $brevoCustomer->company_name = $program->company_name;
+                        $brevoCustomer->app_customer_id = $user->id;
+                        $brevoCustomer->is_app_user = true;
+                        $brevoCustomer->max_session = $program->max_session??0;
+                        $brevoCustomer->save();
+                        $user->max_session = $program->max_session??0;
+                        $user->save();
+            }
+            else
+            {
+                $brevo = new CustomreBrevoData();
+                $brevo->name = $user->name;
+                $brevo->email = 'dummyemail' . time(). '@example.com';
+                $brevo->program_id = $program->id;
+                $brevo->company_name = $program->company_name??'';
+                $brevo->max_session = $program->max_session??0;
+                $brevo->is_app_user = true;
+                $brevo->app_customer_id = $user->id;
+                $brevo->save();
+            }
         }
-        else
-        {
-            $brevo = new CustomreBrevoData();
-            $brevo->name = $user->name;
-            $brevo->email = 'dummyemail' . time(). '@example.com';
-            $brevo->program_id = $program->id;
-            $brevo->company_name = $program->company_name??'';
-            $brevo->max_session = $program->max_session??0;
-            $brevo->is_app_user = true;
-            $brevo->app_customer_id = $user->id;
-            $brevo->save();
-        }
+        
         $existingRecord = DB::table('customers_programs')
             ->where('programs_id', $program->id)
             ->where('device', $request->device_id)
