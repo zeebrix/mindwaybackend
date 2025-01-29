@@ -27,7 +27,8 @@ class BookingController extends Controller
             'counselor_id' => 'required|exists:counselors,id',
             'date' => 'nullable|date|after_or_equal:today',
         ]);
-
+        $counselor = Counselor::where('id',$validated['counselor_id'])->first();
+        $notice_period = isset($counselor) ?$counselor->notice_period : 12;
         $customer_timezone = $request->customer_timezone; // Use proper timezone string
         $date = $validated['date'] ?? now()->toDateString(); // Date in YYYY-MM-DD format
         
@@ -44,7 +45,7 @@ class BookingController extends Controller
             ->whereBetween('start_time', [$startDateTime, $endDateTime])
             ->where('is_booked', false)
             ->whereNull('customer_id')
-            ->where('start_time', '>', now()->addHours(24))
+            ->where('start_time', '>', now()->addHours($notice_period))
             ->orderBy('start_time')
             ->get();
 
@@ -62,6 +63,8 @@ class BookingController extends Controller
         DB::beginTransaction(); // Start a new transaction
         try{
         $counselor = Counselor::where("id",$validated['counselor_id'])->first();
+        $notice_period = isset($counselor) ?$counselor->notice_period : 12;
+        
         $customer = Customer::where('id', $request->customer_id)->first();
         if ($customer->max_session <= 0) {
             return response()->json([
@@ -80,7 +83,7 @@ class BookingController extends Controller
             ], 422);
             
         }
-        if ($slot->start_time <= now()->addHours(24)) {
+        if ($slot->start_time <= now()->addHours($notice_period)) {
             return response()->json([
                 'message' => 'Slot must be booked at least 24 hours in advance'
             ], 422);
@@ -228,9 +231,11 @@ catch (\Exception $e) {
         if ((int)$booking->user_id !== (int)$user_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
-
+        $target = Counselor::where('id',$booking->counselor_id)->first();
+        $notice_period = isset($target) ?$target->notice_period : 12;
+        
         $newSlot = Slot::findOrFail($validated['new_slot_id']);
-        if ($newSlot->is_booked || $newSlot->start_time <= now()->addHours(24)) {
+        if ($newSlot->is_booked || $newSlot->start_time <= now()->addHours($notice_period)) {
             return response()->json([
                 'message' => 'Selected slot is not available'
             ], 422);
