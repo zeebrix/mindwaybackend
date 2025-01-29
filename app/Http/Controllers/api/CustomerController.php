@@ -74,14 +74,23 @@ class CustomerController extends Controller
                 return response()->json(['status' => false , 'message' => 'This email is already registered. Please try a different one or log in with this email instead.'], 400);
             }
         }
-        $customer = CustomreBrevoData::whereDoesntHave('customer')
+        $customer = NULL;
+        if($request->verification_after == 'access_code'){
+            $customer = Customer::where("email", $request->email)->first();
+        }else{
+            $customer = CustomreBrevoData::whereDoesntHave('customer')
             ->with('program.programDepartment')
             ->where("email", $request->email)
             ->first();
+        }
         if ($customer) {
             $otp = random_int(100000, 999999);
-            $customer->otp = $otp;
-            $customer->otp_expiry = Carbon::now()->addMinutes(10);
+            if($request->verification_after == 'access_code'){
+                $customer->verification_code = $otp;
+            }else{
+                $customer->otp = $otp;
+                $customer->otp_expiry = Carbon::now()->addMinutes(10);
+            }
             $customer->save();
             try {
                 // Send OTP email
