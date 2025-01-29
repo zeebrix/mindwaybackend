@@ -12,15 +12,14 @@ class SlotGenerationService
 
     public function generateSlotsForCounselor(Counselor $counselor,$month = null)
     {
-        $timezone = 'UTC';
-        $startDate = $month ? now()->setTimezone($timezone)->setMonth($month)->startOfMonth() : now()->setTimezone($timezone)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
         if($month)
         {
+            $startDate = now()->setTimezone('UTC')->setDay(1)->setMonth($month)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
             $existingSlots = $counselor->slots()
             ->whereBetween('date', [
-                $startDate->copy()->setTimezone('UTC')->toDateString(), 
-                $endDate->copy()->setTimezone('UTC')->toDateString()
+                $startDate->toDateString(), 
+                $endDate->toDateString()
             ])
             ->where('is_booked',false)
             ->whereNull('customer_id')
@@ -28,16 +27,24 @@ class SlotGenerationService
             if ($existingSlots) {
                 return;
             }
+        }else{
+            $month = now()->month;
+            $startDate = now()->setTimezone('UTC')->setDay(1)->setMonth($month)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
         }
+        
         // Delete future slots that aren't booked
         $counselor->slots()
             ->whereBetween('date', [
-                $startDate->copy()->setTimezone('UTC')->toDateString(), 
-                $endDate->copy()->setTimezone('UTC')->toDateString()
+                $startDate->toDateString(), 
+                $endDate->toDateString()
             ])
             ->where('is_booked', false)
             ->whereNull('customer_id')
             ->delete();
+        $timezone = $counselor->timezone;
+        $startDate = $month ? now()->setTimezone($timezone)->setDay(1)->setMonth($month)->startOfMonth() : now()->setTimezone($timezone)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
         while ($startDate <= $endDate) {
             $dayOfWeek = ($startDate->dayOfWeek + 6) % 7;
            
@@ -69,11 +76,14 @@ class SlotGenerationService
         $endTime,
         string $timezone
     ) {
+        $startTime = $startTime->setTimezone($timezone);
+        $endTime = $endTime->setTimezone($timezone);
         $start = Carbon::parse($startTime, $timezone)->setDateFrom($date);
         $end = Carbon::parse($endTime, $timezone)->setDateFrom($date);
         if ($start->minute > 0 || $start->second > 0) {
             $start = $start->addHour()->minute(0)->second(0);
         }
+        
         while ($start->copy()->addMinutes(self::SLOT_DURATION) <= $end) {
             $slotStart = $start->copy()->setTimezone('UTC');
             $slotEnd = $start->copy()->addMinutes(self::SLOT_DURATION)->setTimezone('UTC');

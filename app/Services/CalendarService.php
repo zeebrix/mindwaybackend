@@ -41,6 +41,7 @@ class CalendarService
                     'date' => $dateStr,
                     'day_of_week' => $currentDate->dayOfWeek,
                     'has_slots' => $hasSlots,
+                    'first_slot_time' => $daySlots->first()->start_time,
                     'available_slots_count' => $daySlots->where('is_booked', false)->whereNull('customer_id')->count(),
                     'total_slots_count' => $daySlots->count(),
                 ];

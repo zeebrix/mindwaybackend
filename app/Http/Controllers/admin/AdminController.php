@@ -112,7 +112,6 @@ class AdminController extends Controller
     }
     public function Addcounselor(Request $request)
     {
-        dd('fsdfsdf');
         // Define validation rules
         $rules = [
             'name' => 'required|string|max:255',
@@ -142,7 +141,6 @@ class AdminController extends Controller
             'full_name' => $request->name,
             'id' => $user->id
         ];
-        dd($recipient, $subject, $template, $data);
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
 
         return response()->json(['message' => 'Form submitted successfully!']);

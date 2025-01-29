@@ -65,10 +65,14 @@ class CustomerController extends Controller
         $request->validate([
             'email' => 'required|email',
         ]);
-        $user = Customer::Where('email',$request->email)->first();
-        if($user)
+        $is_resend = isset($request->is_resend) ? $request->is_resend : false;
+        if(!$is_resend)
         {
-            return response()->json(['status' => false , 'message' => 'This email is already registered. Please try a different one or log in with this email instead.'], 400);
+            $user = Customer::Where('email',$request->email)->first();
+            if($user)
+            {
+                return response()->json(['status' => false , 'message' => 'This email is already registered. Please try a different one or log in with this email instead.'], 400);
+            }
         }
         $customer = CustomreBrevoData::whereDoesntHave('customer')
             ->with('program.programDepartment')

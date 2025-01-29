@@ -13,7 +13,7 @@
     <p>
         <strong>With: </strong> {{ $counselor_name }}<br />
         <strong>Date & Time: </strong> {{ $start_time }} ({{$timezone}})<br />
-        @if(meeting_link)
+        @if($meeting_link)
         <strong>Join Link: </strong> {{ $meeting_link }}<br />
         @endif
     </p>

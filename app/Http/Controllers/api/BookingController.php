@@ -28,10 +28,20 @@ class BookingController extends Controller
             'date' => 'nullable|date|after_or_equal:today',
         ]);
 
-        $date = $validated['date'] ?? now()->toDateString();
+        $customer_timezone = $request->customer_timezone; // Use proper timezone string
+        $date = $validated['date'] ?? now()->toDateString(); // Date in YYYY-MM-DD format
+        
+        // Convert customer timezone date to UTC start and end of the day
+        $startDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 00:00:00', $customer_timezone)
+            ->setTimezone('UTC')
+            ->format('Y-m-d H:i:s');
+        
+        $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 23:59:59', $customer_timezone)
+            ->setTimezone('UTC')
+            ->format('Y-m-d H:i:s');
 
         $slots = Slot::where('counselor_id', $validated['counselor_id'])
-            ->where('date', $date)
+            ->whereBetween('start_time', [$startDateTime, $endDateTime])
             ->where('is_booked', false)
             ->whereNull('customer_id')
             ->where('start_time', '>', now()->addHours(24))
