@@ -97,6 +97,7 @@ class CustomerService
             } else {
                 $customerbrevo = new CustomreBrevoData();
                 $pushToBrevo = true;
+                $customerbrevo->level = 'member';
             }
             $program = Program::where('id', $modelValues['program_id'])->first();
 
@@ -105,7 +106,6 @@ class CustomerService
             $customerbrevo->program_id = $modelValues['program_id'];
             $customerbrevo->max_session = $program->max_session;
             $customerbrevo->company_name = $program->company_name;
-            $customerbrevo->level = 'member';
             $customerbrevo->is_app_user = true;
             $customerbrevo->app_customer_id = $customer['id'];
             $customerbrevo->save();

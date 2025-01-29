@@ -360,18 +360,6 @@ catch (\Exception $e) {
 
         $booking->update(['status' => 'cancelled']);
         $booking->slot->update(['is_booked' => false]);
-        try
-        {
-            $customer = Customer::find($user_id);
-            $customer->max_session = $customer->max_session + 1;
-            $customer->save();
-            $brevoCustomer = CustomreBrevoData::where('app_customer_id',$$user_id)->first();
-            $brevoCustomer->max_session = $brevoCustomer->max_session + 1;
-            $brevoCustomer->save();
-            
-        }catch (\Throwable $th) {
-            //throw $th;
-        }
         try {
             $this->googleProvider->deleteEvent($booking->event_id, $booking->counselor->googleToken->access_token);
         } catch (\Throwable $th) {

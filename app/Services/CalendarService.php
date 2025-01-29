@@ -11,12 +11,15 @@ class CalendarService
 {
     public function getMonthlyAvailability(int $counselorId, int $month, int $year): array
     {
+        $target = Counselor::where('id',$counselorId)->first();
+        $notice_period = isset($target) ?$target->notice_period : 12;
+        
         $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
         // Get all slots for the month
         $slots = Slot::where('counselor_id', $counselorId)
             ->whereBetween('date', [$startDate, $endDate])
-            ->where('start_time', '>', now()->addHours(24))
+            ->where('start_time', '>', now()->addHours($notice_period))
             ->get()
             ->groupBy(function ($slot) {
                 return $slot->date->format('Y-m-d'); // Ensure date is formatted as a string
