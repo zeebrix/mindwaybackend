@@ -64,7 +64,7 @@ class BookingController extends Controller
         try{
         $counselor = Counselor::where("id",$validated['counselor_id'])->first();
         $notice_period = isset($counselor) ?$counselor->notice_period : 12;
-        
+        $customer_timezone = isset($request->customer_timezone) ? $request->customer_timezone : 'UTC';
         $customer = Customer::where('id', $request->customer_id)->first();
         if ($customer->max_session <= 0) {
             return response()->json([
@@ -180,8 +180,8 @@ class BookingController extends Controller
         $data = [
             'full_name' => $customer->name,
             'counselor_name' => $counselor->name,
-            'start_time' => Carbon::parse($slot->start_time)->setTimezone($counselor->timezone),
-            'timezone' => $counselor->timezone,
+            'start_time' => Carbon::parse($slot->start_time)->setTimezone($customer_timezone),
+            'timezone' => $customer_timezone,
             'duration' => '50 minutes',
             'meeting_link' => $meetingLink,
             'max_session' => $customer->max_session,
@@ -286,7 +286,7 @@ catch (\Exception $e) {
             }
         }
         
-
+        $customer_timezone = isset($request->customer_timezone) ? $request->customer_timezone : 'UTC';
         $booking->event_id = $eventId;
         $booking->meeting_link = $meetingLink;
         $booking->save();
@@ -296,9 +296,9 @@ catch (\Exception $e) {
         $data = [
             'full_name' => $booking->user->name,
             'counselor_name' => $booking->counselor->name,
-            'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($booking->counselor->timezone),
+            'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($customer_timezone),
             'end_time' => Carbon::parse($booking->slot->end_time)->setTimezone($booking->counselor->timezone),
-            'timezone' => $booking->counselor->timezone,
+            'timezone' => $customer_timezone,
             'meeting_link' => $meetingLink,
             'intake_link' => $booking->counselor->intake_link??''
         ];
@@ -365,15 +365,15 @@ catch (\Exception $e) {
         } catch (\Throwable $th) {
             //throw $th;
         }
-
+        $customer_timezone = isset($request->customer_timezone) ? $request->customer_timezone : 'UTC';
         $recipient = $booking->user->email;
         $subject = 'Cancelled Session Notification';
         $template = 'emails.cancel-session-employee';
         $data = [
             'full_name' => $booking->user->name,
             'counselor_name' => $booking->counselor->name,
-            'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($booking->counselor->timezone),
-            'timezone' => $booking->counselor->timezone,
+            'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($customer_timezone),
+            'timezone' => $customer_timezone,
         ];
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
 

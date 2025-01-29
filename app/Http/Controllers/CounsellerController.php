@@ -278,18 +278,19 @@ class CounsellerController extends Controller
         {
             $sessionData = CustomreBrevoData::where('id', $request->customerId)->first();
         }
-        if ($sessionData) {
-             $sessionData->max_session = $sessionData->max_session - 1;
+        if ($sessionData)
+        {
+            $sessionData->max_session = $sessionData->max_session - 1;
             $sessionData->is_counselling_user = true;
             $sessionData->save();
-            if($sessionData->app_customer_id){
+            if($sessionData->app_customer_id)
+            {
                 $customer3 = Customer::where('id',$sessionData->app_customer_id)->first();
                 if($customer3)
                 {
                     $customer3->max_session = $sessionData->max_session - 1;
                     $customer3->save();
                 }
-                
             }
                 
        Session::create([

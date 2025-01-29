@@ -73,7 +73,7 @@ class UpdateAccessToken extends Command
                         }
                     }
                 } catch (\Exception $e) {
-                    dd($e->getMessage());
+                    //
                     // Log the exception error
                     $this->error("Error updating token for User ID: {$token->counseller_id}. Exception: {$e->getMessage()}");
                 }

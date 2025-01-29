@@ -414,12 +414,11 @@ class ProgramController extends Controller
 
             // Delete the customer
             $customer->delete();
-            return back()->with('message', 'Employee Deleted successfully');
         } catch (Exception $e) {
-            echo 'Exception when calling ContactsApi->updateContact: ', $e->getMessage(), PHP_EOL;
-            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+            //echo 'Exception when calling ContactsApi->updateContact: ', $e->getMessage(), PHP_EOL;
+           // return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
-
+        return back()->with('message', 'Employee Deleted successfully');
 
         // Optionally, redirect back with a success message
     }

@@ -54,7 +54,7 @@ class TwoFactorController extends Controller
         $user_id = $request->session()->get('2fa:user:id');
         $remember = $request->session()->get('2fa:auth:remember', false);
         $attempt = $request->session()->get('2fa:auth:attempt', false);
-        if (!$user_id || !$attempt) {
+        if (!$user_id) {
             return redirect()->route('login');
         }
 
@@ -67,6 +67,8 @@ class TwoFactorController extends Controller
         $google2fa = new Google2FA();
         $otp_secret = $user->google2fa_secret;
         if (!$google2fa->verifyKey($otp_secret, $request->one_time_password)) {
+            $request->session()->put('2fa:user:id', $user_id);
+            $request->session()->put('2fa:auth:attempt', true);
             throw ValidationException::withMessages([
                 'one_time_password' => [__('The one time password is invalid.')],
             ]);
@@ -104,7 +106,7 @@ class TwoFactorController extends Controller
         $user_id = $request->session()->get('2fa:user:id');
         $remember = $request->session()->get('2fa:auth:remember', false);
         $attempt = $request->session()->get('2fa:auth:attempt', false);
-        if (!$user_id || !$attempt) {
+        if (!$user_id) {
             return redirect()->route('counseller.login');
         }
 
@@ -117,6 +119,8 @@ class TwoFactorController extends Controller
         $google2fa = new Google2FA();
         $otp_secret = $user->google2fa_secret;
         if (!$google2fa->verifyKey($otp_secret, $request->one_time_password)) {
+            $request->session()->put('2fa:user:id', $user_id);
+            $request->session()->put('2fa:auth:attempt', true);
             throw ValidationException::withMessages([
                 'one_time_password' => [__('The one time password is invalid.')],
             ]);
@@ -142,7 +146,7 @@ class TwoFactorController extends Controller
         $user_id = $request->session()->get('2fa:user:id');
         $remember = $request->session()->get('2fa:auth:remember', false);
         $attempt = $request->session()->get('2fa:auth:attempt', false);
-        if (!$user_id || !$attempt) {
+        if (!$user_id) {
             return redirect()->route('program.login');
         }
 
@@ -155,6 +159,8 @@ class TwoFactorController extends Controller
         $google2fa = new Google2FA();
         $otp_secret = $program->google2fa_secret;
         if (!$google2fa->verifyKey($otp_secret, $request->one_time_password)) {
+            $request->session()->put('2fa:user:id', $user_id);
+            $request->session()->put('2fa:auth:attempt', true);
             throw ValidationException::withMessages([
                 'one_time_password' => [__('The one time password is invalid.')],
             ]);

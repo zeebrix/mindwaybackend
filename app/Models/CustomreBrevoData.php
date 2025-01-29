@@ -11,6 +11,7 @@ class CustomreBrevoData extends Model
         'name',
         'email',
         'program_id',
+        'app_customer_id',
     ];
     public function customer()
     {
