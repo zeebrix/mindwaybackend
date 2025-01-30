@@ -3,8 +3,9 @@
 @section('selected_menu', 'active')
 
 @section('content')
-    <div class="card w-100">
-        <div class="card-body p-4">
+  
+<div class="row">
+        <div class="col-10 offset-1">
 
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Welcome {{ $Counselor->name }}</h2>
@@ -12,54 +13,56 @@
             <h6>Upcoming Sessions ({{$upcomingBookings->count()}})</h6>
 
             <div class="table-responsive">
-                <table class="table text-nowrap mb-0 align-middle">
-                    <thead class="text-dark fs-4">
-                        <tr>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Session Detail</h6>
-                            </th>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Date</h6>
-                            </th>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Action</h6>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="customersTable">
+            <table class="table text-nowrap mb-0 align-middle">
+                <tbody id="customersTable">
                     @if($upcomingBookings->isNotEmpty())
                     @foreach($upcomingBookings as $booking)
-                    <tr class="customer-row">
-                        <td class="border-bottom-0">
-                            <h6 class="fw-semibold mb-0">
-                                <h5>{{ optional($booking->user)->name ?? 'N/A' }}</h5>
-                                <p>{{ optional($booking->user)->email ?? 'Email not provided' }}</p>
-                                <p>{{ optional($booking->user)->max_session ?? 0 }} Session(s) Remaining</p>
-                            </h6>
-                        </td>
-                        <td class="border-bottom-0">
-                            <h6 class="fw-semibold mb-0">
-                                {{ optional($booking->slot)->date?->format('Y-m-d') ?? 'No date available' }}
-                                {{ optional($booking->slot)->start_time?->format('H:i') ?? 'No time available' }}
-                            </h6>
-                        </td>
-                        <td class="border-bottom-0">
-                            <a class="btn btn-primary mindway-btn"
-                                href="{{ route('counselor.session.cancel', ['booking_id' => $booking->id, 'customer_id' => $booking->user_id]) }}">
-                                Cancel
-                            </a>
-                            <a class="btn btn-primary mindway-btn" href="{{ route('counselor.session.rebook', ['booking_id' => $booking->id]) }}">Rebook</a>
-                            <br>
-                            <a style="margin-left: 20px;"
-                                class="btn btn-primary mt-2 add-session-btn mindway-btn-blue" data-bs-toggle="modal"
-                                
-                                        data-bs-target="#addSessionModal" data-id="{{ $booking?->user_id  }}"
-                                         data-couselor_id="{{ $booking?->counselor_id  }}"
-                                        data-slot_id="{{ $booking?->slot_id }}"
-                                        data-name="{{ $booking?->counselor?->name }}" data-program_id="{{$booking?->brevoUser?->program_id}}"
-                                        data-customer_name="{{ $booking?->user?->name }}">
-                                Add Session
-                            </a>
+                    <tr style="border-bottom: none;">
+                        <td colspan="3" style="padding: 0; border: none;">
+                            <div class="card" style="border-radius: 8px; margin: 15px 15px 15px 15px;">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <!-- User Information -->
+                                        <div class="col-md-4" style="border-right: 4px solid #D4D4D4;">
+                                            <h5 class="fw-semibold">{{ optional($booking->user)->name ?? 'N/A' }}</h5>
+                                            <p class="fw-bold mb-1">{{ optional($booking->user)->email ?? 'Email not provided' }}</p>
+                                            <p class="fw-bold mb-0">{{ optional($booking->user)->max_session ?? 0 }} Session(s) Remaining</p>
+                                        </div>
+                                        <!-- Date & Time -->
+                                        <div class="col-md-3" style="border-right: 4px solid #D4D4D4;">
+                                            <p></p>
+
+                                            <h5 class="fw-semibold" style="display: block;width: 100%;max-width: 300px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">Date & Time {{$booking?->counselor?->timezone}}</h5>
+                                            <p class="fw-bold mb-0">
+                                                {{ optional($booking->slot)->date?->format('Y-m-d') ?? 'No date available' }}
+                                                {{ optional($booking->slot)->start_time?->format('H:i') ?? 'No time available' }}
+                                            </p>
+                                        </div>
+                                        <!-- Actions -->
+                                        <div class="col-md-4">
+                                            <a class="btn btn-primary mindway-btn" href="{{ route('session.cancel', ['booking_id' => $booking->id, 'customer_id' => $booking->user_id]) }}">
+                                                Cancel
+                                            </a>
+                                            <a data-bs-toggle="modal" data-bs-target="#rebookSessionModal" class="btn btn-primary mindway-btn" href="{{ route('counselor.session.rebook', ['booking_id' => $booking->id]) }}">
+                                                Rebook
+                                            </a>
+                                            <br>
+                                            <a style="background-color: #688edc !important; color: white !important; margin-top: 10px;"
+                                                class="btn btn-primary add-session-btn mindway-btn"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#addSessionModal"
+                                                data-id="{{ $booking?->user_id }}"
+                                                data-counselor_id="{{ $booking?->counselor_id }}"
+                                                data-slot_id="{{ $booking?->slot_id }}"
+                                                data-name="{{ $booking?->counselor?->name }}"
+                                                data-program_id="{{ $booking?->brevoUser?->program_id }}"
+                                                data-customer_name="{{ $booking?->user?->name }}">
+                                                Add Session
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </td>
                     </tr>
                     @endforeach
@@ -70,11 +73,13 @@
                         </td>
                     </tr>
                     @endif
-
                 </tbody>
-                </table>
-            </div>
+            </table>
+        </div>
+        </div>
+        </div>
 
+            
             {{-- Sessions of the Counsellor --}}
             <br>
             <hr><br>
@@ -156,8 +161,6 @@
                 </table>
             </div>
 
-        </div>
-    </div>
     <div class="modal fade" id="addSessionModal" tabindex="-1" aria-labelledby="addSessionModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -269,6 +272,21 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="rebookSessionModal" tabindex="-1" aria-labelledby="rebookSessionModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rebookSessionModal">Rebook Session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+               <p>Need to discuss</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('js')

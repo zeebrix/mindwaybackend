@@ -165,32 +165,42 @@
                         </div>
                     </div>
 
-                    <div class="col-8">
-                        <div class="card" style="height: 39px">
-                            <div style="padding: 8px 0px 8px 0px !important;"
-                                class="card-body d-flex justify-content-center align-items-center p-4">
-                                <span style="font-weight:900;color:#818181;margin-right:15px">Overall Adoption Rate</span>
-                                <span style="color: #000000; font-weight:500">{{ $adoptionRate }} %</span>
-                            </div>
+                    @php
+                    $adoptionRate = 0;
+                    if($allUsers->count() > 0){
+                        $adoptionRate = ($adoptedUsers / $allUsers->count()) * 100;
+
+                    }
+                    @endphp
+                <div class="col-8">
+                    <div class="card">
+                        <div style="padding: 8px 0px 8px 0px !important;"
+                            class="card-body d-flex justify-content-center align-items-center p-4">
+                            <span style="font-weight:600;color:#818181;margin-right:15px">Overall Adoption Rate</span> <span
+                                style="color: #000000; font-weight:500">{{number_format($adoptionRate, 2) }} %</span>
                         </div>
                     </div>
                 </div>
+            </div>
+
                 {{-- {{ ($totalCustomersCount / 1000) * 100 }} --}}
-                <div class="card w-100" style="width:576px; height:127px;">
-                    <div class="card-body p-4">
-                        <h6>Overall Adoption</h6>
-                        <h4><strong>{{ $totalCustomersCount }} Employees</strong></h4>
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="text-muted" id="min-value">0</span>
-                            <div class="progress w-100 mx-3">
-                                <div class="progress-bar" role="progressbar" style="width: {{ $totalCustomersCount }}%;"
-                                    aria-valuenow="{{ $totalCustomersCount }}" aria-valuemin="0" aria-valuemax="1000">
-                                </div>
-                            </div>
-                            <span class="text-muted" id="max-value">{{ $Program->max_lic }}</span>
+                            <div class="card w-100" style="width:576px; height:127px;">
+                <div class="card-body p-4">
+                    <h6>Overall Adoption</h6>
+                    <h4><strong>{{ $adoptedUsers }} Employees</strong></h4>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted" id="min-value">0</span>
+                        <div class="progress w-100 mx-3">
+                            <div class="progress-bar" role="progressbar" style="width:{{ round($adoptionRate) }}%;"
+                    aria-valuenow="{{ $adoptedUsers }}"
+                    aria-valuemin="0"
+                    aria-valuemax="{{ $allUsers->count() }}"></div>
                         </div>
+                        <span class="text-muted" id="max-value">{{ $allUsers->count() }}</span>
                     </div>
                 </div>
+            </div>
+
                 <div class="card w-100">
                     <div class="card-body p-4">
                         <h3 style="display: inline;">Growth of Program</h3>
