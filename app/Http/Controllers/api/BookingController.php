@@ -272,8 +272,15 @@ catch (\Exception $e) {
                     'timezone' => $booking->counselor->timezone,
                     'access_token' => $booking->counselor->googleToken->access_token,
                     'update_meeting_link' => true,
-                ];    
-                $event = $this->googleProvider->updateEvent($booking->event_id , $eventData);
+                ];
+                if($booking->event_id)
+                {
+                    $event = $this->googleProvider->updateEvent($booking->event_id , $eventData);
+                }
+                else
+                {
+                    $event = $this->googleProvider->createEvent($eventData);
+                }
                 $meetingLink = $event['meeting_link'];
                 $eventId = $event['event_id'];
             } catch (\Throwable $th) {
