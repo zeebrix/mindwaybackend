@@ -394,7 +394,6 @@ class ProgramController extends Controller
 
     public function removeCustomer(Request $request)
     {
-        // dd($request->all());
         $customerId = $request->input('customerId');
         $email = $request->input('email');
         $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', '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');
@@ -413,6 +412,10 @@ class ProgramController extends Controller
         }
 
         $customer = CustomreBrevoData::findOrFail($customerId);
+        if($customer->level == 'admin')
+        {
+            return back()->with('error', 'Unable to remove the admin employee.');
+        }
         if($customer->app_customer_id)
         {
             Customer::where('id',$customer->app_customer_id)->delete();
