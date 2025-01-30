@@ -578,20 +578,6 @@ class CounsellerController extends Controller
 
         $booking->update(['status' => 'cancelled']);
         $booking->slot->update(['is_booked' => false]);
-        $customer = Customer::find($user_id);
-        if($customer)
-        {
-            $customer->max_session = $customer?->max_session + 1;
-            $customer->save();
-            $brevoCustomer = CustomreBrevoData::where('app_customer_id',$user_id)->first();
-            if($brevoCustomer)
-            {
-                $brevoCustomer->max_session = $brevoCustomer->max_session + 1;
-                $brevoCustomer->save();
-            }
-            
-            $booking->counselor->notify(new BookingCancellation($booking));
-        }
         return redirect()->back()->with('success', 'Booking cancelled successfully');
     }
     public function counsellerSettingSave(Request $request)
