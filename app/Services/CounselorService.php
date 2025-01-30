@@ -39,7 +39,7 @@ class CounselorService
         {
             return $data[0];
         }
-        return $data;
+        return null;
     }
 
     private function baseCounselorQuery()
