@@ -35,7 +35,7 @@
                                 <h5 class="fw-semibold" style="display: block;width: 100%;max-width: 300px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">Date & Time {{$booking?->counselor?->timezone}}</h5>
                                     <p class="fw-bold mb-0">
                                     {{ optional($booking->slot)->date?->setTimezone($timezone)->format('Y-m-d') ?? 'No date available' }}
-                                        {{ optional($booking->slot)->start_time?setTimezone($timezone)->format('H:i') ?? 'No time available' }}
+                                        {{ optional($booking->slot)->start_time?->setTimezone($timezone)->format('H:i') ?? 'No time available' }}
                                     </p>
                                 </div>
                                 <!-- Actions -->
