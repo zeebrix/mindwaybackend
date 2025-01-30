@@ -35,7 +35,7 @@ class CounselorService
                 ->orderByRaw('next_available_slot asc')
                 ->get()
         );
-        if(!empty($data))
+        if(count($data))
         {
             return $data[0];
         }
