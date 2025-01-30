@@ -209,6 +209,7 @@ class CounsellerController extends Controller
         })
         ->orderBy('created_at', 'desc')
         ->get();
+        $timezone = $Counselor->timezone??'UTC';
         return view('mw-1.counseller.dashboard', get_defined_vars());
 
     }
