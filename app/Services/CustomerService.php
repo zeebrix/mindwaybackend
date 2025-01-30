@@ -6,6 +6,7 @@ use App\Models\CustomreBrevoData;
 use App\Models\Program;
 use App\Models\Customer;
 use App\Repositories\CustomersRepository;
+use Exception;
 use Illuminate\Support\Facades\Mail;
 use SendinBlue\Client\Configuration;
 use SendinBlue\Client\Api\ContactsApi;
@@ -136,23 +137,9 @@ class CustomerService
 
 
                 try {
-                    // Make the request to create the contact
                     $result = $apiInstance->createContact($createContact);
-
-                    // Process the response as needed
-                    // return response()->json($result);
-                    //return back()->with('message', 'Record added successfully');
-                } catch (\Illuminate\Database\QueryException $e) {
-                    // Catch the specific exception for duplicate entry constraint
-                    if ($e->getCode() == 23000) {
-                        //return back()->with('error', 'User is already registered. Duplicate emails are not allowed.');
-                    } else {
-                        
-                        //return back()->with('error', $e->getMessage());
-                    }
-                } catch (Exception $e) {
-                    
-                    //return back()->with('error', $e->getMessage());
+                } 
+                catch (Exception $e) {
                 }
             }
         }

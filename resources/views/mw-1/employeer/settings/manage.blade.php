@@ -35,7 +35,7 @@
         <div class="col-10 offset-1">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <img height="46px" width="130px" class="popup" src="{{ asset('storage/logo/' . $Program->logo) }}"
+                    <img style="object-fit: contain;" height="46px" width="130px" class="popup" src="{{ asset('storage/logo/' . $Program->logo) }}"
                         alt="{{ $Program->company_name }} Logo">
                 </div>
                 <div>
