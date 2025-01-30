@@ -405,22 +405,20 @@ class ProgramController extends Controller
         );
         $identifier =  $email;
         $updateContact = new UpdateContact();
-
-
         try {
             $apiInstance->deleteContact($identifier);
-            // Find the customer by ID
-            $customer = CustomreBrevoData::findOrFail($customerId);
+        } catch (Exception $e)
+        {
 
-            // Delete the customer
-            $customer->delete();
-        } catch (Exception $e) {
-            //echo 'Exception when calling ContactsApi->updateContact: ', $e->getMessage(), PHP_EOL;
-           // return response()->json(['success' => false, 'message' => $e->getMessage()]);
         }
-        return back()->with('message', 'Employee Deleted successfully');
 
-        // Optionally, redirect back with a success message
+        $customer = CustomreBrevoData::findOrFail($customerId);
+        if($customer->app_customer_id)
+        {
+            Customer::where('id',$customer->app_customer_id)->delete();
+        }
+        $customer->delete();
+        return back()->with('message', 'Employee Deleted successfully');
     }
 
     public function viewEmployees()

@@ -1365,10 +1365,10 @@ class AdminController extends Controller
 
     public function storeProgram(Request $request)
     {
-// dd($request->all());
         try {
             $brevo = CustomreBrevoData::where('email', $request->admin_email)->first();
-            if ($brevo) {
+            $customer = Customer::where('email', $request->admin_email)->first();
+            if ($brevo || $customer) {
                 return back()->with('error', 'Email has already been taken.');
             }
             if ($program = Program::create($request->all())) {
