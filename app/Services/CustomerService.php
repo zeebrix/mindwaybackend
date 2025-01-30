@@ -92,14 +92,15 @@ class CustomerService
         $customer2 = $this->repository->getOne($modelValues["email"], "email");
         $customer = $customer2->toArray();
         if ($modelValues['program_id']) {
-            if (isset($modelValues['device_id'])) {
+           
                 $customerbrevo = CustomreBrevoData::where('email', $modelValues['email'])->first();
-            } else {
-                $customerbrevo = new CustomreBrevoData();
-                $pushToBrevo = true;
-                $customerbrevo->level = 'member';
-            }
-            $program = Program::where('id', $modelValues['program_id'])->first();
+                if(!$customerbrevo)
+                {
+                    $customerbrevo = new CustomreBrevoData();
+                    $pushToBrevo = true;
+                    $customerbrevo->level = 'member';
+                }
+                $program = Program::where('id', $modelValues['program_id'])->first();
 
             $customerbrevo->email = $modelValues['email'];
             $customerbrevo->name = $modelValues['name'];

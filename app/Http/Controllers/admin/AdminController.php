@@ -79,20 +79,22 @@ class AdminController extends Controller
         $google2fa = new Google2FA();
 
         if ($request->has('enable_2fa')) {
-            // Enable 2FA
-            $secret = $google2fa->generateSecretKey();
-            $user->google2fa_secret = $secret;
-            $user->uses_two_factor_auth = true;
-            $user->save();
-
+            if($user->uses_two_factor_auth)
+            {
+                $secret = $google2fa->generateSecretKey();
+                $user->google2fa_secret = $secret;
+                $user->uses_two_factor_auth = true;
+                $user->save();    
+            }
+            
             $qrCodeUrl = $google2fa->getQRCodeUrl(
                 config('app.name'),
                 $user->email,
-                $secret
+                $user->google2fa_secret
             );
 
             return redirect()->route('admin.setting')
-                ->with(['success' => 'Two-factor authentication enabled!', 'qrCodeUrl' => $qrCodeUrl, 'secret' => $secret]);
+                ->with(['success' => 'Two-factor authentication enabled!', 'qrCodeUrl' => $qrCodeUrl, 'secret' => $user->google2fa_secret]);
         } else {
             // Disable 2FA
             $user->google2fa_secret = null;
@@ -1700,7 +1702,7 @@ class AdminController extends Controller
             {
                 $customer3 = Customer::where('id',$customer->app_customer_id)->first();
                 if($customer3){
-                     $customer3->max_session = (int)$customer->max_session + 1;
+                     $customer3->max_session = (int)$customer->max_session;
                     $customer3->save();
                 }
             }
@@ -1786,7 +1788,7 @@ class AdminController extends Controller
         try
         {
             $customer3 = Customer::where('id',$request->customerId)->first();
-            $customer3->max_session = $sessionData->max_session - 1;
+            $customer3->max_session = $customer3->max_session - 1;
             $customer3->save();
         }
         catch (\Throwable $th) {
@@ -1995,7 +1997,9 @@ class AdminController extends Controller
         if(isset($request->notice_period))
         {
             $Counselor->slots()->where('is_booked', false)->delete();
+            $month = now()->addMonth()->month;
             app(SlotGenerationService::class)->generateSlotsForCounselor($Counselor);
+            app(SlotGenerationService::class)->generateSlotsForCounselor($Counselor,$month);
             
         }
         return back()->with(['message' => "Information Saved Successfully"]);

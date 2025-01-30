@@ -288,7 +288,7 @@ class CounsellerController extends Controller
                 $customer3 = Customer::where('id',$sessionData->app_customer_id)->first();
                 if($customer3)
                 {
-                    $customer3->max_session = $sessionData->max_session - 1;
+                    $customer3->max_session = $sessionData->max_session;
                     $customer3->save();
                 }
             }
@@ -536,7 +536,9 @@ class CounsellerController extends Controller
         if(isset($request->notice_period))
         {
             $Counselor->slots()->where('is_booked', false)->delete();
+            $month = now()->addMonth()->month;
             app(SlotGenerationService::class)->generateSlotsForCounselor($Counselor);
+            app(SlotGenerationService::class)->generateSlotsForCounselor($Counselor,$month);
             
         }
         return back()->with(['message' => "Information Saved Successfully"]);
@@ -598,20 +600,22 @@ class CounsellerController extends Controller
         $google2fa = new Google2FA();
 
         if ($request->has('enable_2fa')) {
-            // Enable 2FA
-            $secret = $google2fa->generateSecretKey();
-            $counselor->google2fa_secret = $secret;
-            $counselor->uses_two_factor_auth = true;
-            $counselor->save();
-
+            
+            if(!$counselor->uses_two_factor_auth)
+            {
+                $secret = $google2fa->generateSecretKey();
+                $counselor->google2fa_secret = $secret;
+                $counselor->uses_two_factor_auth = true;
+                $counselor->save();
+            }
+            
             $qrCodeUrl = $google2fa->getQRCodeUrl(
                 config('app.name'),
                 $counselor->email,
-                $secret
+                $counselor->google2fa_secret
             );
-
             return redirect()->route('counseller.setting')
-                ->with(['success' => 'Two-factor authentication enabled!', 'qrCodeUrl' => $qrCodeUrl, 'secret' => $secret]);
+                ->with(['success' => 'Two-factor authentication enabled!', 'qrCodeUrl' => $qrCodeUrl, 'secret' => $counselor->google2fa_secret]);
         } else {
             // Disable 2FA
             $counselor->google2fa_secret = null;

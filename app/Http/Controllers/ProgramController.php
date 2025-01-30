@@ -485,20 +485,21 @@ class ProgramController extends Controller
         $google2fa = new Google2FA();
 
         if ($request->has('enable_2fa')) {
-            // Enable 2FA
-            $secret = $google2fa->generateSecretKey();
-            $user->google2fa_secret = $secret;
-            $user->is_2fa_enabled = true;
-            $user->save();
-
+            if(!$user->is_2fa_enabled)
+            {
+                $secret = $google2fa->generateSecretKey();
+                $user->google2fa_secret = $secret;
+                $user->is_2fa_enabled = true;
+                $user->save();    
+            }
             $qrCodeUrl = $google2fa->getQRCodeUrl(
                 config('app.name'),
                 $user->email,
-                $secret
+                $user->google2fa_secret
             );
 
             return redirect()->route('setting')
-                ->with(['message' => 'Two-factor authentication enabled!', 'qrCodeUrl' => $qrCodeUrl, 'secret' => $secret]);
+                ->with(['message' => 'Two-factor authentication enabled!', 'qrCodeUrl' => $qrCodeUrl, 'secret' => $user->google2fa_secret]);
         } else {
             // Disable 2FA
             $user->google2fa_secret = null;
