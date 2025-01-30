@@ -322,6 +322,7 @@ catch (\Exception $e) {
             'customer_name' => $booking->user->name,
             'max_session' => $booking?->brevoUser?->max_session??'',
             'timezone' => $booking->counselor->timezone,
+            'meeting_link' => $meetingLink,
             'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($booking->counselor->timezone),
             'company_name' => $booking?->brevoUser?->program?->company_name,
         ];

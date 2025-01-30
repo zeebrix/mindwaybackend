@@ -1856,6 +1856,7 @@ class AdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         $CounselorSession = CounsellingSession::with('counselor')->get();
+        $timezone = $Counselor->timezone??'UTC';
         return view('mw-1.admin.counsellor.counsellor-manage', get_defined_vars());
     }
 
