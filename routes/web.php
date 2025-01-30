@@ -174,6 +174,9 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::get('/counsellor-manage/{id}',[AdminController::class,'counsellorManage']);
     Route::get('/counsellor-availability/{id}',[AdminController::class,'counsellorAvailability']);
 
+    Route::get('/counseller-session-cancel', [AdminController::class,'counsellerCancelSession'])->name('session.cancel');
+Route::post('/counseller-session-rebook', [AdminController::class,'counsellerRebbokSession'])->name('session.rebook');
+
 
     Route::get('/counsellor-profile/{id}',[AdminController::class,'counsellorProfile'])->name('admin.counsellor.profile');
 
