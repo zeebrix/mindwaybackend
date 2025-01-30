@@ -527,6 +527,38 @@ class ProgramController extends Controller
 
     public function calculateGrowth($Program, $departId = null)
     {
+        $lastSixMonths = $Program->customers()
+            ->where('customers.created_at', '>=', Carbon::now()->subMonths(6))
+            ->orderBy('customers.created_at')
+            ->get();
+            if($departId){
+                $lastSixMonths = $lastSixMonths->where('department_id', $departId);
+            }
+
+        $growthData = [];
+        $startDate = Carbon::now()->subMonths(6)->startOfMonth();
+        for ($i = 0; $i < 7; $i++) { // Change the loop to include 7 months (6 previous months + the current month)
+            $monthStart = $startDate->copy()->addMonths($i);
+            $monthEnd = $monthStart->copy()->endOfMonth();
+
+            $growthData[] = $lastSixMonths->whereBetween('created_at', [$monthStart, $monthEnd])->count();
+        }
+        // Calculate cumulative values
+        for ($i = 1; $i < count($growthData); $i++) {
+            $growthData[$i] += $growthData[$i - 1];
+        }
+
+        // Format month labels (including current month)
+        $labels = [];
+        for ($i = 0; $i < 7; $i++) { // Adjusted for 7 months
+            $labels[] = $startDate->copy()->addMonths($i)->format('M');
+        }
+        return [$growthData, $labels];
+    }
+
+    //Data of each month -- with out commulative -- not using at te moment
+    public function calculateGrowth1($Program, $departId = null)
+    {
         $userId = $Program->id;
         $months = collect();
         $counts = collect();
@@ -581,33 +613,7 @@ class ProgramController extends Controller
         }
         return [$growthData, $labels];
     }
-        // public function calculateSessionGrowth($Program)
-        // {
-        //     $lastSixMonths = Session::where('program_id', $Program->id)
-        //         ->where('session_date', '>=', Carbon::now()->subMonths(6)->startOfMonth())
-        //         ->orderBy('session_date')
-        //         ->get();
 
-        //     $growthData = [];
-        //     $startDate = Carbon::now()->subMonths(6)->startOfMonth();
-
-        //     // Loop for each of the last 6 months + current month
-        //     for ($i = 0; $i < 7; $i++) {
-        //         $monthStart = $startDate->copy()->addMonths($i);
-        //         $monthEnd = $monthStart->copy()->endOfMonth();
-        //         $growthData[] = $lastSixMonths
-        //             ->whereBetween('session_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
-        //             ->count();
-        //     }
-
-        //     $labels = [];
-        //     for ($i = 0; $i < 7; $i++) {
-        //         $labels[] = $startDate->copy()->addMonths($i)->format('M y');
-        //     }
-
-        //     return [$growthData, $labels];
-
-        // }
     public function sessionReasons($Program)
     {
         $workRelatedReasons = [
@@ -815,7 +821,12 @@ class ProgramController extends Controller
         // Retrieve all customers based on the obtained IDs using the relationship
         $totalCustomers = CustomreBrevoData::whereIn('id', $customerIds)->get();
 
-        $allUsers = CustomreBrevoData::where('program_id', $userId)->get();
+        $allUsers = CustomreBrevoData::where('program_id', $userId)
+        ->where('created_at', '>=', Carbon::now()->subMonths(6))
+        ->get();
+        if($request->has('department')){
+            $allUsers = $allUsers->where('department_id', $departId);
+        }
         $adoptedUsers = 0;
         foreach ($allUsers as $key => $u) {
             if($u->is_app_user == 1 || $u->is_counselling_user == 1){
@@ -824,7 +835,7 @@ class ProgramController extends Controller
         }
 
           if($request->has('department')){
-        $totalCustomers = $totalCustomers->where('department_id', $departId);
+            $totalCustomers = $totalCustomers->where('department_id', $departId);
         }
 
         //Data calculate by zahid
