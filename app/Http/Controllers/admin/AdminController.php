@@ -51,6 +51,7 @@ use App\Models\ProgramMultiLogin;
 use Brevo\Client\Model\CreateContact;
 use PragmaRX\Google2FA\Google2FA;
 use App\Models\ProgramDepartment;
+use App\Notifications\BookingCancellation;
 
 class AdminController extends Controller
 {
@@ -1854,6 +1855,36 @@ class AdminController extends Controller
             ->get();
         $CounselorSession = CounsellingSession::with('counselor')->get();
         return view('mw-1.admin.counsellor.counsellor-manage', get_defined_vars());
+    }
+
+    public function counsellerCancelSession(Request $request)
+    {
+        $booking = Booking::findOrFail($request['booking_id']);
+        if ($booking->status == 'cancelled') {
+            return redirect()->back()->with('error', 'Booking already cancelled successfully');
+        }
+        $user_id = $request['customer_id'];
+        if ((int)$booking->user_id !== (int)$user_id) {
+            return redirect()->back()->with('error', 'Not allowed to cancel the session');
+        }
+
+        $booking->update(['status' => 'cancelled']);
+        $booking->slot->update(['is_booked' => false]);
+        $customer = Customer::find($user_id);
+        if($customer)
+        {
+            $customer->max_session = $customer?->max_session + 1;
+            $customer->save();
+            $brevoCustomer = CustomreBrevoData::where('app_customer_id',$user_id)->first();
+            if($brevoCustomer)
+            {
+                $brevoCustomer->max_session = $brevoCustomer->max_session + 1;
+                $brevoCustomer->save();
+            }
+            
+            $booking->counselor->notify(new BookingCancellation($booking));
+        }
+        return redirect()->back()->with('success', 'Booking cancelled successfully');
     }
 
     public function timezones()
