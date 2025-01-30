@@ -79,7 +79,7 @@ class AdminController extends Controller
         $google2fa = new Google2FA();
 
         if ($request->has('enable_2fa')) {
-            if($user->uses_two_factor_auth)
+            if(!$user->uses_two_factor_auth)
             {
                 $secret = $google2fa->generateSecretKey();
                 $user->google2fa_secret = $secret;
