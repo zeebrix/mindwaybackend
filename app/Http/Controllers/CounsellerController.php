@@ -516,8 +516,11 @@ class CounsellerController extends Controller
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
         $Counselor = Counselor::where('id', session('user_id'))->first();
-        $specilization = explode(",", $request->tags);
-        $specilization =  $specilization;
+        $specilization = json_decode($Counselor->specialization);
+        if(isset($request->tags) && $request->tags != '')
+        {
+            $specilization = explode(",", $request->tags);
+        }
         // $Counselor->timezone = $request->timezone;
         $Counselor->description = $request->description;
         $Counselor->gender = $request->gender;
