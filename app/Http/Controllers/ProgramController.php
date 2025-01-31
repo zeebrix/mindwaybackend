@@ -7,14 +7,10 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Customer;
 use App\Models\Program;
 use App\Models\CustomreBrevoData;
-use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\ToArray;
 
 use SendinBlue\Client\Model\CreateContact;
 use SendinBlue\Client\Configuration;
 use SendinBlue\Client\Api\ContactsApi;
-use SendinBlue\Client\Model\UpdateContact;
 
 
 use App\Models\CustomerRelatedProgram;
@@ -26,7 +22,8 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use PragmaRX\Google2FA\Google2FA;
 use App\Models\ProgramDepartment;
-
+use SendinBlue\Client\Model\RemoveContactFromList;
+use SendinBlue\Client\ApiException;
 class ProgramController extends Controller
 {
     public function Login()
@@ -396,19 +393,24 @@ class ProgramController extends Controller
     {
         $customerId = $request->input('customerId');
         $email = $request->input('email');
-        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key',env('BREVO_API_KEY'));
-
-        $apiInstance = new ContactsApi(
-            new Client(),
-            $config
-        );
-        $identifier =  $email;
-        $updateContact = new UpdateContact();
         try {
-            $apiInstance->deleteContact($identifier);
-        } catch (Exception $e)
-        {
-
+                
+            $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', env('BREVO_API_KEY'));
+            $apiInstance = new ContactsApi(new Client(), $config);
+            $contact = $apiInstance->getContactInfo($email);
+            if (in_array(9, $contact->getListIds())) {
+                // Remove the contact from list ID 9
+                $contactIdentifiers = new RemoveContactFromList([
+                    'emails' => [$email]
+                ]);
+                $apiInstance->removeContactFromList(9, $contactIdentifiers);
+            } else {
+                $contactIdentifiers = new RemoveContactFromList([
+                    'emails' => [$email]
+                ]);
+                $apiInstance->removeContactFromList(11, $contactIdentifiers);
+            }
+        } catch (ApiException $e) {
         }
 
         $customer = CustomreBrevoData::findOrFail($customerId);

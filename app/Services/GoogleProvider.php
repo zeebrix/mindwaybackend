@@ -95,11 +95,17 @@ class GoogleProvider extends AbstractProvider
         //['email' => $eventData['counselor_email'], 'organizer' => true] // Counselor as organizer
         ];
         $event->setAttendees($attendees);
-        $conferenceData = new Google_Service_Calendar_ConferenceData();
-        $conferenceRequest = new Google_Service_Calendar_CreateConferenceRequest();
-        $conferenceRequest->setRequestId(uniqid()); // Unique request ID
-        $conferenceData->setCreateRequest($conferenceRequest);
-        $event->setConferenceData($conferenceData);
+        if ($eventData['communication_method'] != 'Video Call')
+        {
+            $event->setLocation('Phone'); // Set location as "Phone" if method is phone
+        } else {
+            // Create Google Meet link
+            $conferenceData = new Google_Service_Calendar_ConferenceData();
+            $conferenceRequest = new Google_Service_Calendar_CreateConferenceRequest();
+            $conferenceRequest->setRequestId(uniqid()); // Unique request ID
+            $conferenceData->setCreateRequest($conferenceRequest);
+            $event->setConferenceData($conferenceData);
+        }
         $createdEvent = $calendarService->events->insert('primary', $event, ['conferenceDataVersion' => 1,'sendUpdates' => 'all']);
         // Insert the event into the user's primary calendar
         return [
@@ -109,7 +115,7 @@ class GoogleProvider extends AbstractProvider
             'start_time' => $createdEvent->getStart()->getDateTime(),
             'end_time' => $createdEvent->getEnd()->getDateTime(),
             'attendees' => $createdEvent->getAttendees(),
-            'meeting_link' => $createdEvent->getConferenceData()->getEntryPoints()[0]->uri ?? null,
+            'meeting_link' => ($eventData['communication_method'] === 'Video Call') ? $createdEvent->getConferenceData()->getEntryPoints()[0]->uri??null : null,
         ];
     }
     public function deleteEvent(string $eventId, string $accessToken)
@@ -165,19 +171,21 @@ class GoogleProvider extends AbstractProvider
        // ['email' => $eventData['counselor_email'], 'organizer' => true] // Counselor as organizer
         ];
         $event->setAttendees($attendees);
-
-        // Update Google Meet link if requested
-        if (!empty($eventData['update_meeting_link'])) {
-            $conferenceData = $event->getConferenceData() ?: new Google_Service_Calendar_ConferenceData();
-            $conferenceRequest = new Google_Service_Calendar_CreateConferenceRequest();
-            $conferenceRequest->setRequestId(uniqid());
-            $conferenceData->setCreateRequest($conferenceRequest);
-            $event->setConferenceData($conferenceData);
+        if (!empty($eventData['communication_method']) && $eventData['communication_method'] != 'Video Call') {
+            $event->setLocation('Phone'); // Set location as "Phone"
+            $event->setConferenceData(null); // Remove Google Meet link if it exists
+        } else 
+        {
+            // Update or create Google Meet link if requested
+            if (!empty($eventData['update_meeting_link'])) {
+                $conferenceData = $event->getConferenceData() ?: new Google_Service_Calendar_ConferenceData();
+                $conferenceRequest = new Google_Service_Calendar_CreateConferenceRequest();
+                $conferenceRequest->setRequestId(uniqid());
+                $conferenceData->setCreateRequest($conferenceRequest);
+                $event->setConferenceData($conferenceData);
+            }
         }
-
-        // Save the updated event
         $updatedEvent = $calendarService->events->update('primary', $eventId, $event, ['conferenceDataVersion' => 1,'sendUpdates' => 'all']);
-
         return [
             'event_id' => $updatedEvent->getId(),
             'summary' => $updatedEvent->getSummary(),
@@ -185,7 +193,7 @@ class GoogleProvider extends AbstractProvider
             'start_time' => $updatedEvent->getStart()->getDateTime(),
             'end_time' => $updatedEvent->getEnd()->getDateTime(),
             'attendees' => $updatedEvent->getAttendees(),
-            'meeting_link' => $updatedEvent->getConferenceData()->getEntryPoints()[0]->uri ?? null,
+            'meeting_link' => ($eventData['communication_method'] === 'Video Call') ? $updatedEvent->getConferenceData()->getEntryPoints()[0]->uri ?? null:null,
         ];
     }
 

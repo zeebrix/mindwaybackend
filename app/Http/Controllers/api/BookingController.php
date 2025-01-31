@@ -121,7 +121,7 @@ class BookingController extends Controller
         $meetingLink = '';
         $eventId = '';
         try {
-            if($counselor?->googleToken?->access_token && $validated['communication_method'] == 'Video Call')
+            if($counselor?->googleToken?->access_token)
             {
                 $eventData = [
                     'title' => '50min Mindway EAP Session',
@@ -140,9 +140,9 @@ class BookingController extends Controller
                      'counselor_email' => $counselor->email,
                     'employee_email' => $customer->email,
                     'timezone' => $counselor->timezone,
-                    'access_token' => $counselor->googleToken->access_token
+                    'access_token' => $counselor->googleToken->access_token,
+                    'communication_method' => $validated['communication_method']
                 ];
-        
                 // send to customer 
                 $event = $this->googleProvider->createEvent($eventData);
                 $meetingLink = $event['meeting_link'];
@@ -250,48 +250,47 @@ catch (\Exception $e) {
         $booking = Booking::findOrFail($validated['booking_id']);
         $eventId = $booking->event_id;
         $meetingLink = $booking->meeting_link;
-        if($validated['communication_method'] == 'Video Call')
-        {
-            try {
-                $eventData = [
-                    'title' => '50min Mindway EAP Session',
-                    'description' => "<p><strong>Important Information:</strong></p>
-                <p>You can cancel or update your session up to 24 hours before the session. While rare, bookings may be subject to changes; you'll be contacted to select another date. Any information shared remains confidential between you and your counsellor.</p>
-                
-                <p><strong>Stored Information:</strong></p>
-                <p>Your details and session history are kept for historical and management purposes.</p>
-                
-                <p><strong>In Case of Emergency:</strong></p>
-                <p>This service is not designed for emergencies. If you are in crisis or facing an immediate threat to yourself or others, please contact your local emergency services or crisis hotline immediately.</p>
-                
-                <p><strong>Emergency Hotline:</strong> Lifeline Australia: 13 11 14</p>",
-                    'start_time' =>  Carbon::parse($booking->slot->start_time)->setTimezone($booking->counselor->timezone),
-                    'end_time' => Carbon::parse($booking->slot->end_time)->setTimezone($booking->counselor->timezone),
-                    'counselor_email' => $booking->counselor->email,
-                    'employee_email' => $booking->user->email,
-                    'timezone' => $booking->counselor->timezone,
-                    'access_token' => $booking->counselor->googleToken->access_token,
-                    'update_meeting_link' => true,
-                ];
-                if($booking->event_id)
-                {
-                    $event = $this->googleProvider->updateEvent($booking->event_id , $eventData);
-                }
-                else
-                {
-                    $event = $this->googleProvider->createEvent($eventData);
-                }
-                $meetingLink = $event['meeting_link'];
-                $eventId = $event['event_id'];
-            } catch (\Throwable $th) {
-                Log::error('An error occurred', [
-        'message' => $th->getMessage(),
-        'file' => $th->getFile(),
-        'line' => $th->getLine(),
-        'trace' => $th->getTraceAsString(),
-    ]);
+        try {
+            $eventData = [
+                'title' => '50min Mindway EAP Session',
+                'description' => "<p><strong>Important Information:</strong></p>
+            <p>You can cancel or update your session up to 24 hours before the session. While rare, bookings may be subject to changes; you'll be contacted to select another date. Any information shared remains confidential between you and your counsellor.</p>
+            
+            <p><strong>Stored Information:</strong></p>
+            <p>Your details and session history are kept for historical and management purposes.</p>
+            
+            <p><strong>In Case of Emergency:</strong></p>
+            <p>This service is not designed for emergencies. If you are in crisis or facing an immediate threat to yourself or others, please contact your local emergency services or crisis hotline immediately.</p>
+            
+            <p><strong>Emergency Hotline:</strong> Lifeline Australia: 13 11 14</p>",
+                'start_time' =>  Carbon::parse($booking->slot->start_time)->setTimezone($booking->counselor->timezone),
+                'end_time' => Carbon::parse($booking->slot->end_time)->setTimezone($booking->counselor->timezone),
+                'counselor_email' => $booking->counselor->email,
+                'employee_email' => $booking->user->email,
+                'timezone' => $booking->counselor->timezone,
+                'access_token' => $booking->counselor->googleToken->access_token,
+                'update_meeting_link' => true,
+                'communication_method' => $validated['communication_method']
+            ];
+            if($booking->event_id)
+            {
+                $event = $this->googleProvider->updateEvent($booking->event_id , $eventData);
             }
+            else
+            {
+                $event = $this->googleProvider->createEvent($eventData);
+            }
+            $meetingLink = $event['meeting_link'];
+            $eventId = $event['event_id'];
+        } catch (\Throwable $th) {
+        Log::error('An error occurred', [
+            'message' => $th->getMessage(),
+            'file' => $th->getFile(),
+            'line' => $th->getLine(),
+            'trace' => $th->getTraceAsString(),
+            ]);
         }
+        
         
         $customer_timezone = isset($request->customer_timezone) ? $request->customer_timezone : 'UTC';
         $booking->event_id = $eventId;
