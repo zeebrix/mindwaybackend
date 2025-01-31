@@ -12,6 +12,7 @@ use SendinBlue\Client\Configuration;
 use SendinBlue\Client\Api\ContactsApi;
 use SendinBlue\Client\Model\UpdateContact;
 use SendinBlue\Client\Model\CreateContact;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -50,106 +51,117 @@ class CustomerService
 
     public function store($request, array $modelValues = [])
     {
-        $pushToBrevo = false;
-        $input = $modelValues = $request;
-        //Image Uploading
-        $modelValues["verification_code"] = random_int(100000, 999999);
-        $modelValues['password'] = \Hash::make($modelValues['password']);
-        //  $modelValues['password'] = $modelValues['password'];
-        \Arr::forget($modelValues, ["password_confirmation"]);
-
-        $customer = $this->repository->store($modelValues);
-        if ($modelValues['program_id'] && isset($modelValues['device_id'])) {
-            $existingRecord = \DB::table('customers_programs')
-                ->where('programs_id', $modelValues['program_id'])
-                ->where('device', $modelValues['device_id'])
-                ->where('customers_id', $customer->id)
-                ->first();
-
-            if (!$existingRecord) {
-                // Record does not exist, so insert it
-                \DB::table('customers_programs')->insert([
-                    'programs_id' => $modelValues['program_id'],
-                    'device' => $modelValues['device_id'],
-                    'customers_id' => $customer->id,
-                ]);
-            }
-        } else {
-            try {
-                // Send OTP email
-                $otp = $modelValues["verification_code"];
-                $email = $modelValues["email"];
-                Mail::send('email.otp', ['otp' => $otp], function ($message) use ($email) {
-                    $message->to($email)
-                        ->subject('Your OTP Code');
-                });
-            } catch (\Exception $e) {
-                return response()->json(['status' => false, 'message' => 'An error occurred while sending the email: ' . $e->getMessage()], 500);
-            }
-        }
-
-
-
-        $customer2 = $this->repository->getOne($modelValues["email"], "email");
-        $customer = $customer2->toArray();
-        if ($modelValues['program_id']) {
-           
-                $customerbrevo = CustomreBrevoData::where('email', $modelValues['email'])->first();
-                if(!$customerbrevo)
-                {
-                    $customerbrevo = new CustomreBrevoData();
-                    $pushToBrevo = true;
-                    $customerbrevo->level = 'member';
+        try {
+            DB::beginTransaction();
+            $pushToBrevo = false;
+            $input = $modelValues = $request;
+            //Image Uploading
+            $modelValues["verification_code"] = random_int(100000, 999999);
+            $modelValues['password'] = \Hash::make($modelValues['password']);
+            //  $modelValues['password'] = $modelValues['password'];
+            \Arr::forget($modelValues, ["password_confirmation"]);
+    
+            $customer = $this->repository->store($modelValues);
+            if ($modelValues['program_id'] && isset($modelValues['device_id'])) {
+                $existingRecord = \DB::table('customers_programs')
+                    ->where('programs_id', $modelValues['program_id'])
+                    ->where('device', $modelValues['device_id'])
+                    ->where('customers_id', $customer->id)
+                    ->first();
+    
+                if (!$existingRecord) {
+                    // Record does not exist, so insert it
+                    \DB::table('customers_programs')->insert([
+                        'programs_id' => $modelValues['program_id'],
+                        'device' => $modelValues['device_id'],
+                        'customers_id' => $customer->id,
+                    ]);
                 }
-                $program = Program::where('id', $modelValues['program_id'])->first();
-
-            $customerbrevo->email = $modelValues['email'];
-            $customerbrevo->name = $modelValues['name'];
-            $customerbrevo->program_id = $modelValues['program_id'];
-            $customerbrevo->max_session = $program->max_session;
-            $customerbrevo->company_name = $program->company_name;
-            $customerbrevo->is_app_user = true;
-            $customerbrevo->app_customer_id = $customer['id'];
-            $customerbrevo->save();
-
-            $customer3 = Customer::where('id', $customer['id'])->first();
-            $customer3->max_session = $program->max_session;
-            $customer3->save();
-            if ($pushToBrevo) {
-                $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', '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');
-
-                // Create an instance of the ContactsApi
-                $apiInstance = new ContactsApi(new Client(), $config); // Use the correct Client class
-
-                // Prepare the data for creating the contact
-                $createContact = new CreateContact([
-                    'email' => $modelValues['email'],
-                    'attributes' => (object) [
-                        'EMAIL' => $modelValues['email'],
-                        'FIRSTNAME' => $modelValues['name'],
-                        'CODEACCESS' =>$program->code,
-                        'COMPANY' => $program->company_name,
-                        'MS' => $program->max_session,
-                        'LASTNAME' => ""
-                    ],
-                    'listIds' => [11], // Assuming you want to add the contact to list ID 1
-                ]);
-
-
+            } else {
                 try {
-                    $result = $apiInstance->createContact($createContact);
-                } 
-                catch (Exception $e) {
+                    // Send OTP email
+                    $otp = $modelValues["verification_code"];
+                    $email = $modelValues["email"];
+                    Mail::send('email.otp', ['otp' => $otp], function ($message) use ($email) {
+                        $message->to($email)
+                            ->subject('Your OTP Code');
+                    });
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    return response()->json(['status' => false, 'message' => 'An error occurred while sending the email: ' . $e->getMessage()], 500);
                 }
             }
+    
+    
+    
+            $customer2 = $this->repository->getOne($modelValues["email"], "email");
+            $customer = $customer2->toArray();
+            if ($modelValues['program_id']) {
+               
+                    $customerbrevo = CustomreBrevoData::where('email', $modelValues['email'])->first();
+                    if(!$customerbrevo)
+                    {
+                        $customerbrevo = new CustomreBrevoData();
+                        $pushToBrevo = true;
+                        $customerbrevo->level = 'member';
+                    }
+                    $program = Program::where('id', $modelValues['program_id'])->first();
+    
+                $customerbrevo->email = $modelValues['email'];
+                $customerbrevo->name = $modelValues['name'];
+                $customerbrevo->program_id = $modelValues['program_id'];
+                $customerbrevo->max_session = $program->max_session;
+                $customerbrevo->company_name = $program->company_name;
+                $customerbrevo->is_app_user = true;
+                $customerbrevo->app_customer_id = $customer['id'];
+                $customerbrevo->save();
+    
+                $customer3 = Customer::where('id', $customer['id'])->first();
+                $customer3->max_session = $program->max_session;
+                $customer3->save();
+                if ($pushToBrevo) {
+                    $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', env('BREVO_API_KEY'));
+    
+                    // Create an instance of the ContactsApi
+                    $apiInstance = new ContactsApi(new Client(), $config); // Use the correct Client class
+    
+                    // Prepare the data for creating the contact
+                    $createContact = new CreateContact([
+                        'email' => $modelValues['email'],
+                        'attributes' => (object) [
+                            'EMAIL' => $modelValues['email'],
+                            'FIRSTNAME' => $modelValues['name'],
+                            'CODEACCESS' =>$program->code,
+                            'COMPANY' => $program->company_name,
+                            'MS' => $program->max_session,
+                            'LASTNAME' => ""
+                        ],
+                        'listIds' => [11], // Assuming you want to add the contact to list ID 1
+                    ]);
+    
+    
+                    try {
+                        $result = $apiInstance->createContact($createContact);
+                    } 
+                    catch (Exception $e) {
+                        DB::rollBack();
+                        return response()->json(['error' => $e->getMessage()], 500);
+                    }
+                }
+            }
+            $customer["bearer_token"] = $customer["api_auth_token"] ?? NULL;
+            DB::commit();
+            return response()->json([
+                'code' => 200,
+                'status' => 'Success',
+                'message' => 'Customer registered successfully.',
+                'data' => $customer
+            ], 200);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-        $customer["bearer_token"] = $customer["api_auth_token"] ?? NULL;
-        return response()->json([
-            'code' => 200,
-            'status' => 'Success',
-            'message' => 'Customer registered successfully.',
-            'data' => $customer
-        ], 200);
+        
     }
 
     /**

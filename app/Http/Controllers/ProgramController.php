@@ -236,7 +236,7 @@ class ProgramController extends Controller
         $customerRelatedProgram->program_id = $userId; // Use the program ID obtained earlier
         $customerRelatedProgram->save();
         // Set up the SendinBlue API configuration
-        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', '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');
+        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key',env('BREVO_API_KEY'));
 
         // Create an instance of the ContactsApi
         $apiInstance = new ContactsApi(new Client(), $config); // Use the correct Client class
@@ -336,7 +336,7 @@ class ProgramController extends Controller
         }
 
         // Set up the Brevo API configuration
-        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', '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');
+        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key',env('BREVO_API_KEY'));
 
         // Create an instance of the ContactsApi
         $apiInstance = new ContactsApi(new Client(), $config);
@@ -396,7 +396,7 @@ class ProgramController extends Controller
     {
         $customerId = $request->input('customerId');
         $email = $request->input('email');
-        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', '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');
+        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key',env('BREVO_API_KEY'));
 
         $apiInstance = new ContactsApi(
             new Client(),

@@ -1714,7 +1714,7 @@ class AdminController extends Controller
     public function update(Request $request)
     {
 
-        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', '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');
+        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', env('BREVO_API_KEY'));
 
         $apiInstance = new ContactsApi(
             new Client(),
@@ -2101,7 +2101,7 @@ class AdminController extends Controller
         $customerRelatedProgram->program_id = $userId; // Use the program ID obtained earlier
         $customerRelatedProgram->save();
         // Set up the SendinBlue API configuration
-        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', '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');
+        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', env('BREVO_API_KEY'));
 
         // Create an instance of the ContactsApi
         $apiInstance = new ContactsApi(new Client(), $config); // Use the correct Client class
