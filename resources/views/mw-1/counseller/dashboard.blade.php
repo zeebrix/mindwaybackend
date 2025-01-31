@@ -206,31 +206,7 @@
 
 @section('js')
 <script>
-  $(document).ready(function() {
-   // Listen for modal show event
-   $('#addSessionModal').on('show.bs.modal', function(event) {
-      // Get the button that triggered the modal
-      var button = $(event.relatedTarget);
-
-      // Extract data from the button's data attributes
-      var customerId = button.data('id');
-       var slotId = button.data('slot_id');
-      var counselorName = button.data('name');
-      var programId = button.data('program_id');
-      var couselorId = button.data('counselor_id');
-      var customerName = button.data('customer_name');
-
-      // Populate the modal fields
-      $('#customerId').val(customerId);
-       $('#slotId').val(slotId);
-      $('#counselorName').val(counselorName);
-      $('#programId').val(programId);
-      $('#couselorId').val(couselorId);
-      
-      $('#customerName').val(customerName);
-   });
-
-   function toggleAdditionalReasons() {
+    function toggleAdditionalReasons() {
             const workRelatedCheckbox = document.getElementById('work_related');
             const additionalReasons = document.getElementById('additionalReasons');
 
@@ -257,8 +233,29 @@
                 otherInput.value = '';
             }
         }
+  $(document).ready(function() {
+   // Listen for modal show event
+   $('#addSessionModal').on('show.bs.modal', function(event) {
+      // Get the button that triggered the modal
+      var button = $(event.relatedTarget);
 
-        
+      // Extract data from the button's data attributes
+      var customerId = button.data('id');
+       var slotId = button.data('slot_id');
+      var counselorName = button.data('name');
+      var programId = button.data('program_id');
+      var couselorId = button.data('counselor_id');
+      var customerName = button.data('customer_name');
+
+      // Populate the modal fields
+      $('#customerId').val(customerId);
+       $('#slotId').val(slotId);
+      $('#counselorName').val(counselorName);
+      $('#programId').val(programId);
+      $('#couselorId').val(couselorId);
+      
+      $('#customerName').val(customerName);
+   });  
 });
 </script>
 @endsection
