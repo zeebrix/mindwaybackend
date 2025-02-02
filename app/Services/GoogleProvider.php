@@ -97,7 +97,7 @@ class GoogleProvider extends AbstractProvider
         $event->setAttendees($attendees);
         if ($eventData['communication_method'] != 'Video Call')
         {
-            $event->setLocation('Phone'); // Set location as "Phone" if method is phone
+            $event->setLocation('Phone Number');
         } else {
             // Create Google Meet link
             $conferenceData = new Google_Service_Calendar_ConferenceData();
@@ -172,11 +172,11 @@ class GoogleProvider extends AbstractProvider
         ];
         $event->setAttendees($attendees);
         if (!empty($eventData['communication_method']) && $eventData['communication_method'] != 'Video Call') {
-            $event->setLocation('Phone'); // Set location as "Phone"
-            $event->setConferenceData(null); // Remove Google Meet link if it exists
+            $event->setLocation('Phone Number'); // Set location as "Phone"
+            $emptyConferenceData = new Google_Service_Calendar_ConferenceData();
+            $event->setConferenceData($emptyConferenceData);
         } else 
         {
-            // Update or create Google Meet link if requested
             if (!empty($eventData['update_meeting_link'])) {
                 $conferenceData = $event->getConferenceData() ?: new Google_Service_Calendar_ConferenceData();
                 $conferenceRequest = new Google_Service_Calendar_CreateConferenceRequest();

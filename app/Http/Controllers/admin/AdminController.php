@@ -1691,6 +1691,8 @@ class AdminController extends Controller
                 }
             } catch (ApiException $e) {
             }
+            catch (\Throwable $e) {
+            }
             $customer->delete();
             $customer3 = CustomerRelatedProgram::where('customer_id', $customerId)->first();
             if($customer3)
@@ -1711,7 +1713,9 @@ class AdminController extends Controller
                         $apiInstance->removeContactFromList(11, $contactIdentifiers);
                     }
                 } catch (ApiException $e) {
+                } catch (\Throwable $e) {
                 }
+                
                 $customer3->delete();
             }
         }

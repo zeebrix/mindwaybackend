@@ -412,6 +412,8 @@ class ProgramController extends Controller
             }
         } catch (ApiException $e) {
         }
+        catch (\Throwable $e) {
+        }
 
         $customer = CustomreBrevoData::findOrFail($customerId);
         if($customer->level == 'admin')
