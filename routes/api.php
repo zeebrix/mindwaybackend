@@ -131,7 +131,7 @@ Route::get('/get-test', function () {
 
 Route::get('/sync-department-data',function()
 {
-  $customer = Customer::whereNotNull('department_id')->first();
+  $customer = Customer::whereNotNull('department_id')->get();
   foreach($customer as $cust)
   {
     $brevoData = CustomreBrevoData::where('app_customer_id', $cust->id)->first();
