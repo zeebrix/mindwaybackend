@@ -533,44 +533,55 @@ class ProgramController extends Controller
 
     public function calculateGrowth($Program, $departId = null)
     {
-        // $lastSixMonths = $Program->customers()
-        //     ->where('customers.created_at', '>=', Carbon::now()->subMonths(6))
-        //     ->orderBy('customers.created_at')
-        //     ->get();
-
         $userId = Auth::guard('programs')->user()->id;
-        $lastSixMonths = CustomreBrevoData::where('program_id', $userId)
-        ->where(function ($query) {
-            $query->where('is_app_user', 1)
-                  ->orWhere('is_counselling_user', 1);
-        })
-        ->where('created_at', '>=', Carbon::now()->subMonths(12))
-        ->get();
-
-            if($departId){
-                $lastSixMonths = $lastSixMonths->where('department_id', $departId);
-            }
-
-        $growthData = [];
+    
+        // Set the date range (last 12 months)
         $startDate = Carbon::now()->subMonths(12)->startOfMonth();
-        for ($i = 0; $i < 12; $i++) { // Change the loop to include 7 months (6 previous months + the current month)
+        $endDate = Carbon::now()->endOfMonth();
+    
+        // Query with correct filtering
+        $query = CustomreBrevoData::where('program_id', $userId)
+            ->where(function ($query) {
+                $query->where('is_app_user', 1)
+                      ->orWhere('is_counselling_user', 1);
+            })
+            ->whereBetween('created_at', [$startDate, $endDate]);
+    
+        // Apply department filter if provided
+        if ($departId) {
+            $query->where('department_id', $departId);
+        }
+    
+        // Fetch data once from the database
+        $entries = $query->get();
+    
+        $growthData = [];
+        for ($i = 0; $i < 12; $i++) {
             $monthStart = $startDate->copy()->addMonths($i);
             $monthEnd = $monthStart->copy()->endOfMonth();
-
-            $growthData[] = $lastSixMonths->whereBetween('created_at', [$monthStart, $monthEnd])->count();
+    
+            // Count directly from the already filtered data
+            $count = $entries->filter(function ($entry) use ($monthStart, $monthEnd) {
+                return $entry->created_at >= $monthStart && $entry->created_at <= $monthEnd;
+            })->count();
+    
+            $growthData[] = $count;
         }
+    
         // Calculate cumulative values
         for ($i = 1; $i < count($growthData); $i++) {
             $growthData[$i] += $growthData[$i - 1];
         }
-
-        // Format month labels (including current month)
+    
+        // Generate month labels
         $labels = [];
-        for ($i = 0; $i < 12; $i++) { // Adjusted for 7 months
+        for ($i = 0; $i < 12; $i++) {
             $labels[] = $startDate->copy()->addMonths($i)->format('M');
         }
+    
         return [$growthData, $labels];
     }
+    
 
     //Data of each month -- with out commulative -- not using at te moment
     public function calculateGrowth1($Program, $departId = null)
