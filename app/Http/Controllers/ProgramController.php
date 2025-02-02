@@ -531,17 +531,27 @@ class ProgramController extends Controller
 
     public function calculateGrowth($Program, $departId = null)
     {
-        $lastSixMonths = $Program->customers()
-            ->where('customers.created_at', '>=', Carbon::now()->subMonths(6))
-            ->orderBy('customers.created_at')
-            ->get();
+        // $lastSixMonths = $Program->customers()
+        //     ->where('customers.created_at', '>=', Carbon::now()->subMonths(6))
+        //     ->orderBy('customers.created_at')
+        //     ->get();
+
+        $userId = Auth::guard('programs')->user()->id;
+        $lastSixMonths = CustomreBrevoData::where('program_id', $userId)
+        ->where(function ($query) {
+            $query->where('is_app_user', 1)
+                  ->orWhere('is_counselling_user', 1);
+        })
+        ->where('created_at', '>=', Carbon::now()->subMonths(12))
+        ->get();
+
             if($departId){
                 $lastSixMonths = $lastSixMonths->where('department_id', $departId);
             }
 
         $growthData = [];
-        $startDate = Carbon::now()->subMonths(6)->startOfMonth();
-        for ($i = 0; $i < 7; $i++) { // Change the loop to include 7 months (6 previous months + the current month)
+        $startDate = Carbon::now()->subMonths(12)->startOfMonth();
+        for ($i = 0; $i < 12; $i++) { // Change the loop to include 7 months (6 previous months + the current month)
             $monthStart = $startDate->copy()->addMonths($i);
             $monthEnd = $monthStart->copy()->endOfMonth();
 
@@ -554,7 +564,7 @@ class ProgramController extends Controller
 
         // Format month labels (including current month)
         $labels = [];
-        for ($i = 0; $i < 7; $i++) { // Adjusted for 7 months
+        for ($i = 0; $i < 12; $i++) { // Adjusted for 7 months
             $labels[] = $startDate->copy()->addMonths($i)->format('M');
         }
         return [$growthData, $labels];
@@ -820,27 +830,45 @@ class ProgramController extends Controller
        list($leftDays, $is_trial) = $this->findTrialInfo($Program);
 
 
-        $customerIds = CustomerRelatedProgram::where('program_id', $userId)->pluck('customer_id')->unique()->toArray();
+        // $customerIds = CustomerRelatedProgram::where('program_id', $userId)->pluck('customer_id')->unique()->toArray();
+        // $totalCustomers = CustomreBrevoData::whereIn('id', $customerIds)->get();
 
-        // Retrieve all customers based on the obtained IDs using the relationship
-        $totalCustomers = CustomreBrevoData::whereIn('id', $customerIds)->get();
+        $allUsers1 = CustomreBrevoData::where('program_id', $userId)
+        ->where('created_at', '>=', Carbon::now()->subMonths(12))
+        ;
 
-        $allUsers = CustomreBrevoData::where('program_id', $userId)
-        ->where('created_at', '>=', Carbon::now()->subMonths(6))
-        ->get();
+        $allUsers = $allUsers1->get();
+        $adoptedUsers = $allUsers1
+        ->where(function ($query) {
+            $query->where('is_app_user', 1)
+                  ->orWhere('is_counselling_user', 1);
+        })
+        ;
+
+        if($request->has('department')){
+            $adoptedUsers = $adoptedUsers->where('department_id', $departId);
+            // $allUsers = $allUsers->where('department_id', $departId);
+        }
+        $adoptedUsers=  $adoptedUsers->count();
+
         if($request->has('department')){
             $allUsers = $allUsers->where('department_id', $departId);
         }
-        $adoptedUsers = 0;
-        foreach ($allUsers as $key => $u) {
-            if($u->is_app_user == 1 || $u->is_counselling_user == 1){
-                $adoptedUsers = $adoptedUsers +1;
-                }
-        }
 
-          if($request->has('department')){
-            $totalCustomers = $totalCustomers->where('department_id', $departId);
-        }
+        // $adoptedUsers = 0;
+        // foreach ($allUsers as $key => $u) {
+        //     if($u->is_app_user == 1 || $u->is_counselling_user == 1){
+        //         $adoptedUsers = $adoptedUsers +1;
+        //     }
+        // }
+
+        // $totalCustomers = CustomreBrevoData::where('program_id', $userId)
+        // ->where('created_at', '>=', Carbon::now()->subMonths(12))
+        // ->orWhere('is_app_user', 1)->orWhere('is_counselling_user', 1)->get();
+
+        //   if($request->has('department')){
+        //     $totalCustomers = $totalCustomers->where('department_id', $departId);
+        // }
 
         //Data calculate by zahid
         // list($growthData, $labels) = $this->calculateGrowth($Program);
@@ -856,7 +884,7 @@ class ProgramController extends Controller
         $customerCount = $Program->customers->count();
         $totalCount = $customerCount + $newUserCount; // Sum of customer count and new user count
         $sum = $count + $newUserCount;
-        $totalCustomersCount = count($totalCustomers);
+        // $totalCustomersCount = count($totalCustomers);
         $adoptionRate = $this->adoptionRate($userId, $departId);
 
         $departments = ProgramDepartment::where('program_id', $userId)->get();

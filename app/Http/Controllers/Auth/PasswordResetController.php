@@ -123,14 +123,12 @@ class PasswordResetController extends Controller
         } elseif ($type == 'program') {
             $custBrevoData = CustomreBrevoData::where(['email' => $request->input('email'), 'level' => 'admin'])->first();
             $program_id = $custBrevoData->program_id;
-            $Program = Program::where('id', $program_id)->first();
-
-            $multiProgramLogin = ProgramMultiLogin::where(['customre_brevo_data_id' => $custBrevoData->id, 'program_id' => $Program->id])->first();
-
-            if($multiProgramLogin){
+            // $Program = Program::where('id', $program_id)->first();
+            $multiProgramLogin = ProgramMultiLogin::where(['customre_brevo_data_id' => $custBrevoData->id, 'program_id' => $program_id])->first();
+            if(!$multiProgramLogin){
                 $multiProgramLogin = new ProgramMultiLogin();
                 $multiProgramLogin->customre_brevo_data_id = $custBrevoData->id;
-                $multiProgramLogin->program_id = $Program->id;
+                $multiProgramLogin->program_id = $program_id;
             }
 
             $multiProgramLogin->password = $request->input('password');

@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Customer;
+use App\Observers\CustomerObserver;
 use App\Services\CalendarManager;
 use App\Services\GoogleProvider;
 use Illuminate\Support\ServiceProvider;
@@ -34,6 +36,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Customer::observe(CustomerObserver::class);
     }
 }
