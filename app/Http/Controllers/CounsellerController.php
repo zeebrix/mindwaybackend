@@ -313,6 +313,7 @@ class CounsellerController extends Controller
                 'company_name' => $sessionData->company_name,
                 'name' => $sessionData->name,
                 'email' => $sessionData->email,
+                'department_id' => $sessionData?->department_id??null,
                 'counselor_id' => $request->counselor_id ?? null,
                 'max_session' => $sessionData->max_session, // Assuming you want to store this as well
             ]);

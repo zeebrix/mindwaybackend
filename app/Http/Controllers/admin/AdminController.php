@@ -1866,6 +1866,7 @@ class AdminController extends Controller
                 'name' => $sessionData->name,
                 'email' => $sessionData->email,
                 'counselor_id' => $request->counselor_id ?? null,
+                'department_id' => $sessionData?->department_id??null,
                 'max_session' => $sessionData->max_session, // Assuming you want to store this as well
             ]);
             return redirect()->back()->with('success', 'Session data saved successfully.');

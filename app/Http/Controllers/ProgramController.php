@@ -657,7 +657,7 @@ class ProgramController extends Controller
         return [$growthData, $labels];
     }
     
-    public function sessionReasons($Program)
+    public function sessionReasons($Program, $departId = null)
     {
         $workRelatedReasons = [
             'Work Related',
@@ -674,12 +674,19 @@ class ProgramController extends Controller
         // Calculate the date 6 months ago
         $sixMonthsAgo = Carbon::now()->subMonths(6);
 
-        // Fetch all sessions from the past 6 months and process them
-        $sessions = DB::table('sessions')
+        // Build the query with program filter and date range
+        $query = DB::table('sessions')
             ->where('program_id', $Program->id)
             ->where('created_at', '>=', $sixMonthsAgo) // Assuming `created_at` stores the session date
-            ->select('reason')
-            ->get();
+            ->select('reason');
+
+        // Apply department filter if provided
+        if ($departId) {
+            $query->where('department_id', $departId);
+        }
+
+        // Fetch filtered sessions
+        $sessions = $query->get();
 
         // Initialize the counts
         $reasonCounts = array_fill_keys($workRelatedReasons, 0);
@@ -701,7 +708,7 @@ class ProgramController extends Controller
         return [array_keys($reasonCounts), array_values($reasonCounts)];
     }
 
-    public function sessionReasonsPercentage($Program)
+    public function sessionReasonsPercentage($Program, $departId = null)
     {
         $workRelatedReasons = [
             'Work Related',
@@ -718,12 +725,19 @@ class ProgramController extends Controller
         // Calculate the date 6 months ago
         $sixMonthsAgo = Carbon::now()->subMonths(6);
 
-        // Fetch all sessions from the past 6 months and process them
-        $sessions = DB::table('sessions')
+        // Build the query with program filter and date range
+        $query = DB::table('sessions')
             ->where('program_id', $Program->id)
             ->where('created_at', '>=', $sixMonthsAgo) // Assuming `created_at` stores the session date
-            ->select('reason')
-            ->get();
+            ->select('reason');
+
+        // Apply department filter if provided
+        if ($departId) {
+            $query->where('department_id', $departId);
+        }
+
+        // Fetch filtered sessions
+        $sessions = $query->get();
 
         // Initialize the counts
         $reasonCounts = array_fill_keys($workRelatedReasons, 0);
@@ -749,22 +763,17 @@ class ProgramController extends Controller
         }
 
         $totalCount = $personRelatedCount + $otherReasonsCount;
-        // dd($personRelatedCount , $otherReasonsCount, $totalCount);
-        $otherReasonsPercentage = 0;
-        $personRelatedPercentage = 0;
-        if ($otherReasonsCount !== 0) {
-            $otherReasonsPercentage =  ($otherReasonsCount / $totalCount) * 100;
-        }
-        if ($personRelatedCount) {
-            $personRelatedPercentage = ($personRelatedCount / $totalCount) * 100;
-        }
 
+        // Calculate percentages
+        $otherReasonsPercentage = $totalCount ? ($otherReasonsCount / $totalCount) * 100 : 0;
+        $personRelatedPercentage = $totalCount ? ($personRelatedCount / $totalCount) * 100 : 0;
 
-        $dataSend['personRelatedCount'] = $personRelatedCount;
-        $dataSend['workReasonsCount'] = $otherReasonsCount;
-        $dataSend['workReasonsPercentage'] = $otherReasonsPercentage;
-        $dataSend['personRelatedPercentage'] = $personRelatedPercentage;
-        return $dataSend;
+        return [
+            'personRelatedCount' => $personRelatedCount,
+            'workReasonsCount' => $otherReasonsCount,
+            'workReasonsPercentage' => $otherReasonsPercentage,
+            'personRelatedPercentage' => $personRelatedPercentage,
+        ];
     }
 
 
@@ -843,18 +852,26 @@ class ProgramController extends Controller
         $user = Auth::guard('programs')->user();
 
         $Program =  $user;
-        $this->sessionReasonsPercentage($Program);
+        $this->sessionReasonsPercentage($Program,$departId);
 
 
         $Program = Auth::guard('programs')->user();
         $userId = $Program->id;
         $programs = Program::where('id', $userId)->get();
         $newUserCount = Session::where('new_user', 'Yes')
-            ->where('program_id', $userId)
-            ->count();
+        ->where('program_id', $userId);
+        if ($departId) {
+            $newUserCount->where('department_id', $departId);
+        }
+        $newUserCount = $newUserCount->count();
 
-        $totalSessions = Session::where('program_id', $userId)
-            ->count();
+        $totalSessions = Session::where('program_id', $userId);
+
+        if ($departId) {
+            $totalSessions->where('department_id', $departId);
+        }
+        
+        $totalSessions = $totalSessions->count();
 
        list($leftDays, $is_trial) = $this->findTrialInfo($Program);
 
@@ -884,28 +901,11 @@ class ProgramController extends Controller
             $allUsers = $allUsers->where('department_id', $departId);
         }
 
-        // $adoptedUsers = 0;
-        // foreach ($allUsers as $key => $u) {
-        //     if($u->is_app_user == 1 || $u->is_counselling_user == 1){
-        //         $adoptedUsers = $adoptedUsers +1;
-        //     }
-        // }
-
-        // $totalCustomers = CustomreBrevoData::where('program_id', $userId)
-        // ->where('created_at', '>=', Carbon::now()->subMonths(12))
-        // ->orWhere('is_app_user', 1)->orWhere('is_counselling_user', 1)->get();
-
-        //   if($request->has('department')){
-        //     $totalCustomers = $totalCustomers->where('department_id', $departId);
-        // }
-
-        //Data calculate by zahid
-        // list($growthData, $labels) = $this->calculateGrowth($Program);
-         list($growthData, $labels) = $this->calculateGrowth($Program, $departId);
+        list($growthData, $labels) = $this->calculateGrowth($Program, $departId);
         list($growthDataSession, $labelsSession) =  $this->calculateSessionGrowth($Program,$departId);
-        list($sessionReasonLabel, $sessionReasonData) = $this->sessionReasons($Program);
+        list($sessionReasonLabel, $sessionReasonData) = $this->sessionReasons($Program,$departId);
 
-        $percentageData = $this->sessionReasonsPercentage($Program);
+        $percentageData = $this->sessionReasonsPercentage($Program,$departId);
         $count = count($Program->customers);
         //echo "App User: " . $count . "<br>";
         // echo $count;
