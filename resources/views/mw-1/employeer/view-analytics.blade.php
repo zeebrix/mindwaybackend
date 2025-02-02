@@ -204,7 +204,7 @@
                 <div class="card w-100">
                     <div class="card-body p-4">
                         <h3 style="display: inline;">Growth of Program</h3>
-                        <p style="display: inline; margin-left:10px">Past 6 months</p>
+                        <p style="display: inline; margin-left:10px">Past 12 months</p>
                         <p class="mt-2">This shows the total users enrolled in the program</p>
                         <div class="chart-container">
                             <canvas id="growthProgramChart"></canvas>
