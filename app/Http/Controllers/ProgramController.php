@@ -535,9 +535,9 @@ class ProgramController extends Controller
     {
         $userId = Auth::guard('programs')->user()->id;
     
-        // Set the date range (last 12 months)
-        $startDate = Carbon::now()->subMonths(12)->startOfMonth();
-        $endDate = Carbon::now()->endOfMonth();
+        // Set the date range: from 12 months ago to the end of the current month
+        $startDate = Carbon::now()->subMonths(11)->startOfMonth(); // 11 months ago (so we include current month)
+        $endDate = Carbon::now()->endOfMonth(); // Current month end
     
         // Query with correct filtering
         $query = CustomreBrevoData::where('program_id', $userId)
@@ -556,11 +556,11 @@ class ProgramController extends Controller
         $entries = $query->get();
     
         $growthData = [];
-        for ($i = 0; $i < 12; $i++) {
+        for ($i = 0; $i < 12; $i++) { // Loop for 12 months including February
             $monthStart = $startDate->copy()->addMonths($i);
             $monthEnd = $monthStart->copy()->endOfMonth();
     
-            // Count directly from the already filtered data
+            // Count entries in this month
             $count = $entries->filter(function ($entry) use ($monthStart, $monthEnd) {
                 return $entry->created_at >= $monthStart && $entry->created_at <= $monthEnd;
             })->count();
@@ -573,7 +573,7 @@ class ProgramController extends Controller
             $growthData[$i] += $growthData[$i - 1];
         }
     
-        // Generate month labels
+        // Generate month labels (e.g., "Mar", "Apr", ..., "Feb")
         $labels = [];
         for ($i = 0; $i < 12; $i++) {
             $labels[] = $startDate->copy()->addMonths($i)->format('M');
@@ -581,8 +581,6 @@ class ProgramController extends Controller
     
         return [$growthData, $labels];
     }
-    
-
     //Data of each month -- with out commulative -- not using at te moment
     public function calculateGrowth1($Program, $departId = null)
     {
