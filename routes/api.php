@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\CustomerController;
 use App\Http\Controllers\CounsellerController;
+use App\Models\Customer;
+use App\Models\CustomreBrevoData;
 use Illuminate\Support\Facades\Artisan;
 
 /*
@@ -127,6 +129,20 @@ Route::get('/get-test', function () {
   return "api is ok";
 });
 
+Route::get('/sync-department-data',function()
+{
+  $customer = Customer::whereNotNull('department_id')->first();
+  foreach($customer as $cust)
+  {
+    $brevoData = CustomreBrevoData::where('app_customer_id', $cust->id)->first();
+    if($brevoData){
+        $departId = $cust->department_id;
+        $brevoData->department_id = $departId;
+        $brevoData->save();
+    }
+  }
+  
+});
 Route::get('/sync-old-data', function () {
 // $customer = App\Models\Customer::whereHas('program')->with('program')->get();
 // foreach($customer as $key => $user)
