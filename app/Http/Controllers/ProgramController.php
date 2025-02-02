@@ -612,33 +612,51 @@ class ProgramController extends Controller
         return [$counts->toArray(), $months->toArray()];
     }
 
-    public function calculateSessionGrowth($Program)
+    public function calculateSessionGrowth($Program, $departId = null)
     {
-        $lastSixMonths = Session::where('program_id', $Program->id)->where('created_at', '>=', Carbon::now()->subMonths(6))
-            ->orderBy('created_at')->get();
-
-        $growthData = [];
+        // Set the date range: from 6 months ago to the end of the current month
         $startDate = Carbon::now()->subMonths(6)->startOfMonth();
-        for ($i = 0; $i < 7; $i++) { // Change the loop to include 7 months (6 previous months + the current month)
+        $endDate = Carbon::now()->endOfMonth(); // Ensures we include the current month
+    
+        // Query with filters
+        $query = Session::where('program_id', $Program->id)
+            ->whereBetween('created_at', [$startDate, $endDate]);
+    
+        // Apply department filter if provided
+        if ($departId) {
+            $query->where('department_id', $departId);
+        }
+    
+        // Fetch data once from the database
+        $sessions = $query->orderBy('created_at')->get();
+    
+        $growthData = [];
+        for ($i = 0; $i < 7; $i++) { // Loop for 7 months (including current)
             $monthStart = $startDate->copy()->addMonths($i);
             $monthEnd = $monthStart->copy()->endOfMonth();
-
-            $growthData[] = $lastSixMonths->whereBetween('created_at', [$monthStart, $monthEnd])->count();
+    
+            // Count entries in this month
+            $count = $sessions->filter(function ($session) use ($monthStart, $monthEnd) {
+                return $session->created_at >= $monthStart && $session->created_at <= $monthEnd;
+            })->count();
+    
+            $growthData[] = $count;
         }
-
+    
         // Calculate cumulative values
         for ($i = 1; $i < count($growthData); $i++) {
             $growthData[$i] += $growthData[$i - 1];
         }
-
-        // Format month labels (including current month)
+    
+        // Generate month labels (e.g., "Sep 23", "Oct 23", ..., "Feb 24")
         $labels = [];
-        for ($i = 0; $i < 7; $i++) { // Adjusted for 7 months
+        for ($i = 0; $i < 7; $i++) {
             $labels[] = $startDate->copy()->addMonths($i)->format('M y');
         }
+    
         return [$growthData, $labels];
     }
-
+    
     public function sessionReasons($Program)
     {
         $workRelatedReasons = [
@@ -884,7 +902,7 @@ class ProgramController extends Controller
         //Data calculate by zahid
         // list($growthData, $labels) = $this->calculateGrowth($Program);
          list($growthData, $labels) = $this->calculateGrowth($Program, $departId);
-        list($growthDataSession, $labelsSession) =  $this->calculateSessionGrowth($Program);
+        list($growthDataSession, $labelsSession) =  $this->calculateSessionGrowth($Program,$departId);
         list($sessionReasonLabel, $sessionReasonData) = $this->sessionReasons($Program);
 
         $percentageData = $this->sessionReasonsPercentage($Program);

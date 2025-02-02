@@ -1850,6 +1850,7 @@ class AdminController extends Controller
             'reason' => $reasonStrings,
             'new_user' => $newUser,
             'program_id' => $request->programId??$sessionData->program_id,
+            'department_id' => $sessionData?->department_id??null,
             'counselor_id' => $request->counselor_id ?? null
         ]);
             $sessionData->max_session = $sessionData->max_session - 1;

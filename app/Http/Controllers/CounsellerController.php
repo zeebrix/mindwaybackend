@@ -300,6 +300,7 @@ class CounsellerController extends Controller
             'reason' => $reasonStrings,
             'new_user' => $newUser,
             'program_id' => $request->programId??$sessionData->program_id,
+            'department_id' => $sessionData?->department_id??null,
             'counselor_id' => $request->counselor_id ?? null
         ]);
             // Save to CounsellingSession table
