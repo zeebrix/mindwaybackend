@@ -78,7 +78,7 @@ class CustomerService
                     ]);
                 }
             }
-            if($modelValues['register_type'] == 'code')
+            if($modelValues['register_type']??'' == 'code')
             {
                 try {
                     // Send OTP email
