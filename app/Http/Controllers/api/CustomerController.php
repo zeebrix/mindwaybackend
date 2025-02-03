@@ -297,7 +297,18 @@ class CustomerController extends Controller
             }
             else
             {
-                $brevo = new CustomreBrevoData();
+                try {
+                    $brevo = new CustomreBrevoData();
+                    $brevo->name = $user->name;
+                    $brevo->email = $user->email;
+                    $brevo->program_id = $program->id;
+                    $brevo->company_name = $program->company_name??'';
+                    $brevo->max_session = $program->max_session??0;
+                    $brevo->is_app_user = true;
+                    $brevo->app_customer_id = $user->id;
+                    $brevo->save();
+                } catch (\Throwable $th) {
+                    $brevo = new CustomreBrevoData();
                 $brevo->name = $user->name;
                 $brevo->email = 'dummyemail' . time(). '@example.com';
                 $brevo->program_id = $program->id;
@@ -306,6 +317,7 @@ class CustomerController extends Controller
                 $brevo->is_app_user = true;
                 $brevo->app_customer_id = $user->id;
                 $brevo->save();
+                }
             }
         }
         
