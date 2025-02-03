@@ -160,7 +160,7 @@ class CustomerService
             ], 200);
         } catch (\Throwable $th) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(['error' => $th->getMessage()], 500);
         }
         
     }
