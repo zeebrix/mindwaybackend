@@ -13,6 +13,7 @@ use SendinBlue\Client\Api\ContactsApi;
 use SendinBlue\Client\Model\UpdateContact;
 use SendinBlue\Client\Model\CreateContact;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -160,6 +161,9 @@ class CustomerService
             ], 200);
         } catch (\Throwable $th) {
             DB::rollBack();
+
+            Log::error('Exception caught: ' . $th->getMessage(), [
+                'exception' => $th]);
             return response()->json(['error' => $th->getMessage()], 500);
         }
         
