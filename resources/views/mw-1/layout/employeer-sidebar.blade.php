@@ -12,7 +12,10 @@
          <!-- Sidebar navigation-->
          <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
              <ul id="sidebarnav">
-
+             @php
+                        $Program = Auth::guard('programs')->user();
+                        $ProgramLink = $Program->link ?? '';
+                @endphp
                  <li class="nav-small-cap">
                      <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
                      <span class="hide-menu">Manage</span>
@@ -37,6 +40,7 @@
                      </a>
                  </li>
 
+                 @if($Program->allow_employees == 1)
                  <li class="sidebar-item">
                      <a class="sidebar-link" href="{{ url('/manage-program/view-employees') }}" aria-expanded="false">
                          <span>
@@ -45,16 +49,14 @@
                          <span class="hide-menu">Employees</span>
                      </a>
                  </li>
+                @endif
 
                  <li class="nav-small-cap">
                      <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
                      <span class="hide-menu">Others</span>
                  </li>
 
-                @php
-                        $Program = Auth::guard('programs')->user();
-                        $ProgramLink = $Program->link ?? '';
-                @endphp
+
                 @if ($ProgramLink)
                     <li class="sidebar-item">
                      <a class="sidebar-link" href="{{ $ProgramLink }}" target="_blank" aria-expanded="false">

@@ -238,6 +238,23 @@
                             </div>
                         </div>
                     </div>
+
+                    <label class="form-label">Employees Visible ?</label>
+                        <div class="d-flex flex-wrap justify-content-start" style="gap: 10px;">
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" @if ($Program?->allow_employees == '1') checked @endif
+                                    name="allow_employees" id="yes-employee" value="1" autocomplete="off">
+                                <label class="btn btn-outline-primary rounded-pill px-4 plan-type-checkbox"
+                                    style="border-radius: 20px;" for="yes-employee">Yes
+                            </div>
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" @if ($Program?->allow_employees == 0) checked @endif
+                                    name="allow_employees" id="no-employee" value="0" autocomplete="off">
+                                <label class="plan-type-checkbox btn btn-outline-primary rounded-pill px-4"
+                                    style="border-radius: 20px;" for="no-employee">No</label>
+                            </div>
+                        </div>
+
                     <input type="hidden" name="program_type" value="{{ $Program->program_type }}">
                     @include('mw-1.admin.programs.input-edit-component', [
                         'name' => 'link',
