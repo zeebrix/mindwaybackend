@@ -4,9 +4,18 @@ namespace App\Observers;
 
 use App\Models\Customer;
 use App\Models\CustomreBrevoData;
-
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Auth;
 class CustomerObserver
 {
+    protected $auth;
+
+    public function __construct()
+    {
+        $this->auth = (new Factory)
+            ->withServiceAccount(base_path('public/mw-1/firebase-credentials.json'))
+            ->createAuth();
+    }
     /**
      * Handle the Customer "created" event.
      *
@@ -49,7 +58,13 @@ class CustomerObserver
      */
     public function deleted(Customer $customer)
     {
-        //
+        try {
+              $firebaseUser = $this->auth->getUserByEmail($customer->email);
+              $this->auth->deleteUser($firebaseUser->uid);
+              $this->auth->revokeRefreshTokens($firebaseUser->uid);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
 
     /**

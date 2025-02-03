@@ -62,10 +62,10 @@ class CustomerService
             \Arr::forget($modelValues, ["password_confirmation"]);
     
             $customer = $this->repository->store($modelValues);
-            if ($modelValues['program_id'] && isset($modelValues['device_id'])) {
+            if ($modelValues['program_id'])
+            {
                 $existingRecord = \DB::table('customers_programs')
                     ->where('programs_id', $modelValues['program_id'])
-                    ->where('device', $modelValues['device_id'])
                     ->where('customers_id', $customer->id)
                     ->first();
     
@@ -73,11 +73,12 @@ class CustomerService
                     // Record does not exist, so insert it
                     \DB::table('customers_programs')->insert([
                         'programs_id' => $modelValues['program_id'],
-                        'device' => $modelValues['device_id'],
                         'customers_id' => $customer->id,
                     ]);
                 }
-            } else {
+            }
+            if($modelValues['register_type'] == 'code')
+            {
                 try {
                     // Send OTP email
                     $otp = $modelValues["verification_code"];

@@ -51,6 +51,7 @@ use App\Models\ProgramMultiLogin;
 use Brevo\Client\Model\CreateContact;
 use PragmaRX\Google2FA\Google2FA;
 use App\Models\ProgramDepartment;
+use App\Services\BrevoService;
 use SendinBlue\Client\Model\RemoveContactFromList;
 use SendinBlue\Client\ApiException;
 
@@ -1672,50 +1673,14 @@ class AdminController extends Controller
     {
         $customer = CustomreBrevoData::where('id', $customerId)->where('program_id', $programId)->first();
         if ($customer) {
-            try {
-                
-                $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', env('BREVO_API_KEY'));
-                $apiInstance = new ContactsApi(new Client(), $config);
-                $contact = $apiInstance->getContactInfo($customer->email);
-                if (in_array(9, $contact->getListIds())) {
-                    // Remove the contact from list ID 9
-                    $contactIdentifiers = new RemoveContactFromList([
-                        'emails' => [$customer->email]
-                    ]);
-                    $apiInstance->removeContactFromList(9, $contactIdentifiers);
-                } else {
-                    $contactIdentifiers = new RemoveContactFromList([
-                        'emails' => [$customer->email]
-                    ]);
-                    $apiInstance->removeContactFromList(11, $contactIdentifiers);
-                }
-            } catch (ApiException $e) {
-            }
-            catch (\Throwable $e) {
-            }
+            $brevo = new BrevoService();
+            $brevo->removeUserFromList($customer->email);
             $customer->delete();
             $customer3 = CustomerRelatedProgram::where('customer_id', $customerId)->first();
             if($customer3)
             {
-                try {
-                    $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', env('BREVO_API_KEY'));
-                    $apiInstance = new ContactsApi(new Client(), $config);
-                    $contact = $apiInstance->getContactInfo($customer3->email);
-                    if (in_array(9, $contact->getListIds())) {
-                        $contactIdentifiers = new RemoveContactFromList([
-                            'emails' => [$customer3->email]
-                        ]);
-                        $apiInstance->removeContactFromList(9, $contactIdentifiers);
-                    } else {
-                        $contactIdentifiers = new RemoveContactFromList([
-                            'emails' => [$customer3->email]
-                        ]);
-                        $apiInstance->removeContactFromList(11, $contactIdentifiers);
-                    }
-                } catch (ApiException $e) {
-                } catch (\Throwable $e) {
-                }
-                
+                $brevo = new BrevoService();
+                $brevo->removeUserFromList($customer3->email);
                 $customer3->delete();
             }
         }
