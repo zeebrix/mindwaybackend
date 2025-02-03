@@ -3,6 +3,7 @@
 namespace App\Http\Requests\API\MobileApp\Auth\Customer;
 
 use App\Http\Requests\API\BaseAPIRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CustomerRegisterRequest extends BaseAPIRequest {
@@ -23,9 +24,24 @@ class CustomerRegisterRequest extends BaseAPIRequest {
      */
     public function rules() {
         return [
-            'email' => ['required', 'email', Rule::unique('customers')->where(function ($query) {
-                return $query->where('deleted_at', NULL);
-            })],
+            'email' => [
+                'required',
+                'email',
+                function ($attribute, $value, $fail) {
+                    $existsInCustomers = DB::table('customers')
+                        ->where('email', $value)
+                        ->whereNull('deleted_at')
+                        ->exists();
+        
+                    $existsInCustomerbrevot = DB::table('customre_brevo_data')
+                        ->where('email', $value)
+                        ->exists();
+        
+                    if ($existsInCustomers || $existsInCustomerbrevot) {
+                        $fail('The email has already been taken.');
+                    }
+                },
+            ],
             'name' => 'required|string|min:3',
             // 'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'password' => 'required|string|min:6|confirmed',

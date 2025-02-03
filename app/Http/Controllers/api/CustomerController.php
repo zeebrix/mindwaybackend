@@ -259,7 +259,14 @@ class CustomerController extends Controller
     //     }
 
     // }
-
+    public function getCodeInformation(Request $request)
+    {
+        $program = Program::where('code', $request->code)->with('programDepartment')->first();
+        if (!$program) {
+            return response()->json(['code' => 401, 'status' => "failed", 'message' => "Code is not exits"]);
+        } 
+        return response()->json(['code' => 200, 'result' => $program, 'status' => "success", 'message' => "Code Reddem successfully!"]);
+    }
     public function ReddemProgramCode(Request $request)
     {
         if (!$request->code || $request->code == '') {

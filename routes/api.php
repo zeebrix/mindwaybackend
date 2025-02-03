@@ -33,6 +33,8 @@ Route::get('/storage-link', function () {
 });
 
 Route::post('/reddemprogramcode', [CustomerController::class, 'ReddemProgramCode']);
+Route::post('/get-code-information', [CustomerController::class, 'getCodeInformation']);
+
 Route::get('/getuserprograms', [CustomerController::class, 'getuserprograms']);
 Route::post('/updatedeviceid', [CustomerController::class, 'updatedeviceid']);
 //Customers Routes
