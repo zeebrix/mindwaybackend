@@ -224,6 +224,7 @@ class ProgramController extends Controller
         $customer->program_id =  $userId;
         $customer->company_name = $program->company_name;
         $customer->max_session = $program->max_session;
+        $customer->level = $request->level;
         $customer->save();
         // Retrieve the newly created customer's ID
         $customerId = $customer->id;
@@ -431,9 +432,7 @@ class ProgramController extends Controller
     public function viewEmployees()
     {
         $Program = Auth::guard('programs')->user();
-        if($Program->allow_employees == 0){
-            return redirect()->route('program.dashboard');
-        }
+        
         list($leftDays, $is_trial) = $this->findTrialInfo($Program);
         $userId = Auth::guard('programs')->id();
         $customers = CustomreBrevoData::where('program_id', $userId)->get();

@@ -40,7 +40,6 @@
                      </a>
                  </li>
 
-                 @if($Program->allow_employees == 1)
                  <li class="sidebar-item">
                      <a class="sidebar-link" href="{{ url('/manage-program/view-employees') }}" aria-expanded="false">
                          <span>
@@ -49,7 +48,6 @@
                          <span class="hide-menu">Employees</span>
                      </a>
                  </li>
-                @endif
 
                  <li class="nav-small-cap">
                      <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
