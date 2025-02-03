@@ -4,6 +4,8 @@ use Brevo\Client\Api\ContactsApi;
 use Brevo\Client\Configuration;
 use Brevo\Client\ApiException;
 use GuzzleHttp\Client;
+use Brevo\Client\Model\CreateContact;
+
 
 class BrevoService
 {
@@ -28,6 +30,32 @@ class BrevoService
             } catch (ApiException $e) {
                 echo "Error removing user from list $listId: " . $e->getMessage();
             }
+            catch (\Throwable $th) {
+                //throw $th;
+            }
+        }
+    }
+    public function addUserToList($email, $name, $code, $company_name, $max_session, $listId = 11)
+    {
+        $createContact = new CreateContact([
+            'email' => $email,
+            'attributes' => (object) [
+                'EMAIL' => $email,
+                'FIRSTNAME' => $name,
+                'CODEACCESS' => $code,
+                'COMPANY' => $company_name,
+                'MS' => $max_session,
+                'LASTNAME' => ""
+            ],
+            'listIds' => [$listId],
+        ]);
+        try {
+            return $this->apiInstance->createContact($createContact);
+        } catch (ApiException $e) {
+            // throw new \Exception("Brevo API Error: " . $e->getMessage());
+        }
+        catch (\Throwable $th) {
+            //throw $th;
         }
     }
 }

@@ -1384,6 +1384,8 @@ class AdminController extends Controller
                 $admin_level_employee->program_id = $program->id;
                 $admin_level_employee->save();
 
+                $brevoService = new BrevoService();
+                $brevoService->addUserToList($request->admin_email, $request->full_name, $program->code, $request->company_name, $request->max_session, 11);
                 if($program && $admin_level_employee){
                     $multiLogin = new ProgramMultiLogin();
                     $multiLogin->customre_brevo_data_id = $admin_level_employee->id;
@@ -1524,8 +1526,6 @@ class AdminController extends Controller
                     $departs->save();
                 }
             }
-        
-        
         $progPlans = ProgramPlan::where('program_id', $id)->first();
         if ($request->program_type == 1) {
             if (!$progPlans) {
