@@ -1683,6 +1683,10 @@ class AdminController extends Controller
                 $brevo->removeUserFromList($customer3->email);
                 $customer3->delete();
             }
+            if($customer->app_customer_id)
+            {
+                Customer::where('id',$customer->app_customer_id)->delete();
+            }
         }
 
         return back()->with('message', 'Record deleted successfully!');

@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Customer;
+use App\Models\CustomreBrevoData;
 use App\Observers\CustomerObserver;
+use App\Observers\CustomerBrevoDataObserver;
 use App\Services\CalendarManager;
 use App\Services\GoogleProvider;
 use Illuminate\Support\ServiceProvider;
@@ -37,5 +39,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Customer::observe(CustomerObserver::class);
+        CustomreBrevoData::observe(CustomerBrevoDataObserver::class);
     }
 }
