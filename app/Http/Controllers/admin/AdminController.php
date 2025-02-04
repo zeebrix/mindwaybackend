@@ -1426,6 +1426,13 @@ class AdminController extends Controller
                 $program->password = $random_password;
                 $program->email = $request->admin_email;
                 $program->program_type = $request->program_type ?? 0;
+
+                if($request->input('allow_employees') == 'yes'){
+                    $program->allow_employees = 1;
+                    }else{
+                    $program->allow_employees = 0;
+                    }
+
                 if ($request->program_type == 2) {
                     $program->trial_expire = Carbon::parse($request->trial_expire)->format('Y-m-d H:i:s');
                 }
@@ -1484,6 +1491,7 @@ class AdminController extends Controller
         $Program->code = $request->code;
         $Program->link = $request->link ?? 'https://mindwayeap.com.au/booking';
         $Program->max_session = $request->max_session;
+        $Program->allow_employees = $request->allow_employees;
 
         if ($request->program_type == 2) {
             $Program->trial_expire = Carbon::parse($request->trial_expire)->format('Y-m-d H:i:s');
