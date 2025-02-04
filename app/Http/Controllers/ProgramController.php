@@ -277,7 +277,7 @@ class ProgramController extends Controller
     public function uploadUsers(Request $request)
     {
         // Get names and emails from the request
-        $names = $request->input('name');
+        $names = $request->input('name'); 
         $emails = $request->input('email');
 
         // Create an array to store the data for Brevo
