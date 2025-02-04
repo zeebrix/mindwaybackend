@@ -49,6 +49,12 @@ class CustomerRegisterRequest extends BaseAPIRequest {
             'gender_preference' => 'nullable|string',
         ];
     }
-
+    public function passedValidation()
+    {
+        // Add 'register_by_email' to the request after validation
+        $this->merge([
+            'register_type' => 'code',
+        ]);
+    }
 
 }
