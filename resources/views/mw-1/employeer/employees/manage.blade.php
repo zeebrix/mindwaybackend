@@ -99,6 +99,8 @@
                 <table class="table text-nowrap mb-0 align-middle" id="employeeTable">
                     <tbody>
                         @foreach ($customers as $data)
+                        @if($Program->allow_employees == 0)
+                            @if($data->level == 'admin')
                             <tr>
                                 <td class="border-bottom-0" style="width: 350px;"><span
                                         class=" fw-semibold">{{ $data->name }}</span><br>
@@ -117,6 +119,29 @@
                                     </button>
                                 </td>
                             </tr>
+                            @endif
+
+                            @else
+                            <tr>
+                                <td class="border-bottom-0" style="width: 350px;"><span
+                                        class=" fw-semibold">{{ $data->name }}</span><br>
+                                    <span class=" fw-normal">{{ $data->email }}</span>
+                                </td>
+                                <td class="border-bottom-0" id = "changeLevel" style="width: 250px;" data-id="{{ $data->id }}" data-level="{{ $data->level }}"><span
+                                        class="{{ $data->level == 'member' ? 'member-style' : 'admin-style'}} badge btn btn-primary theme-btn">{{$data->level??'member'}}</span>
+                                    </td>
+                                <td class="border-bottom-0">
+                                    <button type="button"
+                                        style="background-color: #E4E4E4 !important;color:#7C7C7C !important"
+                                        class="mindway-btn btn btn-success btn-sm remove-btn"
+                                        data-name="{{ $data->name }}" data-email="{{ $data->email }}"
+                                        data-id="{{ $data->id }}">
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+
+                            @endif
                         @endforeach
                     </tbody>
                 </table>

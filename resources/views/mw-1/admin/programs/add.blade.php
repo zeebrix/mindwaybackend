@@ -212,6 +212,20 @@
                         </div>
                     </div>
 
+                    <label class="form-label">Employees Visible?</label>
+                    <div class="d-flex flex-wrap justify-content-start mb-3" style="gap: 10px;">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="allow_employees" id="yes-employee" value="yes" autocomplete="off" required>
+                            <label class="btn btn-outline-primary rounded-pill px-4 plan-type-checkbox"
+                                style="border-radius: 20px;" for="yes-employee">Yes</label>
+                        </div>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="allow_employees" id="no-employee" value="no" autocomplete="off" required>
+                            <label class="plan-type-checkbox btn btn-outline-primary rounded-pill px-4"
+                                style="border-radius: 20px;" for="no-employee">No</label>
+                        </div>
+                    </div>
+
                     <span class="fw-bolder mb-3" style="color: #000000;">Assign Admin User</span>
                     @include('mw-1.admin.programs.input-component', [
                         'name' => 'full_name',

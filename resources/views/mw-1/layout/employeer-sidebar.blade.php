@@ -12,7 +12,10 @@
          <!-- Sidebar navigation-->
          <nav class="sidebar-nav scroll-sidebar" data-simplebar="">
              <ul id="sidebarnav">
-
+             @php
+                        $Program = Auth::guard('programs')->user();
+                        $ProgramLink = $Program->link ?? '';
+                @endphp
                  <li class="nav-small-cap">
                      <i class="ti ti-dots nav-small-cap-icon fs-4"></i>
                      <span class="hide-menu">Manage</span>
@@ -51,10 +54,7 @@
                      <span class="hide-menu">Others</span>
                  </li>
 
-                @php
-                        $Program = Auth::guard('programs')->user();
-                        $ProgramLink = $Program->link ?? '';
-                @endphp
+
                 @if ($ProgramLink)
                     <li class="sidebar-item">
                      <a class="sidebar-link" href="{{ $ProgramLink }}" target="_blank" aria-expanded="false">
