@@ -22,7 +22,8 @@ class CounsellingSession extends Model
         'email',
         'max_session',
         'created_at',
-        'counselor_id'
+        'counselor_id',
+        'department_id'
     ];
     public function counselor()
     {
