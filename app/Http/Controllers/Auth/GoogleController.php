@@ -67,12 +67,12 @@ class GoogleController extends Controller
         \Log::info('Google Calendar Webhook Triggered', $request->all());
 
         // Fetch updated events
-        $counselor = Counselor::where('google_calendar_id', $request->get('calendarId'))->first();
+        // $counselor = Counselor::where('google_calendar_id', $request->get('calendarId'))->first();
 
-        if (!$counselor || !$counselor->googleToken) {
-            return response()->json(['message' => 'No counselor found'], 404);
-        }
-        app(SlotGenerationService::class)->removeConflictingSlots($counselor, now()->month);
+        // if (!$counselor || !$counselor->googleToken) {
+        //     return response()->json(['message' => 'No counselor found'], 404);
+        // }
+        // app(SlotGenerationService::class)->removeConflictingSlots($counselor, now()->month);
 
         return response()->json(['message' => 'Processed'], 200);
 }
