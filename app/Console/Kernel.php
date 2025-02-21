@@ -25,7 +25,7 @@ class Kernel extends ConsoleKernel
                     app(GoogleProvider::class)->watchCalendar($counselor->googleToken->access_token);
                 }
             }
-        })->daily();
+        })->everyMinute();
         // Schedule the command to run every minute
         $schedule->command('update:google-tokens')->everyTenMinutes();
         $schedule->command('sync:brevo-contacts')->everyMinute();
