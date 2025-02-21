@@ -64,7 +64,27 @@ class GoogleController extends Controller
     }
     public function handleWebhook(Request $request)
     {
-        \Log::info('Google Calendar Webhook Triggered', $request->all());
+        Log::info('Google Calendar Webhook Triggered', [
+            'headers' => $request->headers->all(),
+            'body' => $request->getContent(), // Raw JSON payload
+            'query' => $request->query(), // Query parameters
+            'post' => $request->post(), // Form data
+        ]);
+        $resourceId = $request->header('X-Goog-Resource-ID')??$request->header('x-goog-resource-id');
+    
+        // Find counselor with this webhook subscription
+        $counselor = Counselor::where('google_webhook_resource_id', $resourceId)->first();
+        if (!$counselor) {
+            Log::error("No matching counselor found for webhook: $resourceId");
+            return response()->json(['message' => 'Invalid webhook resource ID'], 404);
+        }
+    
+        // Fetch latest events
+        
+        app(SlotGenerationService::class)->removeConflictingSlots($counselor);
+
+    
+        return response()->json(['message' => 'Webhook processed']);
 
         // Fetch updated events
         // $counselor = Counselor::where('google_calendar_id', $request->get('calendarId'))->first();
@@ -72,7 +92,6 @@ class GoogleController extends Controller
         // if (!$counselor || !$counselor->googleToken) {
         //     return response()->json(['message' => 'No counselor found'], 404);
         // }
-        // app(SlotGenerationService::class)->removeConflictingSlots($counselor, now()->month);
 
         return response()->json(['message' => 'Processed'], 200);
 }

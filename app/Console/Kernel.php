@@ -22,7 +22,7 @@ class Kernel extends ConsoleKernel
             $counselor = Counselor::where('id',7)->first();
             if ($counselor->googleToken) {
                 Log::info("inside token");
-                app(GoogleProvider::class)->watchCalendar($counselor->googleToken->access_token);
+                app(GoogleProvider::class)->watchCalendar($counselor);
             }
             // foreach ($counselors as $counselor) {
             //     if ($counselor->googleToken) {

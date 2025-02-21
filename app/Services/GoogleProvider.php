@@ -274,21 +274,55 @@ class GoogleProvider extends AbstractProvider
         ];
     })->toArray();
 }
-public function watchCalendar(string $accessToken)
+    public function watchCalendar($counselor)
     {
+        $accessToken = $counselor->googleToken->access_token;
         $client = $this->getHttpClient();
         $client->setAccessToken(Crypt::decrypt($accessToken));
 
         $calendarService = $this->getCalendarService();
-
+        $this->stopAllWebhooks($counselor);
         $channel = new Channel();
         $channel->setId(Str::uuid()); // Unique ID for this subscription
         $channel->setType('web_hook');
         $channel->setAddress(env('GOOGLE_CALENDAR_WEBHOOK_URL')); // Your webhook URL
         $response = $calendarService->events->watch('primary', $channel);
+        $counselor->update([
+            'google_webhook_channel_id' => $response->id,
+            'google_webhook_resource_id' => $response->resourceId,
+            'google_webhook_expiration' => $response->expiration ?? null
+        ]);
         Log::info('Google Calendar Watch Response:', (array) $response);
         return $response;
     }
 
-
+    public function stopAllWebhooks($counselor)
+    {
+        if (!$counselor->google_webhook_channel_id || !$counselor->google_webhook_resource_id) {
+            Log::info("No existing webhook to stop for counselor: {$counselor->id}");
+            return;
+        }
+    
+        try {
+            $calendarService = $this->getCalendarService();
+    
+            $channel = new \Google\Service\Calendar\Channel();
+            $channel->setId($counselor->google_webhook_channel_id);
+            $channel->setResourceId($counselor->google_webhook_resource_id);
+    
+            $calendarService->channels->stop($channel);
+    
+            // Clear old webhook details
+            $counselor->update([
+                'google_webhook_channel_id' => null,
+                'google_webhook_resource_id' => null,
+                'google_webhook_expiration' => null
+            ]);
+    
+            Log::info("Stopped previous webhook for counselor: {$counselor->id}");
+        } catch (\Exception $e) {
+            Log::error("Error stopping webhook for counselor {$counselor->id}: " . $e->getMessage());
+        }
+    }
+    
 }

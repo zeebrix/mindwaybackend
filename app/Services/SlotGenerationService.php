@@ -104,8 +104,70 @@ class SlotGenerationService
             $start->addHour();
         }
     }
-
-    public function removeConflictingSlots(Counselor $counselor, string $month)
+    public function removeConflictingSlots(Counselor $counselor, ?string $month = null)
+    {
+        try {
+            // Ensure the counselor has a Google token
+            if (!$counselor->googleToken || !$counselor->googleToken->access_token) {
+                \Log::warning("Google Token missing for counselor ID: {$counselor->id}");
+                return;
+            }
+    
+            $timezone = $counselor->timezone ?? 'UTC';
+    
+            if ($month) {
+                $startOfMonth = Carbon::now($timezone)->setDay(1)->setMonth($month)->startOfMonth();
+                $endOfMonth = $startOfMonth->copy()->endOfMonth();
+            } else {
+                // If no month is provided, check the entire year (Jan 1 - Dec 31)
+                $startOfMonth = Carbon::now($timezone)->startOfYear();
+                $endOfMonth = Carbon::now($timezone)->endOfYear();
+            }
+    
+            // Fetch all events for the given range
+            $events = $this->googleProvider->getAllEvents(
+                $counselor->googleToken->access_token,
+                $startOfMonth->toRfc3339String(),
+                $endOfMonth->toRfc3339String()
+            );
+    
+            if (empty($events)) {
+                \Log::info("No events found for counselor ID: {$counselor->id} in range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}");
+                return;
+            }
+    
+            // Convert event times to UTC
+            foreach ($events as &$event) {
+                try {
+                    $event['start_time'] = Carbon::parse($event['start_time'], $event['start_timezone'] ?? $timezone)->setTimezone('UTC');
+                    $event['end_time'] = Carbon::parse($event['end_time'], $event['end_timezone'] ?? $timezone)->setTimezone('UTC');
+                } catch (\Exception $e) {
+                    \Log::error("Error parsing event times for event ID: {$event['event_id']}");
+                    continue;
+                }
+            }
+    
+            // Fetch all slots for the counselor in the given range
+            $slots = Slot::where('counselor_id', $counselor->id)
+                ->whereBetween('start_time', [$startOfMonth->setTimezone('UTC'), $endOfMonth->setTimezone('UTC')])
+                ->get();
+    
+            // Remove slots that overlap with events
+            foreach ($slots as $slot) {
+                foreach ($events as $event) {
+                    if ($slot->start_time < $event['end_time'] && $slot->end_time > $event['start_time']) {
+                        \Log::info("Deleting slot ID: {$slot->id} as it conflicts with event ID: {$event['event_id']}");
+                        $slot->delete();
+                        break; // No need to check further, slot is already deleted
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error("Error in removeConflictingSlots for counselor ID: {$counselor->id}, range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}. Exception: " . $e->getMessage());
+        }
+    }
+    
+    public function removeConflictingSlots1(Counselor $counselor, string $month=null)
     {
         try {
             // Ensure the counselor has a Google token

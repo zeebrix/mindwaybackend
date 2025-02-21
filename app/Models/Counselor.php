@@ -18,7 +18,10 @@ class Counselor extends Model
         'gender',
         'timezone',
         'specialization',
-        'communication_method'
+        'communication_method',
+        'google_webhook_channel_id',
+        'google_webhook_resource_id',
+        'google_webhook_expiration'
     ];
     public function availabilities()
     {
