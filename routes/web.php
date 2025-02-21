@@ -24,6 +24,7 @@ use App\Http\Controllers\Auth\RegistrationController;
 Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle'])->name('auth.google.redirect');
 Route::get('/oauth2/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 Route::post('calendar/event', [GoogleController::class, 'createEvent'])->name('calendar.event.create');
+Route::get('/calendar/events', [GoogleController::class, 'listEvents'])->name('calendar.event.list');
 Route::get('calendar/create', function () {
     return view('create-event');
 })->name('calendar.create');

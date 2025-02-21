@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Google_Service_Calendar_ConferenceData;
 use Google_Service_Calendar_CreateConferenceRequest;
+use Illuminate\Support\Str;
+use Google\Service\Calendar\Channel;
+
 class GoogleProvider extends AbstractProvider
 {
     private ?GoogleClient $httpClient = null;
@@ -228,4 +231,64 @@ class GoogleProvider extends AbstractProvider
 
         return $this->httpClient;
     }
+    public function getAllEvents(string $accessToken, string $timeMin = null, string $timeMax = null)
+{
+    // Fetch the stored access token
+    $this->getHttpClient()->setAccessToken(Crypt::decrypt($accessToken));
+
+    // Initialize Google Calendar service
+    $calendarService = $this->getCalendarService();
+
+    // Get Calendar default timezone
+    $calendar = $calendarService->calendarList->get('primary');
+    $calendarTimeZone = $calendar->getTimeZone(); // Default calendar timezone
+
+    // Set time range to the current month's remaining days if null
+    if (!$timeMin || !$timeMax) {
+        $now = now();
+        $timeMin = $now->toRfc3339String(); // Today's date and time
+        $timeMax = $now->endOfMonth()->toRfc3339String(); // Last day of the current month
+    }
+
+    // Get events
+    $events = $calendarService->events->listEvents('primary', [
+        'timeMin' => $timeMin,
+        'timeMax' => $timeMax,
+        'singleEvents' => true,
+        'orderBy' => 'startTime'
+    ])->getItems();
+    // Format response
+    return collect($events)->map(function ($event) use ($calendarTimeZone) {
+        return [
+            'event_id' => $event->getId(),
+            'summary' => $event->getSummary(),
+            'description' => $event->getDescription() ?? '',
+            'start_time' => $event->getStart()->getDateTime() ?? $event->getStart()->getDate(),
+            'start_timezone' => $event->getStart()->getTimeZone() ?? $calendarTimeZone,
+            'end_time' => $event->getEnd()->getDateTime() ?? $event->getEnd()->getDate(),
+            'end_timezone' => $event->getEnd()->getTimeZone() ?? $calendarTimeZone,
+            'attendees' => $event->getAttendees() ?? [],
+            'meeting_link' => $event->getConferenceData() && $event->getConferenceData()->getEntryPoints() 
+                            ? $event->getConferenceData()->getEntryPoints()[0]->uri 
+                            : null,
+        ];
+    })->toArray();
+}
+public function watchCalendar(string $accessToken)
+    {
+        $client = $this->getHttpClient();
+        $client->setAccessToken(Crypt::decrypt($accessToken));
+
+        $calendarService = $this->getCalendarService();
+
+        $channel = new Channel();
+        $channel->setId(Str::uuid()); // Unique ID for this subscription
+        $channel->setType('web_hook');
+        $channel->setAddress(env('GOOGLE_CALENDAR_WEBHOOK_URL')); // Your webhook URL
+        $response = $calendarService->events->watch('primary', $channel);
+        Log::info('Google Calendar Watch Response:', (array) $response);
+        return $response;
+    }
+
+
 }

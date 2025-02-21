@@ -6,6 +6,7 @@ use App\Http\Controllers\api\CounselorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\CustomerController;
+use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\CounsellerController;
 use App\Models\Customer;
 use App\Models\CustomreBrevoData;
@@ -192,3 +193,5 @@ Route::get('/sync-old-data', function () {
     }
     return "api is ok";
 });
+
+Route::post('/google/calendar/webhook', [GoogleController::class, 'handleWebhook'])->name('google.calendar.webhook');
