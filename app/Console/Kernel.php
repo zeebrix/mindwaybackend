@@ -16,20 +16,17 @@ class Kernel extends ConsoleKernel
      * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
-  protected function schedule(Schedule $schedule)
+    protected function schedule(Schedule $schedule)
     {
         $schedule->call(function () {
-            $counselor = Counselor::where('id',7)->first();
-            if ($counselor->googleToken) {
-                Log::info("inside token");
-                app(GoogleProvider::class)->watchCalendar($counselor);
+            $counselors = Counselor::all();
+            foreach ($counselors as $counselor)
+            {
+                if ($counselor->googleToken) {
+                    app(GoogleProvider::class)->watchCalendar($counselor);
+                }
             }
-            // foreach ($counselors as $counselor) {
-            //     if ($counselor->googleToken) {
-            //         app(GoogleProvider::class)->watchCalendar($counselor->googleToken->access_token);
-            //     }
-            // }
-        })->everyMinute();
+        })->daily();
         // Schedule the command to run every minute
         $schedule->command('update:google-tokens')->everyTenMinutes();
         $schedule->command('sync:brevo-contacts')->everyMinute();
