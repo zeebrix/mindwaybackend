@@ -204,7 +204,7 @@ class SlotGenerationService
             }
 
             // Fetch all slots for the counselor in the given month
-            $slots = Slot::where('counselor_id', $counselor->id)
+            $slots = Slot::where('counselor_id', $counselor->id)->where('is_booked', false)
                 ->whereBetween('start_time', [$startOfMonth->setTimezone('UTC'), $endOfMonth->setTimezone('UTC')])
                 ->get();
 

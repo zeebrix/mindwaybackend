@@ -283,9 +283,9 @@ class GoogleProvider extends AbstractProvider
         $calendarService = $this->getCalendarService();
         $this->stopAllWebhooks($counselor);
         $channel = new Channel();
-        $channel->setId(Str::uuid()); // Unique ID for this subscription
+        $channel->setId(Str::uuid());
         $channel->setType('web_hook');
-        $channel->setAddress(env('GOOGLE_CALENDAR_WEBHOOK_URL')); // Your webhook URL
+        $channel->setAddress(env('GOOGLE_CALENDAR_WEBHOOK_URL'));
         $response = $calendarService->events->watch('primary', $channel);
         $counselor->update([
             'google_webhook_channel_id' => $response->id,
