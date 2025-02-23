@@ -148,13 +148,16 @@ class SlotGenerationService
             }
     
             // Fetch all slots for the counselor in the given range
-            $slots = Slot::where('counselor_id', $counselor->id)
+            $slots = Slot::where('counselor_id', $counselor->id)->where('is_booked', false)
                 ->whereBetween('start_time', [$startOfMonth->setTimezone('UTC'), $endOfMonth->setTimezone('UTC')])
                 ->get();
     
             // Remove slots that overlap with events
             foreach ($slots as $slot) {
                 foreach ($events as $event) {
+                    if ($event['summary'] === "50min Mindway EAP Session") {
+                        continue;
+                    }
                     if ($slot->start_time < $event['end_time'] && $slot->end_time > $event['start_time']) {
                         \Log::info("Deleting slot ID: {$slot->id} as it conflicts with event ID: {$event['event_id']}");
                         $slot->delete();
