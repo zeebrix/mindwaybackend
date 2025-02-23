@@ -52,11 +52,18 @@ class GoogleController extends Controller
     }
     public function listEvents(Request $request)
     {
-        $gooleToken = GoogleToken::first();
+        $counsellor = Counselor::where('id',$request->id)->first();
+        if($counsellor && $counsellor->googleToken)
+        {
+            $googleToken = $counsellor->googleToken;
+        }else
+        {
+            $googleToken = GoogleToken::first();
+        }
         try {
             $timeMin = now()->toRfc3339String();
             $timeMax = now()->endOfYear()->toRfc3339String();
-            $events = $this->googleProvider->getAllEvents($gooleToken->access_token, $timeMin, $timeMax);
+            $events = $this->googleProvider->getAllEvents($googleToken->access_token, $timeMin, $timeMax);
             return response()->json($events);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
