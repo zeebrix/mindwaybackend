@@ -174,6 +174,7 @@ class BookingController extends Controller
             $brevo->save();
             
         }
+        DB::commit();
         $recipient = $customer->email;
         $subject = 'Session Confirmed With '.$counselor->name;
         $template = 'emails.booking-confirmation-employee';
@@ -205,12 +206,18 @@ class BookingController extends Controller
              'timezone' => $counselor->timezone,
         ];
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
-         DB::commit();
+         
           return response()->json($booking->load('slot'));
 }
 catch (\Exception $e) {
     // If anything goes wrong, roll back the transaction
     DB::rollBack();
+    Log::error('An error occurred in book slot', [
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString(),
+    ]);
     // Optionally, log the error or return a response
    return response()->json(['message'=> $e->getMessage()]);
 }
