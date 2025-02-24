@@ -115,11 +115,13 @@ class CounselorService
             'upcoming_sessions' => $upcomingBookings->map(function ($booking) {
                 return [
                     'communication_method' => $booking->communication_method??'',
+                    'meeting_link' => $booking->meeting_link,
                     'booking_id' => $booking->id,
                     'counselor' => $booking->counselor,
                     'user' => [
                         'id' => $booking->user?->id,
-                        'name' => $booking->user?->name,
+                        'name' => $booking?->user?->name,
+                        'phone' => $booking?->user?->phone,
                     ],
                     'session_time' => [
                         'slot_id' => $booking->slot->id,
@@ -150,11 +152,13 @@ class CounselorService
             'upcoming_sessions' => $upcomingBookings->map(function ($booking) {
                 return [
                     'communication_method' => $booking->communication_method??'',
+                    'meeting_link' => $booking->meeting_link,
                     'booking_id' => $booking->id,
                     'counselor' => $booking->counselor,
                     'user' => [
                         'id' => $booking->user?->id,
                         'name' => $booking->user?->name,
+                        'phone' => $booking?->user?->phone,
                     ],
                     'session_time' => [
                         'slot_id' => $booking->slot->id,
