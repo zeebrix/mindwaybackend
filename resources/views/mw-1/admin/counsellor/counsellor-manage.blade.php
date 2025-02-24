@@ -64,8 +64,8 @@
                                                 @if($booking->communication_method == 'Video Call')
                                                 Video Call Chosen
                                                 <br>
-                                                <a target="_blank" href="{{$booking->meeting_link}}" style="background-color: #D9D9D9 !important; color: #000000 !important; margin-top: 10px;"
-                                                    class="btn btn-primary add-session-btn mindway-btn">
+                                                <a target="_blank" href="{{$booking->meeting_link}}"
+                                                    class="btn btn-primary mindway-btn">
                                                     JOIN MEETING
                                                 </a>
                                                 @else
