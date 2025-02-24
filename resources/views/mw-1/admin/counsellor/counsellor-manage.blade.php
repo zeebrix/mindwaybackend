@@ -5,8 +5,7 @@
 @section('content')
   
 <div class="row">
-        <div class="col-10 offset-1">
-
+        <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Welcome {{ $Counselor->name }}</h2>
             </div>
@@ -23,7 +22,7 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <!-- User Information -->
-                                        <div class="col-md-4" style="border-right: 4px solid #D4D4D4;">
+                                        <div class="col-md-3" style="border-right: 4px solid #D4D4D4;">
                                             <h5 class="fw-semibold">{{ optional($booking->user)->name ?? 'N/A' }}</h5>
                                             <p class="fw-bold mb-1">{{ optional($booking->user)->email ?? 'Email not provided' }}</p>
                                             <p class="fw-bold mb-0">{{ optional($booking->user)->max_session ?? 0 }} Session(s) Remaining</p>
@@ -39,7 +38,7 @@
                                             </p>
                                         </div>
                                         <!-- Actions -->
-                                        <div class="col-md-4">
+                                        <div class="col-md-3" style="border-right: 4px solid #D4D4D4;">
                                             <a class="btn btn-primary mindway-btn" href="{{ route('session.cancel', ['booking_id' => $booking->id, 'customer_id' => $booking->user_id]) }}">
                                                 Cancel
                                             </a>
@@ -59,6 +58,23 @@
                                                 data-customer_name="{{ $booking?->user?->name }}">
                                                 Add Session
                                             </a>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p style="margin: unset;">
+                                                @if($booking->communication_method == 'Video Call')
+                                                Video Call Chosen
+                                                <br>
+                                                <a target="_blank" href="{{$booking->meeting_link}}" style="background-color: #D9D9D9 !important; color: #000000 !important; margin-top: 10px;"
+                                                    class="btn btn-primary add-session-btn mindway-btn">
+                                                    JOIN MEETING
+                                                </a>
+                                                @else
+                                                Phone Call Chosen
+                                                <br>
+                                                <strong>Call: {{$booking?->user?->phone}}</strong>
+                                                @endif
+                                            </p>
+
                                         </div>
                                     </div>
                                 </div>

@@ -53,7 +53,7 @@ class BrevoService
                 }
             }
         } catch (Exception $e) {
-            \Log::error("Error removing user from list $listId: " . $e->getMessage(), ['email' => $email, 'listId' => $listId]);
+            \Log::error("Error removing user from list : " . $e->getMessage(), ['email' => $email]);
         }
     }
     public function addUserToList($email, $name, $code, $company_name, $max_session, $listId = 11)
