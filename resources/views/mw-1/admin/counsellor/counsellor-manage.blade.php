@@ -56,7 +56,7 @@
                                                 data-name="{{ $booking?->counselor?->name }}"
                                                 data-program_id="{{ $booking?->brevoUser?->program_id }}"
                                                 data-customer_name="{{ $booking?->user?->name }}">
-                                                Add Session
+                                                Log Session
                                             </a>
                                         </div>
                                         <div class="col-md-3">
