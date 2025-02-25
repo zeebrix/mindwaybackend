@@ -21,7 +21,8 @@ class Counselor extends Model
         'communication_method',
         'google_webhook_channel_id',
         'google_webhook_resource_id',
-        'google_webhook_expiration'
+        'google_webhook_expiration',
+        'google_webhook_data',
     ];
     public function availabilities()
     {
