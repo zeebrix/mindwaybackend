@@ -347,88 +347,84 @@ class GoogleProvider extends AbstractProvider
         Log::info('Google Calendar Watch Response:', (array) $response);
         return $response;
     }
-    public function watchAllCalendars($counselor)
-{
-    $accessToken = $counselor->googleToken->access_token;
-    $client = $this->getHttpClient();
-    $client->setAccessToken(Crypt::decrypt($accessToken));
+    public function watchCalendar($counselor)
+    {
+        $accessToken = $counselor->googleToken->access_token;
+        $client = $this->getHttpClient();
+        $client->setAccessToken(Crypt::decrypt($accessToken));
 
-    $calendarService = $this->getCalendarService();
-    $this->stopAllWebhooks($counselor); // Stop existing webhooks before creating new ones
-
-    // Fetch all user calendars
-    $calendarList = $calendarService->calendarList->listCalendarList()->getItems();
-    $webhookData = [];
-
-    foreach ($calendarList as $calendar) {
-        $calendarId = $calendar->getId();
-        $channel = new Channel();
-        $channel->setId(Str::uuid());
-        $channel->setType('web_hook');
-        $channel->setAddress(env('GOOGLE_CALENDAR_WEBHOOK_URL'));
-
-        try {
-            $response = $calendarService->events->watch($calendarId, $channel);
-            Log::info("Google Calendar Watch Response for {$calendarId}:", (array) $response);
-
-            // Store webhook details for tracking (optional)
-            $webhookData[] = [
-                'calendar_id' => $calendarId,
-                'channel_id' => $response->id,
-                'resource_id' => $response->resourceId,
-                'expiration' => $response->expiration ?? null,
-            ];
-        } catch (\Exception $e) {
-            Log::error("Failed to watch calendar {$calendarId}: " . $e->getMessage());
-        }
-    }
-
-    // Optionally, store webhook data in DB (if tracking multiple webhooks per user)
-    $counselor->update([
-        'google_webhook_data' => json_encode($webhookData),
-    ]);
-
-    return $webhookData;
-}
-
-
-public function stopAllWebhooks($counselor)
-{
-    if (!$counselor->google_webhook_data) {
-        Log::info("No existing webhooks to stop for counselor: {$counselor->id}");
-        return;
-    }
-    try {
         $calendarService = $this->getCalendarService();
-        $webhooks = json_decode($counselor->google_webhook_data, true);
+        $this->stopAllWebhooks($counselor); // Stop existing webhooks before creating new ones
 
-        foreach ($webhooks as $webhook) {
-            if (empty($webhook['channel_id']) || empty($webhook['resource_id'])) {
-                continue; // Skip invalid entries
-            }
+        // Fetch all user calendars
+        $calendarList = $calendarService->calendarList->listCalendarList()->getItems();
+        $webhookData = [];
 
+        foreach ($calendarList as $calendar) {
+            $calendarId = $calendar->getId();
             $channel = new Channel();
-            $channel->setId($webhook['channel_id']);
-            $channel->setResourceId($webhook['resource_id']);
+            $channel->setId(Str::uuid());
+            $channel->setType('web_hook');
+            $channel->setAddress(env('GOOGLE_CALENDAR_WEBHOOK_URL'));
 
             try {
-                $calendarService->channels->stop($channel);
-                Log::info("Stopped webhook for calendar: {$webhook['calendar_id']} (Channel ID: {$webhook['channel_id']})");
+                $response = $calendarService->events->watch($calendarId, $channel);
+                Log::info("Google Calendar Watch Response for {$calendarId}:", (array) $response);
+
+                // Store webhook details for tracking (optional)
+                $webhookData[] = [
+                    'calendar_id' => $calendarId,
+                    'channel_id' => $response->id,
+                    'resource_id' => $response->resourceId,
+                    'expiration' => $response->expiration ?? null,
+                ];
             } catch (\Exception $e) {
-                Log::error("Error stopping webhook for calendar {$webhook['calendar_id']}: " . $e->getMessage());
+                Log::error("Failed to watch calendar {$calendarId}: " . $e->getMessage());
             }
         }
 
-        // Clear all webhook data
+        // Optionally, store webhook data in DB (if tracking multiple webhooks per user)
         $counselor->update([
-            'google_webhook_data' => null,
+            'google_webhook_data' => json_encode($webhookData),
         ]);
 
-        Log::info("Stopped all webhooks for counselor: {$counselor->id}");
-    } catch (\Exception $e) {
-        Log::error("Error stopping all webhooks for counselor {$counselor->id}: " . $e->getMessage());
+        return $webhookData;
     }
-}
+    public function stopAllWebhooks($counselor)
+    {
+        if (!$counselor->google_webhook_data) {
+            Log::info("No existing webhooks to stop for counselor: {$counselor->id}");
+            return;
+        }
+        try {
+            $calendarService = $this->getCalendarService();
+            $webhooks = json_decode($counselor->google_webhook_data, true);
 
-    
+            foreach ($webhooks as $webhook) {
+                if (empty($webhook['channel_id']) || empty($webhook['resource_id'])) {
+                    continue; // Skip invalid entries
+                }
+
+                $channel = new Channel();
+                $channel->setId($webhook['channel_id']);
+                $channel->setResourceId($webhook['resource_id']);
+
+                try {
+                    $calendarService->channels->stop($channel);
+                    Log::info("Stopped webhook for calendar: {$webhook['calendar_id']} (Channel ID: {$webhook['channel_id']})");
+                } catch (\Exception $e) {
+                    Log::error("Error stopping webhook for calendar {$webhook['calendar_id']}: " . $e->getMessage());
+                }
+            }
+
+            // Clear all webhook data
+            $counselor->update([
+                'google_webhook_data' => null,
+            ]);
+
+            Log::info("Stopped all webhooks for counselor: {$counselor->id}");
+        } catch (\Exception $e) {
+            Log::error("Error stopping all webhooks for counselor {$counselor->id}: " . $e->getMessage());
+        }
+    }
 }
