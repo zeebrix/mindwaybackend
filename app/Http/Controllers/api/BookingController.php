@@ -310,7 +310,7 @@ catch (\Exception $e) {
             'full_name' => $booking->user->name,
             'counselor_name' => $booking->counselor->name,
             'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($customer_timezone),
-            'end_time' => Carbon::parse($booking->slot->end_time)->setTimezone($booking->counselor->timezone),
+            'end_time' => Carbon::parse($booking->slot->end_time)->setTimezone($customer_timezone),
             'timezone' => $customer_timezone,
             'meeting_link' => $meetingLink,
             'intake_link' => $booking->counselor->intake_link??''
