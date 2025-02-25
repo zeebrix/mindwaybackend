@@ -2174,7 +2174,8 @@ class AdminController extends Controller
                 if ($employee['email'] && $employee['email'] !== null) {
 
                     $customer = CustomreBrevoData::where('email', $employee['email'])->first();
-                    if (!$customer) {
+                    if (!$customer)
+                    {
                         $customer = new CustomreBrevoData();
                         $customer->email = $employee['email'];
                         $customer->name = $employee['name'];
@@ -2184,6 +2185,11 @@ class AdminController extends Controller
                         $customer->level = 'member';
                         $customer->save();
                     }
+                    $company_name = $Program->company_name??$customer->company_name??null;
+                    $max_session = $Program->max_session??$customer->max_session??0;
+                    $code = $Program->code??'';
+                    $brevoService = new BrevoService();
+                    $brevoService->addUserToList($employee['email'], $employee['name'], $code, $company_name, $max_session, 9);
                 }
             }
         }

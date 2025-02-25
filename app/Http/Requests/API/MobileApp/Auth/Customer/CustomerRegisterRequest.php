@@ -32,12 +32,7 @@ class CustomerRegisterRequest extends BaseAPIRequest {
                         ->where('email', $value)
                         ->whereNull('deleted_at')
                         ->exists();
-        
-                    $existsInCustomerbrevot = DB::table('customre_brevo_data')
-                        ->where('email', $value)
-                        ->exists();
-        
-                    if ($existsInCustomers || $existsInCustomerbrevot) {
+                    if ($existsInCustomers) {
                         $fail('The email has already been taken.');
                     }
                 },
