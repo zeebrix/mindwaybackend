@@ -41,6 +41,7 @@ class Customer extends Authenticatable
         'meditation_experience',
         'nick_name',
         'department_id',
+        'timezone',
     ];
     
     protected $appends = ['single_program'];

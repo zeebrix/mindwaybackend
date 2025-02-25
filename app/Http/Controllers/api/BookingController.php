@@ -66,6 +66,12 @@ class BookingController extends Controller
         $notice_period = isset($counselor) ?$counselor->notice_period : 12;
         $customer_timezone = isset($request->customer_timezone) ? $request->customer_timezone : 'UTC';
         $customer = Customer::where('id', $request->customer_id)->first();
+        try {
+           $customer->timezone = $customer_timezone;
+           $customer->save();
+        } catch (\Throwable $th) {
+            Log::info('Timezone saving error'.$th->getMessage());
+        }
         if ($customer->max_session <= 0) {
             return response()->json([
                 'message' => 'You have reached to the max session limit'
@@ -304,6 +310,11 @@ catch (\Exception $e) {
         $booking->meeting_link = $meetingLink;
         $booking->save();
         $recipient = $booking->user->email;
+        try {
+            Customer::where('email',$recipient)->update(['timezone'=>$customer_timezone]);
+        } catch (\Throwable $th) {
+            Log::info('Timezone saving error'.$th->getMessage());
+        }
         $subject = 'Your Session Has Been Rescheduled';
         $template = 'emails.counsellor-slot-rescheduled-employee';
         $data = [

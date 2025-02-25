@@ -39,7 +39,7 @@ class SendBookingReminder extends Command
      */
     public function handle()
     {
-        $bookings = Booking::whereHas('slot', function ($query) {
+        $bookings = Booking::where('status','confirmed')->whereHas('slot', function ($query) {
             $query->where('start_time', '<=', Carbon::now()->addHours(24))
                   ->where('start_time', '>', Carbon::now()->addHours(23));
         })->get();
@@ -54,8 +54,8 @@ class SendBookingReminder extends Command
             $data = [
                 'full_name' => $customer->name,
                 'counselor_name' => $counselor->name,
-                'start_time' => Carbon::parse($slot->start_time)->setTimezone($counselor->timezone),
-                'timezone' => $customer->timezone,
+                'start_time' => Carbon::parse($slot->start_time)->setTimezone($customer->timezone??'UTC'),
+                'timezone' => $customer->timezone??'UTC',
                 'meeting_link' => $meetingLink,
                 'intake_link' => $counselor->intake_link
             ];
