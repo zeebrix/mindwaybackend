@@ -67,7 +67,8 @@ class CustomerObserver
             $this->auth->revokeRefreshTokens($firebaseUser->uid);
             Log::info("Firebase user disabled", ['uid' => $firebaseUser->uid, 'email' => $customer->email]);
         } catch (\Throwable $th) {
-            //throw $th;
+            Log::info("Firebase user disabled Error ".$th->getMessage());
+
         }
     }
 
