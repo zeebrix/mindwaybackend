@@ -101,7 +101,16 @@
             <hr><br>
 
 
-            <h2>All Counselling Sessions</h2>
+            <!-- <h2>All Counselling Sessions</h2> -->
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <h2 style="margin: 0;">All Counselling Sessions</h2>
+                <select id="sortSessions" style="padding: 8px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer;">
+                    <option value="asc" {{ request('sort') == 'asc' ? 'selected' : '' }}>Sort Ascending</option>
+                    <option value="desc" {{ request('sort') == 'desc' ? 'selected' : '' }}>Sort Descending</option>
+                </select>
+            </div>
+
+            <br/>
 
             <div class="mb-3">
                 <input type="text" id="searchInput" class="form-control"
@@ -307,6 +316,12 @@
 
 @section('js')
     <script>
+        document.getElementById('sortSessions').addEventListener('change', function () {
+            let sortOrder = this.value;
+            let currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('sort', sortOrder); // Update the sort parameter
+            window.location.href = currentUrl.toString(); // Reload the page with the new URL
+        });
         document.getElementById('searchInput').addEventListener('input', function () {
             const searchValue = this.value.toLowerCase();
             const rows = document.querySelectorAll('#customersTable .customer-row');

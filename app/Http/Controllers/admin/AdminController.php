@@ -1864,23 +1864,27 @@ class AdminController extends Controller
         return view('mw-1.admin.counsellor.manage', get_defined_vars());
     }
 
-    public function counsellorManage($id)
+    public function counsellorManage(Request $request, $id)
     {
-        $Counselor = Counselor::where('id', $id)->first();
-        $user_id = $Counselor->id;
-        $customers = CustomreBrevoData::all();
-        $upcomingBookings = Booking::with(['user', 'counselor', 'slot'])
-            ->where('counselor_id', $Counselor?->id)
-            ->where('status', 'confirmed')
-            ->whereHas('slot', function ($query) {
-                // $query->where('start_time', '>', now());
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
-        $CounselorSession = CounsellingSession::with('counselor')->get();
-        $timezone = $Counselor->timezone??'UTC';
-        return view('mw-1.admin.counsellor.counsellor-manage', get_defined_vars());
-    }
+           $Counselor = Counselor::where('id', $id)->first();
+           $user_id = $Counselor->id;
+           $customers = CustomreBrevoData::all();
+           $upcomingBookings = Booking::with(['user', 'counselor', 'slot'])
+               ->where('counselor_id', $Counselor?->id)
+               ->where('status', 'confirmed')
+               ->whereHas('slot', function ($query) {
+                   // $query->where('start_time', '>', now());
+               })
+               ->orderBy('created_at', 'desc')
+               ->get();
+
+               $sortOrder = $request->query('sort', 'asc'); // Default to ascending
+               $CounselorSession = CounsellingSession::with('counselor')->orderBy('session_date', $sortOrder) // Sorting by session_date
+                   ->get();
+        //    $CounselorSession = CounsellingSession::with('counselor')->get();
+           $timezone = $Counselor->timezone??'UTC';
+           return view('mw-1.admin.counsellor.counsellor-manage', get_defined_vars());
+       }
 
     public function counsellerCancelSession(Request $request)
     {
