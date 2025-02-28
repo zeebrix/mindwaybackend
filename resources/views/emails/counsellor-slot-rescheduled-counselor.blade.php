@@ -17,7 +17,7 @@
         @if($meeting_link)
             <strong> Meeting Link : </strong> {{$meeting_link}}
         @endif
-        @if($phone)
+        @if($communication_method == 'Phone Call')
             <strong> Phone call chosen : </strong> {{$phone}}
         @endif
         <strong> Employee Email : </strong> {{$employee_email}}

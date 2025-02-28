@@ -185,6 +185,7 @@ class BookingController extends Controller
         $subject = 'Session Confirmed With '.$counselor->name;
         $template = 'emails.booking-confirmation-employee';
         $data = [
+            'communication_method' => $booking->communication_method,
             'full_name' => $customer->name,
             'counselor_name' => $counselor->name,
             'start_time' => Carbon::parse($slot->start_time)->setTimezone($customer_timezone),
@@ -202,6 +203,7 @@ class BookingController extends Controller
         $subject = 'New Session Scheduled';
         $template = 'emails.booking-confirmation-counselor';
         $data = [
+            'communication_method' => $booking->communication_method,
              'employee_email' => $booking?->user?->email,
             'employee_phone' => $booking?->user?->phone,
             'full_name' => $counselor->name,
@@ -320,6 +322,7 @@ catch (\Exception $e) {
         $subject = 'Your Session Has Been Rescheduled';
         $template = 'emails.counsellor-slot-rescheduled-employee';
         $data = [
+            'communication_method' => $booking->communication_method,
             'full_name' => $booking->user->name,
             'counselor_name' => $booking->counselor->name,
             'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($customer_timezone),
@@ -336,6 +339,7 @@ catch (\Exception $e) {
         $subject = 'Your Session Has Been Rescheduled';
         $template = 'emails.counsellor-slot-rescheduled-counselor';
         $data = [
+            'communication_method' => $booking->communication_method,
             'employee_email' => $booking->user->email,
             'employee_phone' => $booking->user->phone,
             'full_name' => $booking->counselor->name,
