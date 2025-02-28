@@ -1687,13 +1687,14 @@ class AdminController extends Controller
             $customer3 = CustomerRelatedProgram::where('customer_id', $customerId)->first();
             if($customer3)
             {
-                $brevo = new BrevoService();
-                $brevo->removeUserFromList($customer3->email);
                 $customer3->delete();
             }
             if($customer->app_customer_id)
             {
-                Customer::where('id',$customer->app_customer_id)->delete();
+                $data = Customer::where('id',$customer->app_customer_id)->first();
+                $brevo = new BrevoService();
+                $brevo->removeUserFromList($data->email);
+                $data->delete();
             }
         }
 
