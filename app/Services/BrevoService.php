@@ -57,7 +57,7 @@ class BrevoService
             Log::error("Error removing user from list : " . $e->getMessage(), ['email' => $email]);
         }
     }
-    public function removeUserFromList($email)
+    public function removeUserFromList1($email)
     {
         $listIds = [9, 11]; // Define target lists
 
@@ -85,6 +85,16 @@ class BrevoService
                 Log::error("Error removing user from list $listId: " . $e->getMessage(), ['email' => $email]);
                 continue; // Ignore error and continue with the next list ID
             }
+        }
+    }
+    public function removeUserFromList($email)
+    {
+        try {
+            // Delete the contact from Brevo
+            $this->apiInstance->deleteContact($email);
+            Log::info("User deleted from Brevo", ['email' => $email]);
+        } catch (Exception $e) {
+            Log::error("Error deleting user from Brevo: " . $e->getMessage(), ['email' => $email]);
         }
     }
 
