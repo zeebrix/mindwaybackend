@@ -16,6 +16,9 @@
     @if($meeting_link)
         <strong>Join Link:  </strong>   {{ $meeting_link }}<br/>
     @endif
+    @if($phone)
+        <strong>Phone call chosen:  </strong>   {{ $phone }}<br/>
+    @endif
     <strong> Available Sessions Remaining:</strong>  {{ $max_session }}<br/>
     </p>
     <p>

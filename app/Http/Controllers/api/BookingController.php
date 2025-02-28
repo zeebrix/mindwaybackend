@@ -192,7 +192,8 @@ class BookingController extends Controller
             'duration' => '50 minutes',
             'meeting_link' => $meetingLink,
             'max_session' => $customer->max_session,
-            'intake_link' => $counselor->intake_link
+            'intake_link' => $counselor->intake_link,
+            'phone' => $request->phone??'',
         ];
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
 
@@ -209,7 +210,8 @@ class BookingController extends Controller
             'start_time' => Carbon::parse($slot->start_time)->setTimezone($counselor->timezone),
             'max_session' => $customer->max_session,
             'meeting_link' => $meetingLink,
-             'timezone' => $counselor->timezone,
+            'timezone' => $counselor->timezone,
+            'phone' => $request->phone??'',
         ];
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
          
@@ -324,7 +326,8 @@ catch (\Exception $e) {
             'end_time' => Carbon::parse($booking->slot->end_time)->setTimezone($customer_timezone),
             'timezone' => $customer_timezone,
             'meeting_link' => $meetingLink,
-            'intake_link' => $booking->counselor->intake_link??''
+            'intake_link' => $booking->counselor->intake_link??'',
+            'phone' => $booking->user->phone??''
         ];
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
 
@@ -340,6 +343,7 @@ catch (\Exception $e) {
             'max_session' => $booking?->brevoUser?->max_session??'',
             'timezone' => $booking->counselor->timezone,
             'meeting_link' => $meetingLink,
+            'phone' => $booking->user->phone??'',
             'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($booking->counselor->timezone),
             'company_name' => $booking?->brevoUser?->program?->company_name,
         ];

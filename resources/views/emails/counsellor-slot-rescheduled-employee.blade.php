@@ -15,6 +15,9 @@
     @if($meeting_link)
     Join Link:  {{ $meeting_link }}
     @endif
+    @if($phone)
+    Phone call chosen:  {{ $phone }}
+    @endif
     </p>
     <p>Please note that any cancellations within 24 hours of the session will count toward your session allocation.</p>
     <br />
