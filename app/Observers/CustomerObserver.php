@@ -7,6 +7,8 @@ use App\Models\CustomreBrevoData;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Auth;
+use App\Services\BrevoService;
+
 class CustomerObserver
 {
     protected $auth;
@@ -61,10 +63,30 @@ class CustomerObserver
     {
         try {
 
+            try {
+                $brevo = new BrevoService();
+                $brevo->removeUserFromList($customer->email);
+            }
+            catch (\Throwable $th) {
+                Log::info("Brevo Observer delete error  ".$th->getMessage());
+    
+            }
             $firebaseUser = $this->auth->getUserByEmail($customer->email);
             $this->auth->updateUser($firebaseUser->uid, ['disabled' => true]);
             // $this->auth->deleteUser($firebaseUser->uid);
             $this->auth->revokeRefreshTokens($firebaseUser->uid);
+            try
+            {
+                $customer3 = CustomreBrevoData::where('app_customer_id',$customer->id)->first();
+                if($customer3)
+                {
+                    $customer3->delete();
+                }
+            }
+            catch (\Throwable $th) {
+                Log::info("Observer Brevo Data delete error ".$th->getMessage());
+    
+            }
             Log::info("Firebase user disabled", ['uid' => $firebaseUser->uid, 'email' => $customer->email]);
         } catch (\Throwable $th) {
             Log::info("Firebase user disabled Error ".$th->getMessage());

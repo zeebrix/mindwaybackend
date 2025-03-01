@@ -1708,6 +1708,14 @@ class AdminController extends Controller
         if ($customer) {
             $customer->max_session = $customer->max_session - 1;
             $customer->save();
+            if($customer->app_customer_id){
+                $customer3 = Customer::where('id',$customer->app_customer_id)->first();
+                if($customer3)
+                {
+                    $customer3->max_session = $customer3->max_session - 1;
+                    $customer3->save();
+                }
+            }
         }
 
         return back()->with('message', 'Session updated successfully!');
@@ -1873,7 +1881,7 @@ class AdminController extends Controller
                ->where('counselor_id', $Counselor?->id)
                ->where('status', 'confirmed')
                ->whereHas('slot', function ($query) {
-                   // $query->where('start_time', '>', now());
+                   $query->where('start_time', '>', now()->subHours(24));
                })
                ->orderBy('created_at', 'desc')
                ->get();
