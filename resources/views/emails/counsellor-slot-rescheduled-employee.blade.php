@@ -15,7 +15,7 @@
     @if($meeting_link)
     Join Link:  {{ $meeting_link }}
     @endif
-    @if($phone)
+    @if($communication_method == 'Phone Call')
     Phone call chosen:  {{ $phone }}
     @endif
     </p>
