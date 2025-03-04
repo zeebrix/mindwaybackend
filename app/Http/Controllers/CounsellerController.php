@@ -205,7 +205,7 @@ class CounsellerController extends Controller
         ->where('counselor_id', $counsellorId)
         ->where('status', 'confirmed')
         ->whereHas('slot', function ($query) {
-            $query->where('start_time', '>', now());
+            $query->where('start_time', '>', now()->subHours(24));
         })
         ->orderBy('created_at', 'desc')
         ->get();
