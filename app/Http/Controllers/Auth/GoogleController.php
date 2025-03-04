@@ -37,6 +37,9 @@ class GoogleController extends Controller
             $counsellor->google_email = $user->email;
             $counsellor->google_picture = $user->picture;
             $counsellor->save();
+            if ($counsellor->googleToken) {
+                app(GoogleProvider::class)->watchCalendar($counsellor);
+            }
             if(auth()->check())
             {
                 return redirect()->route('admin.counsellor.profile',$counsellor->id);
