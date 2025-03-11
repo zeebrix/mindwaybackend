@@ -80,15 +80,14 @@ class GoogleController extends Controller
             'query' => $request->query(), // Query parameters
             'post' => $request->post(), // Form data
         ]);
-        $resourceId = $request->header('X-Goog-Resource-ID')??$request->header('x-goog-resource-id');
-    
-        // Find counselor with this webhook subscription
-        $counselor = Counselor::whereJsonContains('google_webhook_data', [['resource_id' => $resourceId]])->first();
-        if (!$counselor) {
-            Log::warning("No counselor found using JSON query for resource ID: $resourceId. Trying LIKE query...");
-            // Try using LIKE as a fallback
-            $counselor = Counselor::where('google_webhook_data', 'LIKE', '%"resource_id":"'.$resourceId.'"%')->first();
+        $resourceIdHeader = $request->header('X-Goog-Resource-ID')??$request->header('x-goog-resource-id');
+        $resourceId = is_array($resourceIdHeader) ? $resourceIdHeader[0] : $resourceIdHeader;
+        if (!$resourceId) {
+            Log::error("Google Webhook: Missing X-Goog-Resource-ID header.");
+            return response()->json(['message' => 'Invalid webhook request'], 400);
         }
+        $counselor = Counselor::where('google_webhook_data', 'LIKE', '%"resource_id":"'.$resourceId.'"%')->first();
+        
         if (!$counselor) {
             Log::error("No matching counselor found for webhook: $resourceId");
             return response()->json(['message' => 'Invalid webhook resource ID'], 404);
