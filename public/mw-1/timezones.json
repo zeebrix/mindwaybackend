@@ -436,6 +436,11 @@
         "zone": "(UTC+10:00) Hobart"
       },
       {
+        "name": "Australia/Brisbane",
+        "offset": "+10:00",
+        "zone": "(UTC+10:00) Brisbane"
+      },
+      {
         "name": "Asia/Vladivostok",
         "offset": "+10:00",
         "zone": "(UTC+10:00) Vladivostok"
