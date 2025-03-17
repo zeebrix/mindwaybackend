@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\CustomerController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\CounsellerController;
+use App\Http\Controllers\UserPreferenceController;
 use App\Models\Customer;
 use App\Models\CustomreBrevoData;
 use Illuminate\Support\Facades\Artisan;
@@ -59,6 +60,12 @@ Route::group(["prefix" => "customer", "middleware" => ["appauth"]], function () 
 
   Route::post('/update/profile', [CustomerController::class, 'updateProfile']);
   Route::post('/logout', [CustomerController::class, 'logout']);
+
+
+  Route::get('/preferences', [UserPreferenceController::class, 'index']);
+  Route::post('/preferences', [UserPreferenceController::class, 'store']);
+  Route::delete('/preferences', [UserPreferenceController::class, 'destroy']);
+
 
   Route::post('/add-sessions', [SessionController::class, 'addSession']);
   Route::post('/session-audio', [SessionController::class, 'uploadSessionAudio']);
@@ -115,6 +122,7 @@ Route::group(["prefix" => "customer", "middleware" => ["appauth"]], function () 
 
   // Counselor routes
   Route::get('/counselors', [CounselorController::class, 'getCounselors']);
+  Route::get('/get-preference-info', [CounselorController::class, 'getPreferenceInfo']);
   Route::post('/counselor/availability', [CounselorController::class, 'setAvailability']);
   Route::get('/counselor/calendar', [CounselorController::class, 'getCalendarAvailability']);
   Route::get('/counselor/upcoming-sessions', [CounselorController::class, 'getUpcomingSessions']);

@@ -116,4 +116,16 @@ class CounselorController extends Controller
             $limit
         );   
     }
+
+    public function getPreferenceInfo()
+    {
+        $filters = Counselor::distinct()->get(['specialization', 'location', 'language', 'communication_method']);
+
+        return response()->json([
+            'specializations' => $filters->pluck('specialization')->map(fn($item) => json_decode($item, true) ?? [])->flatten()->unique()->values(),
+            'locations' => $filters->pluck('location')->filter()->unique()->values(),
+            'languages' => $filters->pluck('language')->filter()->unique()->values(),
+            'communication_methods' => $filters->pluck('communication_method')->map(fn($item) => json_decode($item, true) ?? [])->flatten()->unique()->values(),
+        ]);
+    }
 }
