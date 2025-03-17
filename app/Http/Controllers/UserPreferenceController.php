@@ -12,7 +12,7 @@ class UserPreferenceController extends Controller
     {
         $preferences = UserPreference::where('user_id', $request->user_id)->first();
 
-        return response()->json($preferences ?? null);
+        return response()->json(['data' => $preferences,'status' => true]);
     }
     public function store(Request $request): JsonResponse
     {
@@ -31,12 +31,12 @@ class UserPreferenceController extends Controller
             $validated
         );
 
-        return response()->json(['message' => 'Preferences saved successfully!', 'data' => $preferences]);
+        return response()->json(['status' => true,'message' => 'Preferences saved successfully!', 'data' => $preferences]);
     }
     public function destroy(Request $request): JsonResponse
     {
         UserPreference::where('user_id', $request->user_id)->delete();
 
-        return response()->json(['message' => 'Preferences deleted successfully!']);
+        return response()->json(['status' => true,'message' => 'Preferences deleted successfully!']);
     }
 }
