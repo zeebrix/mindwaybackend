@@ -10,9 +10,9 @@ class UserPreferenceController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $preferences = UserPreference::where('user_id', $request->user_id)->get();
+        $preferences = UserPreference::where('user_id', $request->user_id)->first();
 
-        return response()->json($preferences ?? []);
+        return response()->json($preferences ?? null);
     }
     public function store(Request $request): JsonResponse
     {
