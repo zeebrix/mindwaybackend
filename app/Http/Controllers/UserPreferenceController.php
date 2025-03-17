@@ -10,15 +10,9 @@ class UserPreferenceController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $preferences = UserPreference::where('user_id', $request->user_id)->first();
+        $preferences = UserPreference::where('user_id', $request->user_id)->get();
 
-        return response()->json($preferences ?? [
-            'specializations' => [],
-            'location' => null,
-            'language' => null,
-            'gender' => null,
-            'communication_methods' => [],
-        ]);
+        return response()->json($preferences ?? []);
     }
     public function store(Request $request): JsonResponse
     {
@@ -33,7 +27,7 @@ class UserPreferenceController extends Controller
         ]);
 
         $preferences = UserPreference::updateOrCreate(
-            ['user_id' => Auth::id()],
+            ['user_id' => $request->user_id],
             $validated
         );
 
