@@ -31,16 +31,47 @@ class CounselorController extends Controller
             $customer->id??0,
             $gender ?? 'Male'
         );
-        $allCounsellor = $this->counselorService->getAllCounselors(
-            $gender ?? 'Male'
-        );
+        $allCounsellor = $this->counselorService->getAllCounselors();
         return response()->json([ 
             'recommended_counselor' => $recommendedCounselor,
             'all_counselors' => $allCounsellor,
             'customer' => $customer,
         ]);
     }
-
+    public function getCounselorsPagination(Request $request)
+    {
+        $customer = Customer::with(['Program' => function ($query) {
+            $query->limit(1); // Fetch only one related object
+        }])->with('preference')->find($request->customer_id);
+       
+        $preference = $customer ? $customer->preference : null;
+        $recommendedCounselors = [];
+        $page =$request->page??1;
+        if ($preference && $page == 1) {
+            $recommendedCounselors = Counselor::where('gender', $preference->gender)
+                ->orWhereJsonContains('specialization', $preference->specializations)
+                ->orWhereJsonContains('communication_method', $preference->communication_method)
+                ->orWhere('language', $preference->language)
+                ->orWhere('location', $preference->location)
+                ->get();
+        }
+        $allCounselors = $this->counselorService->getAllCounselors(
+            pagination: $request->pagination??true, // Default: true
+            page: $page,
+            offset: $request->offset??15,
+            location:$request->location??null
+        );
+        $response = [
+            'all_counselors' => $allCounselors,
+            'customer' => $customer,
+        ];
+        if ($page == 1) {
+            $response['recommended_counselor'] = $recommendedCounselors ?? [];
+        }
+        
+        return response()->json($response);
+        
+    }
     public function setAvailability(Request $request)
     {
         $validated = $request->validate([

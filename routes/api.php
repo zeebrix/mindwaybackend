@@ -122,6 +122,7 @@ Route::group(["prefix" => "customer", "middleware" => ["appauth"]], function () 
 
   // Counselor routes
   Route::get('/counselors', [CounselorController::class, 'getCounselors']);
+  Route::get('/get-paginated-counselors-data', [CounselorController::class, 'getCounselorsPagination']);
   Route::get('/get-preference-info', [CounselorController::class, 'getPreferenceInfo']);
   Route::post('/counselor/availability', [CounselorController::class, 'setAvailability']);
   Route::get('/counselor/calendar', [CounselorController::class, 'getCalendarAvailability']);

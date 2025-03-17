@@ -54,6 +54,10 @@ class Customer extends Authenticatable
     {
         return $this->hasOne(Slot::class, 'customer_id', 'id')->whereNotNull('customer_id')->where('is_booked',false);
     }
+    public function preference()
+    {
+        return $this->hasOne(UserPreference::class, 'user_id', 'id');
+    }
     public function Program()
     {
         return $this->belongsToMany(Program::class, 'customers_programs', 'customers_id', 'programs_id')->withPivot('session');
