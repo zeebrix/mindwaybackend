@@ -99,8 +99,8 @@ class CounselorService
                 'timezone' => $counselor->timezone ?? 'Australia/Adelaide',
                 'next_availability' => $counselor->next_available_slot ? [
                     'available_day' => \Carbon\Carbon::parse($counselor->next_available_slot)->format('l'),
-                    'date' => \Carbon\Carbon::parse($counselor->next_available_slot)->toDateString(),
-                    'start_time' => \Carbon\Carbon::parse($counselor->next_available_slot)->toTimeString(),
+                    'date' => \Carbon\Carbon::parse($counselor->next_available_slot),
+                    'start_time' => \Carbon\Carbon::parse($counselor->next_available_slot),
                 ] : null,
                 'session_count' => $counselor->session_count ?? 0
             ];
