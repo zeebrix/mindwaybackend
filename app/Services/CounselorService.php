@@ -18,10 +18,12 @@ class CounselorService
             }
             $data = $query->orderBy('next_available_slot')
             ->orderBy('location')->paginate($offset, ['*'], 'page', $page);
+            return $this->formatCounselorsPagination($data);
         } else {
             $data = $query->orderByRaw('next_available_slot asc')->get();
+            return $this->formatCounselors($data);
         }
-        return $this->formatCounselors($data);
+        
     }
 
     public function getRecommendedCounselors(int $userId, ?string $gender = null)
@@ -63,8 +65,50 @@ class CounselorService
                     ->limit(1)
             ]);
     }
-
     private function formatCounselors($counselors)
+    {
+        return $counselors->map(function ($counselor) {
+           
+            
+            return [
+                'id' => $counselor->id,
+                'name' => $counselor->name,
+                'email' => $counselor->email,
+                'gender' => $counselor->gender??'Male',
+                'bio' => $counselor->description,
+                'intake_link' => $counselor->intake_link,
+                'avatar' => $counselor->avatar,
+                'location' => $counselor->location,
+                'language' => $counselor->language,
+                'specialization' => $counselor->specialization??json_encode([]),
+                'communication_method' => $counselor->communication_method,
+                'about_session' => [
+                    'session_time' => '50min Session',
+                    'session_topic' => 'Free professional support by employer',
+                    'encryption' => 'Bookings are confidential and not shared with your employer',
+                    'detail' => "<p><strong>Important Information:</strong></p>
+        <p>You can cancel or update your session up to 24 hours before the session. While rare, bookings may be subject to changes; you'll be contacted to select another date. Any information shared remains confidential between you and your counsellor.</p>
+        
+        <p><strong>Stored Information:</strong></p>
+        <p>Your details and session history are kept for historical and management purposes.</p>
+        
+        <p><strong>In Case of Emergency:</strong></p>
+        <p>This service is not designed for emergencies. If you are in crisis or facing an immediate threat to yourself or others, please contact your local emergency services or crisis hotline immediately.</p>
+        
+        <p><strong>Emergency Hotline:</strong> Lifeline Australia: 13 11 14</p>"
+                ],
+                'hourly_rate' => $counselor->hourly_rate,
+                'timezone' => $counselor->timezone??'Australia/Adelaide',
+                'next_availability' => $counselor->next_available_slot ? [
+                    'available_day' => \Carbon\Carbon::parse($counselor->next_available_slot)->format('L'),
+                    'date' => \Carbon\Carbon::parse($counselor->next_available_slot),
+                    'start_time' => \Carbon\Carbon::parse($counselor->next_available_slot),
+                ] : null,
+                'session_count' => $counselor->session_count ?? 0
+            ];
+        });
+    }
+    private function formatCounselorsPagination($counselors)
     {
         // Check if paginated or collection
         $data = collect(
