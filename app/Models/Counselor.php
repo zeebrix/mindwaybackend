@@ -24,7 +24,8 @@ class Counselor extends Model
         'google_webhook_expiration',
         'google_webhook_data',
         'language',
-        'location'
+        'location',
+        'intro_file'
     ];
     public function availabilities()
     {
