@@ -16,8 +16,10 @@ class CounselorService
             if ($location) {
                 $query->orderByRaw("CASE WHEN location = ? THEN 1 ELSE 2 END", [$location]);
             }
-            $data = $query->orderBy('next_available_slot')
-            ->orderBy('location')->paginate($offset, ['*'], 'page', $page);
+            $data = $query
+                    ->orderBy('location')
+                    ->orderBy('next_available_slot')
+                    ->paginate($offset, ['*'], 'page', $page);
             return $this->formatCounselorsPagination($data);
         } else {
             $data = $query->orderByRaw('next_available_slot asc')->get();
@@ -80,6 +82,7 @@ class CounselorService
                 'avatar' => $counselor->avatar,
                 'location' => $counselor->location,
                 'language' => $counselor->language,
+                'intro_file' => $counselor->intro_file,
                 'specialization' => $counselor->specialization??json_encode([]),
                 'communication_method' => $counselor->communication_method,
                 'about_session' => [
@@ -124,6 +127,7 @@ class CounselorService
                 'intake_link' => $counselor->intake_link,
                 'location' => $counselor->location,
                 'language' => $counselor->language,
+                'intro_file' => $counselor->intro_file,
                 'avatar' => $counselor->avatar,
                 'specialization' => json_decode($counselor->specialization, true) ?? [],
                 'communication_method' => json_decode($counselor->communication_method, true) ?? [],
