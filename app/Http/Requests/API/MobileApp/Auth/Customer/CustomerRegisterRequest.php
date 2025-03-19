@@ -42,6 +42,14 @@ class CustomerRegisterRequest extends BaseAPIRequest {
             'password' => 'required|string|min:6|confirmed',
             'password_confirmation' => 'required|min:6',
             'gender_preference' => 'nullable|string',
+            'program_id' => [
+                'required',
+                function ($attribute, $value, $fail) {
+                    if (is_null($value)) {
+                        $fail('An error occurred while setting up your account. Please close and reopen the app to complete the process.');
+                    }
+                },
+            ],
         ];
     }
     public function passedValidation()
