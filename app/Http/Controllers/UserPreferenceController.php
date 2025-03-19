@@ -21,7 +21,8 @@ class UserPreferenceController extends Controller
             'specializations.*' => 'string',
             'location' => 'nullable|string',
             'language' => 'nullable|string',
-            'gender' => 'nullable|string',
+            'gender' => 'nullable|array',
+            'gender.*' => 'string',
             'communication_methods' => 'nullable|array',
             'communication_methods.*' => 'string',
         ]);

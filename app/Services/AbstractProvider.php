@@ -41,6 +41,10 @@ abstract class AbstractProvider
     public function getUser()
     {
         try {
+                        
+            if ($error = $this->request->get('error')) {
+                throw new \RuntimeException("Google OAuth Error: {$error}");
+            }
             $code = $this->request->get('code');
             $credentials = $this->fetchAccessTokenWithAuthCode($code);
            // dd($credentials);

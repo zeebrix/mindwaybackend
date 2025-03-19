@@ -13,6 +13,7 @@ class UserPreference extends Model
     protected $casts = [
         'specializations' => 'array',
         'communication_methods' => 'array',
+        'gender' => 'array'
     ];
 
     public function user()

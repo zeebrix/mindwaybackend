@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use App\Services\SlotGenerationService;
 use App\Services\CounselorService;
 use App\Services\CalendarService;
+use Illuminate\Support\Facades\DB;
+
 class CounselorController extends Controller
 {
     private $counselorService;
@@ -48,12 +50,64 @@ class CounselorController extends Controller
         $recommendedCounselors = [];
         $page =$request->page??1;
         if ($preference && $page == 1) {
-            $recommendedCounselors = Counselor::where('gender', $preference->gender)
-                ->orWhereJsonContains('specialization', $preference->specializations)
-                ->orWhereJsonContains('communication_method', $preference->communication_method)
-                ->orWhere('language', $preference->language)
-                ->orWhere('location', $preference->location)
+            $bindings = [
+                $preference->language, // String
+                $preference->location // String
+            ];
+            
+            // Build JSON_SEARCH conditions for multiple values in specialization
+            $specializationConditions = [];
+            foreach ($preference->specializations as $specialization) {
+                $specializationConditions[] = 'JSON_SEARCH(specialization, "one", ?)';
+                $bindings[] = $specialization; // Add each specialization separately
+            }
+            
+            // Build JSON_SEARCH conditions for multiple values in communication_method
+            $communicationConditions = [];
+            foreach ($preference->communication_methods as $method) {
+                $communicationConditions[] = 'JSON_SEARCH(communication_method, "one", ?)';
+                $bindings[] = $method; // Add each communication method separately
+            }
+            
+            // Step 1: Create a Subquery with Match Score Calculation
+            $subQuery = Counselor::select('*')
+                ->selectRaw('
+                    (CASE WHEN gender IN (' . implode(',', array_fill(0, count($preference->gender), '?')) . ') THEN 1 ELSE 0 END) +
+                    (CASE WHEN (' . implode(' OR ', $specializationConditions) . ') THEN 1 ELSE 0 END) +
+                    (CASE WHEN (' . implode(' OR ', $communicationConditions) . ') THEN 1 ELSE 0 END) +
+                    (CASE WHEN language = ? THEN 1 ELSE 0 END) +
+                    (CASE WHEN location = ? THEN 1 ELSE 0 END)
+                    AS match_score
+                ', array_merge($preference->gender, $bindings));
+            
+            $rawSql = $subQuery->toSql(); // Get raw SQL query
+            
+            // Step 2: Find the Maximum Match Score
+            $maxScoreQuery = DB::table(DB::raw("({$rawSql}) as ranked_counselors"))
+                ->mergeBindings($subQuery->getQuery()) // Merge bindings properly
+                ->selectRaw('MAX(match_score) as max_score')
+                ->value('max_score');
+            
+            $maxScore = $maxScoreQuery ?? 0; // Default to 0 if no matches
+            
+            // Step 3: Retrieve Counselors with the Highest Match Score
+            $recommendedCounselors = Counselor::select('*')
+                ->selectRaw('
+                    (CASE WHEN gender IN (' . implode(',', array_fill(0, count($preference->gender), '?')) . ') THEN 1 ELSE 0 END) +
+                    (CASE WHEN (' . implode(' OR ', $specializationConditions) . ') THEN 1 ELSE 0 END) +
+                    (CASE WHEN (' . implode(' OR ', $communicationConditions) . ') THEN 1 ELSE 0 END) +
+                    (CASE WHEN language = ? THEN 1 ELSE 0 END) +
+                    (CASE WHEN location = ? THEN 1 ELSE 0 END)
+                    AS match_score
+                ', array_merge($preference->gender, $bindings))
+                ->having('match_score', '=', $maxScore) // Keep only the best matches
+                ->orderByDesc('match_score')
+                ->orderBy('id')
                 ->get();
+            
+
+        
+            $recommendedCounselors = $this->counselorService->formatCounselors($recommendedCounselors);
         }
         $allCounselors = $this->counselorService->getAllCounselors(
             pagination: $request->pagination??true, // Default: true

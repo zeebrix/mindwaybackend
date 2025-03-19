@@ -67,7 +67,7 @@ class CounselorService
                     ->limit(1)
             ]);
     }
-    private function formatCounselors($counselors)
+    public function formatCounselors($counselors)
     {
         return $counselors->map(function ($counselor) {
            

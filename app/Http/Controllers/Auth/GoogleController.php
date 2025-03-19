@@ -30,8 +30,8 @@ class GoogleController extends Controller
     public function handleGoogleCallback(Request $request)
     {
         try {
-            $user = $this->googleProvider->getUser();
             $counsellor = Counselor::Where('id', session('google_action_user_id'))->first();
+            $user = $this->googleProvider->getUser();
             $counsellor->google_id = $user->id;
             $counsellor->google_name = $user->name;
             $counsellor->google_email = $user->email;
@@ -45,7 +45,14 @@ class GoogleController extends Controller
                 return redirect()->route('admin.counsellor.profile',$counsellor->id);
             }
             return redirect()->route('counseller.profile');
-        } catch (\Exception $e) {
+        }catch (\RuntimeException $e) {
+            Log::error("Google OAuth Runtime Error: " . $e->getMessage());
+            if(auth()->check())
+            {
+                return redirect()->route('admin.counsellor.profile',$counsellor->id)->with('error', $e->getMessage());
+            }
+            return redirect()->route('counseller.profile')->with('error', $e->getMessage());
+        }catch (\Exception $e) {
             if(auth()->check())
             {
                 return redirect()->route('admin.counsellor.profile',$counsellor->id);
