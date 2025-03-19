@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use App\Models\UserPreference;
+use Illuminate\Support\Facades\Validator;
+
 class UserPreferenceController extends Controller
 {
     public function index(Request $request): JsonResponse
@@ -16,7 +18,7 @@ class UserPreferenceController extends Controller
     }
     public function store(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'specializations' => 'nullable|array',
             'specializations.*' => 'string',
             'location' => 'nullable|string',
@@ -26,7 +28,16 @@ class UserPreferenceController extends Controller
             'communication_methods' => 'nullable|array',
             'communication_methods.*' => 'string',
         ]);
-
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors()
+            ], 422);
+        }
+    
+        // Validation passed, save preferences
+        $validated = $validator->validated();
         $preferences = UserPreference::updateOrCreate(
             ['user_id' => $request->user_id],
             $validated
