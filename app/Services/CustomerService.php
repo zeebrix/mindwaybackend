@@ -235,7 +235,14 @@ class CustomerService
         if (\Auth::guard('api')->attempt(['email' => request('email'), 'password' => request('password')])) {
             $apiAuthToken = $this->repository->getUniqueValue(10, 'api_auth_token');
             $user = \Auth::guard('api')->user();
-            //            $token = $user->createToken('MyApp')->accessToken;
+            if(!$user->single_program)
+            {
+                return response()->json([
+                    'code' => 421,
+                    'status' => 'Error',
+                    'message' => 'This account is not setup Correctly.'
+                ], 421);
+            }
             $user->api_auth_token = $apiAuthToken;
             $user->save();
             $user = $user->toArray();
