@@ -52,39 +52,42 @@ class CounselorController extends Controller
         if ($preference && $page == 1) {
             $bindings = [
                 $preference->language, // String
-                $preference->location // String
+                $preference->location  // String
             ];
             
-            // Build JSON_SEARCH conditions for multiple values in specialization
+            // JSON_SEARCH conditions for specialization
             $specializationConditions = [];
             foreach ($preference->specializations as $specialization) {
                 $specializationConditions[] = 'JSON_SEARCH(specialization, "one", ?)';
-                $bindings[] = $specialization; // Add each specialization separately
+                $bindings[] = $specialization;
             }
             
-            // Build JSON_SEARCH conditions for multiple values in communication_method
+            // JSON_SEARCH conditions for communication_method
             $communicationConditions = [];
             foreach ($preference->communication_methods as $method) {
                 $communicationConditions[] = 'JSON_SEARCH(communication_method, "one", ?)';
-                $bindings[] = $method; // Add each communication method separately
+                $bindings[] = $method;
             }
             
-            // Step 1: Create a Subquery with Match Score Calculation
+            // Add gender bindings
+            $genderPlaceholders = implode(',', array_fill(0, count($preference->gender), '?'));
+            $bindings = array_merge($bindings, $preference->gender);
+            
+            // Step 1: Create Subquery with Match Score
             $subQuery = Counselor::select('*')
-                ->selectRaw('
-                    (CASE WHEN gender IN (' . implode(',', array_fill(0, count($preference->gender), '?')) . ') THEN 3 ELSE 0 END) +
-                    (CASE WHEN (' . implode(' OR ', $specializationConditions) . ') THEN 1 ELSE 0 END) +
-                    (CASE WHEN (' . implode(' OR ', $communicationConditions) . ') THEN 2 ELSE 0 END) +
+                ->selectRaw("
+                    (CASE WHEN gender IN ($genderPlaceholders) THEN 3 ELSE 0 END) +
+                    (CASE WHEN (" . implode(' OR ', $specializationConditions) . ") THEN 1 ELSE 0 END) +
+                    (CASE WHEN (" . implode(' OR ', $communicationConditions) . ") THEN 2 ELSE 0 END) +
                     (CASE WHEN language = ? THEN 4 ELSE 0 END) +
                     (CASE WHEN location = ? THEN 5 ELSE 0 END)
                     AS match_score
-                ', array_merge($preference->gender, $bindings));
+                ", $bindings);
             
-            $rawSql = $subQuery->toSql(); // Get raw SQL query
-            
-            // Step 2: Find the Maximum Match Score
+            // Get raw SQL query and merge bindings properly
+            $rawSql = $subQuery->toSql();
             $maxScoreQuery = DB::table(DB::raw("({$rawSql}) as ranked_counselors"))
-                ->mergeBindings($subQuery->getQuery()) // Merge bindings properly
+                ->mergeBindings($subQuery->getQuery())
                 ->selectRaw('MAX(match_score) as max_score')
                 ->value('max_score');
             
@@ -92,20 +95,19 @@ class CounselorController extends Controller
             
             // Step 3: Retrieve Counselors with the Highest Match Score
             $recommendedCounselors = Counselor::select('*')
-                ->selectRaw('
-                    (CASE WHEN gender IN (' . implode(',', array_fill(0, count($preference->gender), '?')) . ') THEN 3 ELSE 0 END) +
-                    (CASE WHEN (' . implode(' OR ', $specializationConditions) . ') THEN 1 ELSE 0 END) +
-                    (CASE WHEN (' . implode(' OR ', $communicationConditions) . ') THEN 2 ELSE 0 END) +
+                ->selectRaw("
+                    (CASE WHEN gender IN ($genderPlaceholders) THEN 3 ELSE 0 END) +
+                    (CASE WHEN (" . implode(' OR ', $specializationConditions) . ") THEN 1 ELSE 0 END) +
+                    (CASE WHEN (" . implode(' OR ', $communicationConditions) . ") THEN 2 ELSE 0 END) +
                     (CASE WHEN language = ? THEN 4 ELSE 0 END) +
                     (CASE WHEN location = ? THEN 5 ELSE 0 END)
                     AS match_score
-                ', array_merge($preference->gender, $bindings))
-                ->having('match_score', '=', $maxScore) // Keep only the best matches
+                ", $bindings)
+                ->having('match_score', '=', $maxScore)
                 ->orderByDesc('match_score')
                 ->orderBy('id')
                 ->get();
             
-
         
             $recommendedCounselors = $this->counselorService->formatCounselors($recommendedCounselors);
         }
