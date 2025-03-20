@@ -37,7 +37,7 @@ class CustomerRegisterByEmailRequest extends BaseAPIRequest {
     public function messages()
     {
         return [
-            'program_id.required' => 'An error occurred while setting up your account. Please close and reopen the app to complete the process.',
+            'program_id.required' => 'An error occurred while setting up your account. Please try agin after reopen the app.',
         ];
     }
 

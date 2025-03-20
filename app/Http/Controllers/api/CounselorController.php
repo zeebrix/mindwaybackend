@@ -72,11 +72,11 @@ class CounselorController extends Controller
             // Step 1: Create a Subquery with Match Score Calculation
             $subQuery = Counselor::select('*')
                 ->selectRaw('
-                    (CASE WHEN gender IN (' . implode(',', array_fill(0, count($preference->gender), '?')) . ') THEN 1 ELSE 0 END) +
+                    (CASE WHEN gender IN (' . implode(',', array_fill(0, count($preference->gender), '?')) . ') THEN 3 ELSE 0 END) +
                     (CASE WHEN (' . implode(' OR ', $specializationConditions) . ') THEN 1 ELSE 0 END) +
-                    (CASE WHEN (' . implode(' OR ', $communicationConditions) . ') THEN 1 ELSE 0 END) +
-                    (CASE WHEN language = ? THEN 1 ELSE 0 END) +
-                    (CASE WHEN location = ? THEN 1 ELSE 0 END)
+                    (CASE WHEN (' . implode(' OR ', $communicationConditions) . ') THEN 2 ELSE 0 END) +
+                    (CASE WHEN language = ? THEN 4 ELSE 0 END) +
+                    (CASE WHEN location = ? THEN 5 ELSE 0 END)
                     AS match_score
                 ', array_merge($preference->gender, $bindings));
             
@@ -93,11 +93,11 @@ class CounselorController extends Controller
             // Step 3: Retrieve Counselors with the Highest Match Score
             $recommendedCounselors = Counselor::select('*')
                 ->selectRaw('
-                    (CASE WHEN gender IN (' . implode(',', array_fill(0, count($preference->gender), '?')) . ') THEN 1 ELSE 0 END) +
+                    (CASE WHEN gender IN (' . implode(',', array_fill(0, count($preference->gender), '?')) . ') THEN 3 ELSE 0 END) +
                     (CASE WHEN (' . implode(' OR ', $specializationConditions) . ') THEN 1 ELSE 0 END) +
-                    (CASE WHEN (' . implode(' OR ', $communicationConditions) . ') THEN 1 ELSE 0 END) +
-                    (CASE WHEN language = ? THEN 1 ELSE 0 END) +
-                    (CASE WHEN location = ? THEN 1 ELSE 0 END)
+                    (CASE WHEN (' . implode(' OR ', $communicationConditions) . ') THEN 2 ELSE 0 END) +
+                    (CASE WHEN language = ? THEN 4 ELSE 0 END) +
+                    (CASE WHEN location = ? THEN 5 ELSE 0 END)
                     AS match_score
                 ', array_merge($preference->gender, $bindings))
                 ->having('match_score', '=', $maxScore) // Keep only the best matches
