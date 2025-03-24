@@ -52,9 +52,9 @@
 
             <hr class="p-0 m-0" style="border: 1px solid #AEAEAE;">
             <div class="input-group mt-3">
-                <div class="form-outline">
+                <!-- <div class="form-outline">
                     <input style="border-radius: 20px;width:150px" type="search" placeholder="Search" name="search" class="form-control" />
-                </div>
+                </div> -->
                 @if(request()->get('status') != '0')
                     <div class="form-outline">
                         <a href="{{route('admin.program.add',['type' => request()->get('status')])}}" class="btn btn-primary mindway-btn-blue" style="margin-left: 20px;">{{ request()->get('status') == '1' ? 'Create Active Program' : 'Create Trial Program' }}</a>
@@ -75,7 +75,7 @@
         @endif
 
         <div class="table-responsive">
-            <table class="table text-nowrap mb-0 align-middle">
+            <table class="table text-nowrap mb-0 align-middle" id="Yajra-dataTable">
                 <thead class="text-dark fs-4">
                     <tr>
                         <th class="border-bottom-0">
@@ -98,7 +98,7 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <!-- <tbody>
                     @php($count = 0)
                     @foreach ($Programs as $data)
                     @php($count++)
@@ -124,21 +124,27 @@
                                 class="btn btn-success btn-sm btn-icon-text mr-3 mindway-btn-blue">
                                 Manage
                                 <i class="typcn typcn-view btn-icon-append"></i>
-                            </a>
-                            <!-- <a href="{{ url('/manage-admin/delete-quote', ['id' => $data->id]) }}"  class="btn btn-danger btn-sm btn-icon-text">
+                            </a> 
+                            <a href="{{ url('/manage-admin/delete-quote', ['id' => $data->id]) }}"  class="btn btn-danger btn-sm btn-icon-text">
                                                         Delete
                                                         <i class="typcn typcn-delete-outline btn-icon-append"></i>
-                                                      </a> -->
+                                                      </a> 
                         </td>
                     </tr>
                     @endforeach
-                </tbody>
+                </tbody> -->
             </table>
         </div>
     </div>
 </div>
 @endsection
-<script>
+
+
+@section('js')
+    @include('mw-1.admin.programs.datatable')
+@endsection
+
+<!-- <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Get the search input element
         const searchInput = document.querySelector('input[name="search"]');
@@ -173,4 +179,4 @@
             });
         });
     });
-</script>
+</script> -->

@@ -3,15 +3,15 @@
 @section('selected_menu', 'active')
 
 @section('content')
-  
-<div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Welcome {{ $Counselor->name }}</h2>
-            </div>
-            <h6>Upcoming Sessions ({{$upcomingBookings->count()}})</h6>
 
-            <div class="table-responsive">
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Welcome {{ $Counselor->name }}</h2>
+        </div>
+        <h6>Upcoming Sessions ({{$upcomingBookings->count()}})</h6>
+
+        <div class="table-responsive">
             <table class="table text-nowrap mb-0 align-middle">
                 <tbody id="customersTable">
                     @if($upcomingBookings->isNotEmpty())
@@ -92,101 +92,75 @@
                 </tbody>
             </table>
         </div>
+
+        <div class="row mt-4">
+            <div class="col-md-12 d-flex justify-content-center">
+                {{ $upcomingBookings->links('pagination::bootstrap-4') }}
+            </div>
         </div>
-        </div>
 
-            
-            {{-- Sessions of the Counsellor --}}
-            <br>
-            <hr><br>
+    </div>
+</div>
 
 
-            <!-- <h2>All Counselling Sessions</h2> -->
-            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                <h2 style="margin: 0;">All Counselling Sessions</h2>
-                <select id="sortSessions" style="padding: 8px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer;">
+{{-- Sessions of the Counsellor --}}
+<br>
+<hr><br>
+
+
+<!-- <h2>All Counselling Sessions</h2> -->
+<div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+    <h2 style="margin: 0;">All Counselling Sessions</h2>
+    <!-- <select id="sortSessions" style="padding: 8px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer;">
                     <option value="asc" {{ request('sort') == 'asc' ? 'selected' : '' }}>Sort Ascending</option>
                     <option value="desc" {{ request('sort') == 'desc' ? 'selected' : '' }}>Sort Descending</option>
-                </select>
-            </div>
+                </select> -->
+</div>
 
-            <br/>
+<br />
 
-            <div class="mb-3">
+<!-- <div class="mb-3">
                 <input type="text" id="searchInput" class="form-control"
                     placeholder="Search by Name, Email, Company Name, or Counsellor Name">
-            </div>
+            </div> -->
 
-            <div class="table-responsive">
-                <table class="table text-nowrap mb-0 align-middle">
-                    <thead class="text-dark fs-4">
-                        <tr>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Sr. No</h6>
-                            </th>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Name</h6>
-                            </th>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Company Name</h6>
-                            </th>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Email</h6>
-                            </th>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Counsellor Name</h6>
-                            </th>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Session Date</h6>
-                            </th>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Session Type</h6>
-                            </th>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Max Session</h6>
-                            </th>
-                            {{-- <th class="border-bottom-0">
+<div class="table-responsive">
+    <table class="table text-nowrap mb-0 align-middle" id="Yajra-dataTable">
+        <thead class="text-dark fs-4">
+            <tr>
+                <th class="border-bottom-0">
+                    <h6 class="fw-semibold mb-0">ID</h6>
+                </th>
+                <th class="border-bottom-0">
+                    <h6 class="fw-semibold mb-0">Name</h6>
+                </th>
+                <th class="border-bottom-0">
+                    <h6 class="fw-semibold mb-0">Company Name</h6>
+                </th>
+                <th class="border-bottom-0">
+                    <h6 class="fw-semibold mb-0">Email</h6>
+                </th>
+                <th class="border-bottom-0">
+                    <h6 class="fw-semibold mb-0">Counsellor Name</h6>
+                </th>
+                <th class="border-bottom-0">
+                    <h6 class="fw-semibold mb-0">Session Date</h6>
+                </th>
+                <th class="border-bottom-0">
+                    <h6 class="fw-semibold mb-0">Session Type</h6>
+                </th>
+                <th class="border-bottom-0">
+                    <h6 class="fw-semibold mb-0">Max Session</h6>
+                </th>
+                {{-- <th class="border-bottom-0">
                                 <h6 class="fw-semibold mb-0">Actions</h6>
                             </th> --}}
-                        </tr>
-                    </thead>
-                    <tbody id="customersTable">
-                        @php($count = 0)
-                        @foreach ($CounselorSession as $data)
-                            @php($count++)
-                            <tr class="customer-row">
-                                <td class="border-bottom-0">
-                                    <h6 class="fw-normal mb-0">{{ $count }}</h6>
-                                </td>
-                                <td class="border-bottom-0 customer-name">
-                                    <h6 class="fw-semibold mb-1">{{ $data->name }}</h6>
-                                </td>
-                                <td class="border-bottom-0 customer-company">
-                                    <h6 class="fw-semibold mb-1">{{ $data->company_name }}</h6>
-                                </td>
-                                <td class="border-bottom-0 customer-email">
-                                    <h6 class="fw-semibold mb-1">{{ $data->email }}</h6>
-                                </td>
-                                <td class="border-bottom-0 customer-counsellor">
-                                    <h6 class="fw-semibold mb-1">{{ $data->counselor->name ?? '' }}</h6>
-                                </td>
-                                <td class="border-bottom-0">
-                                    <p class="mb-0 fw-normal">{{ $data->session_date }}</p>
-                                </td>
-                                <td class="border-bottom-0">
-                                    <p class="mb-0 fw-normal">{{ $data->session_type }}</p>
-                                </td>
-                                <td class="border-bottom-0">
-                                    <p class="mb-0 fw-normal">{{ $data->max_session ?? 0 }}</p>
-                                </td>
-                              
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+            </tr>
+        </thead>
+    </table>
+</div>
 
-    <div class="modal fade" id="addSessionModal" tabindex="-1" aria-labelledby="addSessionModalLabel" aria-hidden="true">
+<div class="modal fade" id="addSessionModal" tabindex="-1" aria-labelledby="addSessionModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -198,16 +172,16 @@
                     @csrf
                     <input type="hidden" name="customerId" id="customerId">
                     <input type="hidden" name="programId" id="programId">
-                     <input type="hidden" name="counselor_id" id="couselorId" value="">
+                    <input type="hidden" name="counselor_id" id="couselorId" value="">
                     <input type="hidden" name="slot_id" id="slotId">
-                   
+
                     <input type="hidden" name="type" value="upcomingSession">
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="sessionDate" class="form-label">Date</label>
                             <input type="date" class="form-control" name="sessionDate" placeholder="Enter date" required>
-                          </div>
+                        </div>
 
                         <div class="col-md-6 mb-3">
                             <label for="sessionType" class="form-label">Session Type</label>
@@ -306,7 +280,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-               <p>Need to discuss</p>
+                <p>Need to discuss</p>
             </div>
         </div>
     </div>
@@ -315,87 +289,89 @@
 @endsection
 
 @section('js')
-    <script>
-        document.getElementById('sortSessions').addEventListener('change', function () {
-            let sortOrder = this.value;
-            let currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('sort', sortOrder); // Update the sort parameter
-            window.location.href = currentUrl.toString(); // Reload the page with the new URL
+@include('mw-1.admin.counsellor.session-datatable')
+<script>
+    // document.getElementById('sortSessions').addEventListener('change', function () {
+    //     let sortOrder = this.value;
+    //     let currentUrl = new URL(window.location.href);
+    //     currentUrl.searchParams.set('sort', sortOrder); // Update the sort parameter
+    //     window.location.href = currentUrl.toString(); // Reload the page with the new URL
+    // });
+    // document.getElementById('searchInput').addEventListener('input', function () {
+    //     const searchValue = this.value.toLowerCase();
+    //     const rows = document.querySelectorAll('#customersTable .customer-row');
+
+    //     rows.forEach(row => {
+    //         const name = row.querySelector('.customer-name')?.innerText.toLowerCase() || '';
+    //         const company = row.querySelector('.customer-company')?.innerText.toLowerCase() || '';
+    //         const email = row.querySelector('.customer-email')?.innerText.toLowerCase() || '';
+    //         const counsellor = row.querySelector('.customer-counsellor')?.innerText.toLowerCase() || '';
+
+    //         if (
+    //             name.includes(searchValue) ||
+    //             company.includes(searchValue) ||
+    //             email.includes(searchValue) ||
+    //             counsellor.includes(searchValue)
+    //         ) {
+    //             row.style.display = '';
+    //         } else {
+    //             row.style.display = 'none';
+    //         }
+    //     });
+    // });
+</script>
+<script>
+    $(document).ready(function() {
+        // Listen for modal show event
+        $('#addSessionModal').on('show.bs.modal', function(event) {
+            // Get the button that triggered the modal
+            var button = $(event.relatedTarget);
+
+            // Extract data from the button's data attributes
+            var customerId = button.data('id');
+            var counselorName = button.data('name');
+            var programId = button.data('program_id');
+            var customerName = button.data('customer_name');
+            var slotId = button.data('slot_id');
+            var couselorId = button.data('couselor_id');
+
+
+            // Populate the modal fields
+            $('#counselorName').val(counselorName);
+            $('#programId').val(programId);
+            $('#customerName').val(customerName);
+            $('#slotId').val(slotId);
+            $('#couselorId').val(couselorId);
+
         });
-        document.getElementById('searchInput').addEventListener('input', function () {
-            const searchValue = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#customersTable .customer-row');
+    });
 
-            rows.forEach(row => {
-                const name = row.querySelector('.customer-name')?.innerText.toLowerCase() || '';
-                const company = row.querySelector('.customer-company')?.innerText.toLowerCase() || '';
-                const email = row.querySelector('.customer-email')?.innerText.toLowerCase() || '';
-                const counsellor = row.querySelector('.customer-counsellor')?.innerText.toLowerCase() || '';
+    function toggleAdditionalReasons() {
+        const workRelatedCheckbox = document.getElementById('work_related');
+        const additionalReasons = document.getElementById('additionalReasons');
 
-                if (
-                    name.includes(searchValue) ||
-                    company.includes(searchValue) ||
-                    email.includes(searchValue) ||
-                    counsellor.includes(searchValue)
-                ) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
-    </script>
-    <script>
-  $(document).ready(function() {
-   // Listen for modal show event
-   $('#addSessionModal').on('show.bs.modal', function(event) {
-      // Get the button that triggered the modal
-      var button = $(event.relatedTarget);
-
-      // Extract data from the button's data attributes
-      var customerId = button.data('id');
-      var counselorName = button.data('name');
-      var programId = button.data('program_id');
-      var customerName = button.data('customer_name');
-      var slotId = button.data('slot_id');
-      var couselorId = button.data('couselor_id');
-      
-
-      // Populate the modal fields
-      $('#counselorName').val(counselorName);
-      $('#programId').val(programId);
-      $('#customerName').val(customerName);
-      $('#slotId').val(slotId);
-      $('#couselorId').val(couselorId);
-      
-   });
-});
-function toggleAdditionalReasons() {
-            const workRelatedCheckbox = document.getElementById('work_related');
-            const additionalReasons = document.getElementById('additionalReasons');
-
-            if (workRelatedCheckbox.checked) {
-                additionalReasons.style.display = 'block';
-            } else {
-                additionalReasons.style.display = 'none';
-                const checkboxes = additionalReasons.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(checkbox => checkbox.checked = false);
-                const otherInput = document.getElementById('other_reason');
-                otherInput.style.display = 'none';
-                otherInput.value = '';
-            }
-        }
-
-        function toggleOtherInput() {
-            const otherCheckbox = document.getElementById('other');
+        if (workRelatedCheckbox.checked) {
+            additionalReasons.style.display = 'block';
+        } else {
+            additionalReasons.style.display = 'none';
+            const checkboxes = additionalReasons.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => checkbox.checked = false);
             const otherInput = document.getElementById('other_reason');
-
-            if (otherCheckbox.checked) {
-                otherInput.style.display = 'block';
-            } else {
-                otherInput.style.display = 'none';
-                otherInput.value = '';
-            }
+            otherInput.style.display = 'none';
+            otherInput.value = '';
         }
+    }
+
+    function toggleOtherInput() {
+        const otherCheckbox = document.getElementById('other');
+        const otherInput = document.getElementById('other_reason');
+
+        if (otherCheckbox.checked) {
+            otherInput.style.display = 'block';
+        } else {
+            otherInput.style.display = 'none';
+            otherInput.value = '';
+        }
+    }
 </script>
 @endsection

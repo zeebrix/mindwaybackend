@@ -16,6 +16,13 @@
 <!-- Add this to your Blade layout -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
 
+<style>
+    #Yajra-dataTable tbody tr {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Light gray lines */
+        height: 70px; /* Increases row height */
+    }
+</style>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 <!-- Add this to your Blade layout -->
 <style>
   .sidebar-nav ul .sidebar-item.selected>.sidebar-link, .sidebar-nav ul .sidebar-item.selected>.sidebar-link.active, .sidebar-nav ul .sidebar-item>.sidebar-link.active
@@ -112,6 +119,7 @@
   {{-- <script src="{{ asset('mw-1/assets/libs/apexcharts/dist/apexcharts.min.js') }}"></script> --}}
   <script src="{{ asset('mw-1/assets/libs/simplebar/dist/simplebar.js') }}"></script>
   <script src="{{ asset('mw-1/assets/js/dashboard.js') }}"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
   <!-- Select2 JS -->
   <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>

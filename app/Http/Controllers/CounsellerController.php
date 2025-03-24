@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
 use PragmaRX\Google2FA\Google2FA;
+use Yajra\DataTables\Facades\DataTables;
 
 class CounsellerController extends Controller
 {
@@ -208,8 +209,9 @@ class CounsellerController extends Controller
             $query->where('start_time', '>', now()->subHours(24));
         })
         ->orderBy('created_at', 'desc')
-        ->get();
+        ->paginate(10);
         $timezone = $Counselor->timezone??'UTC';
+        // $timezone = 'Europe/London';
         return view('mw-1.counseller.dashboard', get_defined_vars());
 
     }
@@ -226,6 +228,104 @@ class CounsellerController extends Controller
         return view('mw-1.counseller.sessions.manage', get_defined_vars());
         return view('admin.session_dashboard_view')->with(['user_id' => $user_id]);
     }
+    
+    public function getCounsellerSesions(Request $request)
+    {
+    if ($request->ajax()) {
+        $searchText = $request->input('search.value'); // Get the search term from DataTables
+
+        $customers = CustomreBrevoData::query();
+
+        // Apply search filter if a search term is provided
+        if (!empty($searchText)) {
+            $customers->where(function ($query) use ($searchText) {
+                $query->where('name', 'like', '%' . $searchText . '%') // Search by name
+                      ->orWhere('email', 'like', '%' . $searchText . '%') // Search by email
+                      ->orWhere('company_name', 'like', '%' . $searchText . '%'); // Search by company name
+            });
+        }
+
+        return DataTables::of($customers)
+            ->addColumn('count', function ($customer) use (&$count) {
+                // Add row number (count)
+                return '<h6 class="fw-normal mb-0">' . ++$count . '</h6>';
+            })
+            ->addColumn('name_email', function ($customer) {
+                // Combine name and email into a single column
+                return '
+                    <h6 class="fw-semibold mb-1"><b>' . $customer->name . '</b></h6>
+                    <p class="mb-0 fw-semibold">' . $customer->email . '</p>';
+            })
+            ->addColumn('company_name', function ($customer) {
+                // Display company name
+                return '<h6 class="mb-0 fw-bold"><b>' . $customer->company_name . '</b></h6>';
+            })
+            ->addColumn('max_session', function ($customer) {
+                // Display max session count
+                return '<h6 class="mb-0 fw-semibold"><b>' . $customer->max_session . '</b></h6>';
+            })
+            ->addColumn('action', function ($customer) {
+                // Add the "Log" button with data attributes
+                return '
+                    <button type="button" class="btn btn-primary add-session-btn mindway-btn" 
+                        style="background-color: #688EDC !important; color: #F7F7F7 !important" 
+                        data-bs-toggle="modal" data-bs-target="#addSessionModal" 
+                        data-id="' . $customer->id . '" 
+                        data-name="' . $customer->company_name . '" 
+                        data-program_id="' . $customer->program_id . '" 
+                        data-customer_name="' . $customer->name . '">
+                        Log
+                    </button>';
+            })
+            ->rawColumns(['count', 'name_email', 'company_name', 'max_session', 'action']) // Ensure HTML is rendered
+            ->make(true);
+    }
+}
+
+
+// public function getCounsellerSesions(Request $request)
+// {
+//     if ($request->ajax()) {
+//         $customers = CustomreBrevoData::query(); // Fetches all columns
+
+//         return DataTables::of($customers)
+//             ->addColumn('count', function ($customer) use (&$count) {
+//                 // Add row number (count)
+//                 return '<h6 class="fw-normal mb-0">' . ++$count . '</h6>';
+//             })
+//             ->addColumn('name_email', function ($customer) {
+//                 // Combine name and email into a single column
+//                 return '
+//                     <h6 class="fw-semibold mb-1"><b>' . $customer->name . '</b></h6>
+//                     <p class="mb-0 fw-semibold">' . $customer->email . '</p>';
+//             })
+//             ->addColumn('company_name', function ($customer) {
+//                 // Display company name
+//                 return '<h6 class="mb-0 fw-bold"><b>' . $customer->company_name . '</b></h6>';
+//             })
+//             ->addColumn('max_session', function ($customer) {
+//                 // Display max session count
+//                 return '<h6 class="mb-0 fw-semibold"><b>' . $customer->max_session . '</b></h6>';
+//             })
+//             ->addColumn('action', function ($customer) {
+//                 // Add the "Log" button with data attributes
+//                 return '
+//                     <button type="button" class="btn btn-primary add-session-btn mindway-btn" 
+//                         style="background-color: #688EDC !important; color: #F7F7F7 !important" 
+//                         data-bs-toggle="modal" data-bs-target="#addSessionModal" 
+//                         data-id="' . $customer->id . '" 
+//                         data-name="' . $customer->company_name . '" 
+//                         data-program_id="' . $customer->program_id . '" 
+//                         data-customer_name="' . $customer->name . '">
+//                         Log
+//                     </button>';
+//             })
+//             ->rawColumns(['count', 'name_email', 'company_name', 'max_session', 'action']) // Ensure HTML is rendered
+//             ->make(true);
+//     }
+// }
+
+
     public function store(Request $request)
     {
         // Initialize the reason array
