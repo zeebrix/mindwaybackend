@@ -251,10 +251,7 @@ class CustomerService
                     'code' => 200,
                     'status' => 'Success',
                     'message' => 'Login successfully.',
-                    'data' => [
-                        'user' => $user,
-                        'bearer_token' => $token
-                    ]
+                    'data' => $user
                 ], 200);
             }
             \Auth::guard($guard)->login($user);
