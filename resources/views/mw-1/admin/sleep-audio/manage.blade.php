@@ -23,12 +23,10 @@
             @endif
 
             <div class="table-responsive">
-                <table class="table text-nowrap mb-0 align-middle">
+                <table class="table text-nowrap mb-0 align-middle" id="Yajra-dataTable">
                     <thead class="text-dark fs-4">
                         <tr>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Sr. No</h6>
-                            </th>
+
                             <th class="border-bottom-0">
                                 <h6 class="fw-semibold mb-0">Id</h6>
                             </th>
@@ -59,62 +57,7 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @php($count = 0)
-                        @foreach ($getSleepAudio as $data)
-                            @php($count++)
-                            <tr>
-                                <td class="border-bottom-0">
-                                    <h6 class="fw-normal mb-0">{{ $count }}</h6>
-                                </td>
-                                <td class="border-bottom-0">
-                                    <h6 class="fw-semibold mb-1">{{ $data->id }}</h6>
-                                    {{-- <span class="fw-normal">Web Designer</span> --}}
-                                </td>
-                                <td class="border-bottom-0">
-                                    <p class="mb-0 fw-normal">{{ $data->course_id }}</p>
-                                </td>
-
-                                <td class="border-bottom-0">
-                                    <p class="mb-0 fw-normal">{{ $data->duration }}</p>
-                                </td>
-
-                                <td class="border-bottom-0">
-                                    <p class="mb-0 fw-normal">{{ $data->total_play }}</p>
-                                </td>
-
-                                {{-- <td class="border-bottom-0">
-                                    <p class="mb-0 fw-normal">{{ $data->audio_title }}</p>
-                                </td> --}}
-
-                                <td class="border-bottom-0">
-                                    <audio controls="" style="vertical-align: middle"
-                                        src="{{ asset('storage/') }}/{{ $data->audio }}" type="audio/mp3"
-                                        controlslist="nodownload">
-                                    </audio>
-                                </td>
-
-                                <td class="border-bottom-0">
-                                    <p class="mb-0 fw-normal">{{ $data->created_at }}</p>
-                                </td>
-
-                                <td class="border-bottom-0">
-                                    <a href="{{ url('/manage-admin/edit-sleep-audio', ['id' => $data->id]) }}"
-                                        class="btn btn-success btn-sm btn-icon-text mr-3">
-                                        Edit
-                                        <i class="typcn typcn-edit btn-icon-append"></i>
-                                    </a>
-                                    <a href="{{ url('/manage-admin/delete-sleep-audio', ['id' => $data->id]) }}"
-                                        class="btn btn-danger btn-sm btn-icon-text">
-                                        Delete
-                                        <i class="typcn typcn-delete-outline btn-icon-append"></i>
-                                    </a>
-                                </td>
-
-                            </tr>
-                        @endforeach
-
-                    </tbody>
+                  
                 </table>
             </div>
         </div>
@@ -122,4 +65,8 @@
 
 
 
+@endsection
+
+@section('js')
+    @include('mw-1.admin.sleep-audio.datatable')
 @endsection

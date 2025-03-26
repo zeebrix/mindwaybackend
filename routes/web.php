@@ -93,6 +93,7 @@ Route::get('/counsellor-logout', [CounsellerController::class,'logout'])->name('
 Route::post('/sessions/store', [CounsellerController::class, 'store'])->name('session.store');
 Route::get('/counsellersesions', [CounsellerController::class,'index'])->name('counsellersesion.index');
 
+Route::get('/counsellersesions/data', [CounsellerController::class, 'getCounsellerSesions'])->name('admin.counsellersesions-data');
 Route::get('/counsellerhome', [CounsellerController::class,'counsellerhome'])->name('counseller.home');
 
 Route::get('/counselleravailability', [CounsellerController::class,'counsellerAvailability'])->name('counseller.availability');
@@ -135,6 +136,7 @@ Route::group(['prefix' => 'manage-admin', 'middleware' => ['auth']], function ()
   Route::post('/add-counselor',[AdminController::class,'Addcounselor']);
   Route::post('/save-counsellor-logo',[AdminController::class,'SaveCounselorLogo']);
     Route::get('/view-dashboard',[AdminController::class,'viewCustomer'])->name('admin.view-dashboard');
+    Route::get('/users/data', [AdminController::class, 'getUsers'])->name('admin.users-data');
     Route::get('/delete-customer/{id}',[AdminController::class,'deleteCustomer']);
     Route::put('/customer/update', [AdminController::class,'update'])->name('customer.update');
 
@@ -155,9 +157,11 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
 
     // Add course routes
     Route::get('/view-course',[AdminController::class,'viewCourse']);
+    Route::get('/viewCourse/data', [AdminController::class, 'getViewCourse'])->name('admin.viewcourse-data');
       Route::get('/add-audio',[AdminController::class,'addAudio']);
       Route::post('/insert-audio',[AdminController::class,'insertAudio']);
       Route::get('/view-audio',[AdminController::class,'viewAudio'])->name('view-audio');
+      Route::get('/view-audio/data', [AdminController::class, 'getViewAudio'])->name('admin.viewaudio-data');
     Route::get('/view-audio',[AdminController::class,'viewAudio']);
     Route::get('/add-course',[AdminController::class,'addCourse']);
     Route::post('/course-add',[AdminController::class,'courseAdd']);
@@ -174,6 +178,9 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::get('/counsellor',[AdminController::class,'counsellorDisp']);
     Route::get('/counsellor-manage/{id}',[AdminController::class,'counsellorManage']);
     Route::get('/counsellor-availability/{id}',[AdminController::class,'counsellorAvailability']);
+
+    Route::get('/counsellor-session/data', [AdminController::class, 'counsellorSession'])->name('admin.counsellor-session');
+    Route::get('/counsellor/data', [AdminController::class, 'getCounsellor'])->name('admin.counsellor-data');
     Route::get('/counseller-session-cancel', [AdminController::class,'counsellerCancelSession'])->name('session.cancel');
     Route::post('/counseller-session-rebook', [AdminController::class,'counsellerRebbokSession'])->name('session.rebook');
     Route::get('/counsellor-profile/{id}',[AdminController::class,'counsellorProfile'])->name('admin.counsellor.profile');
@@ -183,9 +190,13 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::get('/add-sos-audio',[AdminController::class,'addSosAudio']);
     Route::post('/sos-audio-add',[AdminController::class,'audioSosAdd']);
     Route::get('/view-sos-audio',[AdminController::class,'viewSosAudio']);
+    Route::get('/view-sos-audio/data', [AdminController::class, 'getViewSosAudio'])->name('admin.viewsosaudio-data');
+
     Route::get('/delete-sos-audio/{id}',[AdminController::class,'deleteSosAudio']);
     Route::get('/view-sleep-course',[AdminController::class,'viewSleepCourse']);
+    Route::get('/view-sleep-course/data', [AdminController::class, 'getViewSleepCourse'])->name('admin.viewsleepcourse-data');
     Route::get('/view-sleep-audio',[AdminController::class,'viewSleepAudio']);
+    Route::get('/view-sleep-audio/data', [AdminController::class, 'getViewSleepAudio'])->name('admin.viewsleepaudio-data');
     Route::get('/edit-sleep-audio/{id}',[AdminController::class,'editSleepAudio']);
     Route::get('/add-sleep-course',[AdminController::class,'addSleepCourse']);
     Route::post('/sleep-course-add',[AdminController::class,'sleepCourseAdd']);
@@ -200,6 +211,9 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::post('/logout',[AdminController::class,'logout'])->name('logoutadmin');
     // Account links
     Route::get('/view-links',[AdminController::class,'viewLinks']);
+
+    Route::get('/view-links/data', [AdminController::class, 'getViewLinks'])->name('admin.viewlinks-data');
+
     Route::get('/add-links',[AdminController::class,'addLinks']);
     Route::post('/links-add',[AdminController::class,'linksAdd']);
       Route::get('/edit-links/{id}',[AdminController::class,'editLinks']);
@@ -207,6 +221,9 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::get('/delete-links/{id}',[AdminController::class,'deleteLinks']);
     // category route
     Route::get('/view-category',[AdminController::class,'viewCategory']);
+
+    Route::get('/view-category/data', [AdminController::class, 'getViewCategory'])->name('admin.viewcategory-data');
+
     Route::get('/add-category',[AdminController::class,'addCategory']);
     Route::post('/category-add',[AdminController::class,'categoryAdd']);
     Route::get('/edit-category/{id}',[AdminController::class,'editCategory']);
@@ -215,6 +232,8 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
 
       // home screen route
     Route::get('/view-home',[AdminController::class,'viewHome'])->name('view-home');
+    Route::get('/viewhome/data', [AdminController::class, 'getViewHome'])->name('admin.viewhome-data');
+
     Route::get('/add-home',[AdminController::class,'addHome']);
     Route::post('/home-add',[AdminController::class,'homeAdd']);
     Route::get('/edit-home/{id}',[AdminController::class,'editHome']);
@@ -224,6 +243,8 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
           // emoji route
 
     Route::get('/view-emoji',[AdminController::class,'viewEmoji']);
+    Route::get('/view-emoji/data', [AdminController::class, 'getViewEmoji'])->name('admin.viewemoji-data');
+
     Route::get('/add-emoji',[AdminController::class,'addEmoji']);
     Route::post('/emoji-add',[AdminController::class,'emojiAdd']);
     Route::get('/delete-emoji/{id}',[AdminController::class,'deleteEmoji']);
@@ -232,6 +253,7 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
 
       // music routes
     Route::get('/view-music',[AdminController::class,'viewMusic']);
+    Route::get('/view-music/data', [AdminController::class, 'getViewMusic'])->name('admin.viewmusic-data');
     Route::get('/add-music',[AdminController::class,'addMusic']);
     Route::post('/music-add',[AdminController::class,'musicAdd']);
     Route::get('/edit-music/{id}',[AdminController::class,'editMusic']);
@@ -244,12 +266,14 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::get('/add-sleep-screen',[AdminController::class,'addSleepScreen']);
     Route::post('/sleep-screen-add',[AdminController::class,'SleepScreenAdd']);
     Route::get('/view-sleep-screen',[AdminController::class,'viewSleepScreen']);
+    Route::get('/view-sleep-screen/data', [AdminController::class, 'getViewSleepScreen'])->name('admin.viewsleepscreen-data');
     Route::get('/delete-sleep-screen/{id}',[AdminController::class,'deleteSleepScreen']);
 
 
       //Home emoji route
 
       Route::get('/view-home-emoji',[AdminController::class,'viewHomeEmoji']);
+      Route::get('/view-home-emoji/data', [AdminController::class, 'getViewHomeEmoji'])->name('admin.viewhomeemoji-data');
       Route::get('/add-home-emoji',[AdminController::class,'addHomeEmoji']);
       Route::post('/home-emoji-add',[AdminController::class,'HomeEmojiAdd']);
       Route::get('/delete-home-emoji/{id}',[AdminController::class,'deleteHomeEmoji']);
@@ -258,6 +282,9 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
 
       // single course route
     Route::get('/view-single-course',[AdminController::class,'viewSingleCourse']);
+
+    Route::get('/view-single-course/data', [AdminController::class, 'getViewSingleCourse'])->name('admin.viewsinglecourse-data');
+
     Route::get('/add-single-course',[AdminController::class,'addSingleCourse']);
     Route::post('/single-course-add',[AdminController::class,'singleCourseAdd']);
     Route::get('/edit-single-course/{id}',[AdminController::class,'editSingleCourse']);
@@ -268,6 +295,9 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::post('/save-data-in-bulk',[AdminController::class,'saveDataEmployeeInBulk'])->name('saveDataEmployeeInBulk');
 
     Route::get('/view-quote',[AdminController::class,'viewQuote']);
+
+    Route::get('/view-quote/data', [AdminController::class, 'getViewQuote'])->name('admin.viewquote-data');
+
     Route::get('/add-quote',[AdminController::class,'addQuote']);
     Route::post('/quote-add',[AdminController::class,'quoteAdd']);
     Route::get('/edit-quote/{id}',[AdminController::class,'editQuote']);
@@ -277,8 +307,10 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::get('/view-programs',[AdminController::class,'viewPrograms']);
     Route::get('/view-session',[AdminController::class,'viewsession']);
     Route::get('/reset-session',[AdminController::class,'resetSession'])->name('admin.program-reset-max-session');
+    Route::get('/programs/data', [AdminController::class, 'getPrograms'])->name('admin.programs-data');
     Route::get('/add-program/{type?}',[AdminController::class,'addProgram'])->name('admin.program.add');
     Route::post('/store-program',[AdminController::class,'storeProgram']);
+    Route::get('/programs-employees/data', [AdminController::class, 'programEmployees'])->name('admin.programs-employees-data');
     Route::get('/program/{id}',[AdminController::class,'SingleProgram']);
     Route::get('/deactive-program/{id}/{convertTo}',[AdminController::class,'DeactiveProgram']);
     Route::post('/update-program/{id}',[AdminController::class,'updateProgram']);

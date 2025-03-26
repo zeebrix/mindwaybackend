@@ -40,31 +40,15 @@
         @endif
 
         <div class="table-responsive">
-            <table class="table text-nowrap mb-0 align-middle">
+            <table class="table text-nowrap mb-0 align-middle" id="Yajra-dataTable">
                 <thead class="text-dark fs-4">
                     <tr>
-                        <th class="border-bottom-0">Sr. No</th>
+                        <!-- <th class="border-bottom-0">Sr. No</th> -->
                         <th class="border-bottom-0">Name</th>
                         <th class="border-bottom-0">Email</th>
                         <th class="border-bottom-0">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @php($count = 0)
-                    @foreach ($counsellors as $data)
-                    @php($count++)
-                    <tr>
-                        <td>{{ $count }}</td>
-                        <td>{{ $data->name }}</td>
-                        <td>{{ $data->email }}</td>
-                        <td>
-                            <a href="{{ url('/manage-admin/counsellor-manage', ['id' => $data->id]) }}" class="btn btn-success btn-sm mindway-btn-blue">Manage</a>
-                            <a href="{{ url('/manage-admin/counsellor-availability', ['id' => $data->id]) }}" class="btn btn-secondary btn-sm btn-sm mindway-btn-blue">Availability</a>
-                            <a href="{{ url('/manage-admin/counsellor-profile', ['id' => $data->id]) }}" class="btn btn-primary btn-sm btn-sm mindway-btn-blue">Profile</a>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
             </table>
         </div>
     </div>
@@ -215,4 +199,5 @@
         });
     });
 </script>
+    @include('mw-1.admin.counsellor.datatable')
 @endsection

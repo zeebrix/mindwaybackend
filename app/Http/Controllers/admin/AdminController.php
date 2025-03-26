@@ -54,6 +54,7 @@ use App\Models\ProgramDepartment;
 use App\Services\BrevoService;
 use SendinBlue\Client\Model\RemoveContactFromList;
 use SendinBlue\Client\ApiException;
+use Yajra\DataTables\Facades\DataTables;
 
 class AdminController extends Controller
 {
@@ -196,44 +197,63 @@ class AdminController extends Controller
 
     public function viewCustomer(Request $request)
     {
+
+        // Get all programs with their associated customers
+        // $Program = Program::with('customers')->get();
+        // // Initialize an empty array to store customer records
+        // $customerData = [];
+
+        // // Iterate over each program and its associated customers
+        // foreach ($Program as $program) {
+        //     // Access associated Customers for each Program
+        //     foreach ($program->customers as $customer) {
+        //         // Access Customer attributes
+        //         $customerId = $customer->id;
+        //         $customerName = $customer->name;
+        //         $customerEmail = $customer->email;
+
+        //         // Add the customer data to the array
+        //         $customerData[] = [
+        //             'id' => $customerId,
+        //             'name' => $customerName,
+        //             'email' => $customerEmail,
+        //         ];
+        //     }
+        // }
+        // $customers = Customer::where('add_manage_staff', 1)->get();
+        // $totalCount = count($customerData);
+        // $customerPercentage = $totalCount  / 100;
+        // $totalCustomers = Customer::count();
+
         // Get all customers
         $getCustomer = Customer::get();
 
-        // Get all programs with their associated customers
-        $Program = Program::with('customers')->get();
-
-
-
-        // Initialize an empty array to store customer records
-        $customerData = [];
-
-        // Iterate over each program and its associated customers
-        foreach ($Program as $program) {
-            // Access associated Customers for each Program
-            foreach ($program->customers as $customer) {
-                // Access Customer attributes
-                $customerId = $customer->id;
-                $customerName = $customer->name;
-                $customerEmail = $customer->email;
-
-                // Add the customer data to the array
-                $customerData[] = [
-                    'id' => $customerId,
-                    'name' => $customerName,
-                    'email' => $customerEmail,
-                ];
-            }
-        }
-        $customers = Customer::where('add_manage_staff', 1)->get();
-        $totalCount = count($customerData);
-        $customerPercentage = $totalCount  / 100;
-        $totalCustomers = Customer::count();
 
         return view('mw-1.admin.user.manage', get_defined_vars());
         // Pass the customer data array to the view
         return view('admin.customer', compact('getCustomer', 'customerData', 'customers', 'totalCustomers', 'customerPercentage'));
         // dd($customerData);
     }
+
+    public function getUsers(Request $request)
+    {
+        if ($request->ajax()) {
+            $users = Customer::query(); // Fetches all columns
+            return DataTables::of($users)
+            ->editColumn('improve', function ($user) {
+                return $user->improve ??'Not selected';
+            })
+            ->editColumn('goal_id', function ($user) {
+                return $user->improve ??'Not Added';
+            })
+            ->addColumn('action', function ($user) {
+                    return '<a href="'. url('/manage-admin/delete-customer', ['id' => $user->id]).'" class="btn btn-sm btn-danger">Delete</a>';
+                })
+            ->rawColumns(['action'])
+            ->make(true);
+        }
+    }
+
 
 
     public function deleteCustomer($id)
@@ -255,11 +275,65 @@ class AdminController extends Controller
         // return view('admin.view-course',compact('viewCourse'));
     }
 
+    public function getViewCourse(Request $request)
+{
+    if ($request->ajax()) {
+        $courses = SessionUpload::query(); // Fetches all columns
+
+        return DataTables::of($courses)
+            ->editColumn('course_thumbnail', function ($course) {
+                return '<img height="50px" width="50px" src="' . asset('storage/course/' . $course->course_thumbnail) . '" alt="">';
+            })
+            ->editColumn('course_description', function ($course) {
+                return \Illuminate\Support\Str::words($course->course_description, 5, '...');
+            })
+            ->addColumn('action', function ($course) {
+                return '
+                    <a href="' . url('/manage-admin/edit-course', ['id' => $course->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                        Edit
+                        <i class="typcn typcn-edit btn-icon-append"></i>
+                    </a>
+                    <a href="' . url('/manage-admin/delete-course', ['id' => $course->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                        Delete
+                        <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                    </a>';
+            })
+            ->rawColumns(['course_thumbnail', 'action'])
+            ->make(true);
+    }
+}
+
     public function viewAudio()
     {
         $getAudio = SessionAudio::get();
         return view('mw-1.admin.course-audio.manage', get_defined_vars());
     }
+
+    public function getViewAudio(Request $request)
+{
+    if ($request->ajax()) {
+        $audios = SessionAudio::query(); // Fetches all columns
+
+        return DataTables::of($audios)
+            ->editColumn('audio', function ($audio) {
+                return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $audio->audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
+            })
+            ->addColumn('action', function ($audio) {
+                return '
+                    <a href="' . url('/manage-admin/edit-audio', ['id' => $audio->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                        Edit
+                        <i class="typcn typcn-edit btn-icon-append"></i>
+                    </a>
+                    <a href="' . url('/manage-admin/delete-audio', ['id' => $audio->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                        Delete
+                        <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                    </a>';
+            })
+            ->rawColumns(['audio', 'action'])
+            ->make(true);
+    }
+}
+
 
     public function courseAdd(Request $request)
     {
@@ -462,6 +536,37 @@ class AdminController extends Controller
         return view('admin.view-sleep-course', compact('viewSleepCourse'));
     }
 
+    public function getViewSleepCourse(Request $request)
+{
+    if ($request->ajax()) {
+        $sleepCourses = CategoryCourse::query(); // Fetches all columns
+
+        return DataTables::of($sleepCourses)
+            ->editColumn('thumbnail', function ($sleepCourse) {
+                return '<img height="50px" width="50px" src="' . asset('storage/course/' . $sleepCourse->thumbnail) . '" alt="">';
+            })
+            ->editColumn('description', function ($sleepCourse) {
+                // Truncate description to 50 characters and append '...' if longer
+                return \Illuminate\Support\Str::limit($sleepCourse->description, 50, '...');
+            })
+            ->addColumn('action', function ($sleepCourse) {
+                return '
+                    <a href="' . url('/manage-admin/edit-sleep-course', ['id' => $sleepCourse->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                        Edit
+                        <i class="typcn typcn-edit btn-icon-append"></i>
+                    </a>
+                    <a href="' . url('/manage-admin/delete-sleep-course', ['id' => $sleepCourse->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                        Delete
+                        <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                    </a>';
+            })
+            ->rawColumns(['thumbnail', 'description', 'action'])
+            ->make(true);
+    }
+}
+
+
+
     public function addSleepCourse()
     {
         $categoryList = \DB::table("categories")->where('deleted_at', null)->get();
@@ -565,6 +670,30 @@ class AdminController extends Controller
         return view('admin.view-sleep-audio', compact('getSleepAudio'));
     }
 
+    public function getViewSleepAudio(Request $request)
+    {
+        if ($request->ajax()) {
+            $sleepAudios = SleepAudio::query(); // Fetches all columns
+    
+            return DataTables::of($sleepAudios)
+                ->editColumn('audio', function ($sleepAudio) {
+                    return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $sleepAudio->audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
+                })
+                ->addColumn('action', function ($sleepAudio) {
+                    return '
+                        <a href="' . url('/manage-admin/edit-sleep-audio', ['id' => $sleepAudio->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                            Edit
+                            <i class="typcn typcn-edit btn-icon-append"></i>
+                        </a>
+                        <a href="' . url('/manage-admin/delete-sleep-audio', ['id' => $sleepAudio->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                            Delete
+                            <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                        </a>';
+                })
+                ->rawColumns(['audio', 'action'])
+                ->make(true);
+        }
+    }
     public function addSleepAudio()
     {
         $courseList = DB::table("category_courses")->where('deleted_at', null)->get();
@@ -645,6 +774,29 @@ class AdminController extends Controller
         return view('admin.view-category', compact('getCategory'));
     }
 
+    public function getViewCategory(Request $request)
+    {
+        if ($request->ajax()) {
+            $categories = Category::query(); // Fetches all columns
+    
+            return DataTables::of($categories)
+                ->addColumn('action', function ($category) {
+                    return '
+                        <a href="' . url('/manage-admin/edit-category', ['id' => $category->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                            Edit
+                            <i class="typcn typcn-edit btn-icon-append"></i>
+                        </a>
+                        <a href="' . url('/manage-admin/delete-category', ['id' => $category->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                            Delete
+                            <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                        </a>';
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+    }
+
+
     public function addCategory()
     {
         return view('mw-1.admin.courses-category.add');
@@ -691,6 +843,32 @@ class AdminController extends Controller
 
         return view('admin.view-links', compact('getLinks'));
     }
+
+    public function getViewLinks(Request $request)
+    {
+        if ($request->ajax()) {
+            $links = Link::query(); // Fetches all columns
+    
+            return DataTables::of($links)
+                ->editColumn('icon', function ($link) {
+                    return '<img height="50px" width="50px" src="' . asset('storage/links/' . $link->icon) . '" alt="No image upload">';
+                })
+                ->addColumn('action', function ($link) {
+                    return '
+                        <a href="' . url('/manage-admin/edit-links', ['id' => $link->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                            Edit
+                            <i class="typcn typcn-edit btn-icon-append"></i>
+                        </a>
+                        <a href="' . url('/manage-admin/delete-links', ['id' => $link->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                            Delete
+                            <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                        </a>';
+                })
+                ->rawColumns(['icon', 'action'])
+                ->make(true);
+        }
+    }
+
     public function addLinks(Request $request)
     {
         return view('mw-1.admin.account-links.add');
@@ -762,6 +940,33 @@ class AdminController extends Controller
         return view('admin.view-home', compact('view'));
     }
 
+    public function getViewHome(Request $request)
+    {
+    if ($request->ajax()) {
+        $homes = HomeScreen::query(); // Fetches all columns
+
+        return DataTables::of($homes)
+            ->editColumn('image', function ($home) {
+                return '<img height="50px" width="50px" src="' . asset('storage/homescreen/' . $home->image) . '" alt="">';
+            })
+            ->editColumn('home_audio', function ($home) {
+                return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $home->home_audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
+            })
+            ->addColumn('action', function ($home) {
+                return '
+                    <a href="' . url('/manage-admin/edit-home', ['id' => $home->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                        Edit
+                        <i class="typcn typcn-edit btn-icon-append"></i>
+                    </a>
+                    <a href="' . url('/manage-admin/delete-home', ['id' => $home->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                        Delete
+                        <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                    </a>';
+            })
+            ->rawColumns(['image', 'home_audio', 'action'])
+            ->make(true);
+    }
+}
     public function addHome()
     {
         return view('mw-1.admin.home-screen.add');
@@ -854,6 +1059,31 @@ class AdminController extends Controller
         return view('admin.view-emoji', compact('getEmoji'));
     }
 
+    public function getViewEmoji(Request $request)
+    {
+        if ($request->ajax()) {
+            $emojis = EmojiAdd::query(); // Fetches all columns
+    
+            return DataTables::of($emojis)
+                ->editColumn('emoji', function ($emoji) {
+                    return '<img height="50px" width="50px" src="' . asset('storage/emoji/' . $emoji->emoji) . '" alt="emoji image">';
+                })
+                ->addColumn('action', function ($emoji) {
+                    return '
+                        <a href="' . url('/manage-admin/edit-emoji', ['id' => $emoji->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                            Edit
+                            <i class="typcn typcn-edit btn-icon-append"></i>
+                        </a>
+                        <a href="' . url('/manage-admin/delete-emoji', ['id' => $emoji->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                            Delete
+                            <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                        </a>';
+                })
+                ->rawColumns(['emoji', 'action'])
+                ->make(true);
+        }
+    }
+
     public function addEmoji()
     {
         return view('mw-1.admin.emoji.add');
@@ -931,6 +1161,36 @@ class AdminController extends Controller
         return view('admin.view-music', compact('view'));
     }
 
+    public function getViewMusic(Request $request)
+    {
+        if ($request->ajax()) {
+            $music = Music::query(); // Fetches all columns
+            return DataTables::of($music)
+                ->editColumn('image', function ($music) {
+                    return '<img height="50px" width="50px" src="' . asset('storage/music/' . $music->image) . '" alt="">';
+                })
+                ->editColumn('music_audio', function ($music) {
+                    return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $music->music_audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
+                })
+                ->editColumn('subtitle', function ($music) {
+                    // Truncate subtitle to 50 characters and append '...' if longer
+                    return \Illuminate\Support\Str::limit($music->subtitle, 50, '...');
+                })
+                ->addColumn('action', function ($music) {
+                    return '
+                        <a href="' . url('/manage-admin/edit-music', ['id' => $music->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                            Edit
+                            <i class="typcn typcn-edit btn-icon-append"></i>
+                        </a>
+                        <a href="' . url('/manage-admin/delete-music', ['id' => $music->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                            Delete
+                            <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                        </a>';
+                })
+                ->rawColumns(['image', 'music_audio', 'subtitle', 'action'])
+                ->make(true);
+        }
+    }
     public function addMusic()
     {
         return view('mw-1.admin.music.add');
@@ -1022,6 +1282,30 @@ class AdminController extends Controller
         return view('mw-1.admin.sos-audio.manage', get_defined_vars());
         return view('admin.view-sos-audio', compact('getAudio'));
     }
+    
+
+    public function getViewSosAudio(Request $request)
+    {
+        if ($request->ajax()) {
+            $sosAudios = SosAudio::query(); // Fetches all columns
+    
+            return DataTables::of($sosAudios)
+                ->editColumn('sos_audio', function ($sosAudio) {
+                    return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $sosAudio->sos_audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
+                })
+                ->addColumn('action', function ($sosAudio) {
+                    return '
+                        <a href="' . url('/manage-admin/delete-sos-audio', ['id' => $sosAudio->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                            Delete
+                            <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                        </a>';
+                })
+                ->rawColumns(['sos_audio', 'action'])
+                ->make(true);
+        }
+    }
+
+
     public function addSosAudio()
     {
         $sessionList = DB::table("session_uploads")->where('deleted_at', null)->get();
@@ -1063,6 +1347,31 @@ class AdminController extends Controller
         return view('mw-1.admin.home-emoji.manage', get_defined_vars());
 
         return view('admin.view-home-emoji', compact('getEmoji'));
+    }
+
+    public function getViewHomeEmoji(Request $request)
+    {
+        if ($request->ajax()) {
+            $homeEmojis = HomeEmoji::query(); // Fetches all columns
+    
+            return DataTables::of($homeEmojis)
+                ->editColumn('home_emoji', function ($homeEmoji) {
+                    return '<img height="50px" width="50px" src="' . asset('storage/homeEmoji/' . $homeEmoji->home_emoji) . '" alt="emoji image">';
+                })
+                ->addColumn('action', function ($homeEmoji) {
+                    return '
+                        <a href="' . url('/manage-admin/edit-home-emoji', ['id' => $homeEmoji->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                            Edit
+                            <i class="typcn typcn-edit btn-icon-append"></i>
+                        </a>
+                        <a href="' . url('/manage-admin/delete-home-emoji', ['id' => $homeEmoji->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                            Delete
+                            <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                        </a>';
+                })
+                ->rawColumns(['home_emoji', 'action'])
+                ->make(true);
+        }
     }
 
     public function addHomeEmoji()
@@ -1135,6 +1444,38 @@ class AdminController extends Controller
         return view('mw-1.admin.single-course.manage', get_defined_vars());
 
         return view('admin.view-single-course', compact('view'));
+    }
+
+    public function getViewSingleCourse(Request $request)
+    {
+        if ($request->ajax()) {
+            $singleCourses = SingleCourse::query(); // Fetches all columns
+    
+            return DataTables::of($singleCourses)
+                ->editColumn('image', function ($singleCourse) {
+                    return '<img height="50px" width="50px" src="' . asset('storage/SingleCourse/' . $singleCourse->image) . '" alt="">';
+                })
+                ->editColumn('single_audio', function ($singleCourse) {
+                    return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $singleCourse->single_audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
+                })
+                ->editColumn('subtitle', function ($singleCourse) {
+                    // Truncate subtitle to 50 characters and append '...' if longer
+                    return \Illuminate\Support\Str::limit($singleCourse->subtitle, 50, '...');
+                })
+                ->addColumn('action', function ($singleCourse) {
+                    return '
+                        <a href="' . url('/manage-admin/edit-single-course', ['id' => $singleCourse->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                            Edit
+                            <i class="typcn typcn-edit btn-icon-append"></i>
+                        </a>
+                        <a href="' . url('/manage-admin/delete-single-course', ['id' => $singleCourse->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                            Delete
+                            <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                        </a>';
+                })
+                ->rawColumns(['image', 'single_audio', 'subtitle', 'action'])
+                ->make(true);
+        }
     }
 
     public function addSingleCourse()
@@ -1235,6 +1576,28 @@ class AdminController extends Controller
         return view('mw-1.admin.sleep-screen.manage', get_defined_vars());
 
         return view('admin.view-sleep-screen', compact('getSleepScreen'));
+    }public function getViewSleepScreen(Request $request)
+    {
+        if ($request->ajax()) {
+            $sleepScreens = SleepScreen::query(); // Fetches all columns
+    
+            return DataTables::of($sleepScreens)
+                ->editColumn('image', function ($sleepScreen) {
+                    return '<img height="50px" width="50px" src="' . asset('storage/SleepScreen/' . $sleepScreen->image) . '" alt="no image">';
+                })
+                ->editColumn('sleep_audio', function ($sleepScreen) {
+                    return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $sleepScreen->sleep_audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
+                })
+                ->addColumn('action', function ($sleepScreen) {
+                    return '
+                        <a href="' . url('/manage-admin/delete-sleep-screen', ['id' => $sleepScreen->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                            Delete
+                            <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                        </a>';
+                })
+                ->rawColumns(['image', 'sleep_audio', 'action'])
+                ->make(true);
+        }
     }
     public function addSleepScreen()
     {
@@ -1288,6 +1651,29 @@ class AdminController extends Controller
 
         return view('admin.view-quote', compact('view'));
     }
+
+    public function getViewQuote(Request $request)
+{
+    if ($request->ajax()) {
+        $quotes = Quote::query(); // Fetches all columns
+
+        return DataTables::of($quotes)
+            ->addColumn('action', function ($quote) {
+                return '
+                    <a href="' . url('/manage-admin/edit-quote', ['id' => $quote->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
+                        Edit
+                        <i class="typcn typcn-edit btn-icon-append"></i>
+                    </a>
+                    <a href="' . url('/manage-admin/delete-quote', ['id' => $quote->id]) . '" class="btn btn-danger btn-sm btn-icon-text">
+                        Delete
+                        <i class="typcn typcn-delete-outline btn-icon-append"></i>
+                    </a>';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
+    }
+}
+
 
     public function editQuote($id)
     {
@@ -1349,6 +1735,41 @@ class AdminController extends Controller
 
         return view('admin.view-programs', compact('Programs'));
     }
+    
+    public function getPrograms(Request $request)
+    {
+        $status = 1;
+        if ($request->has('status') && $request->status !== 'all' && in_array($request->status, [0, 1, 2])) {
+            $status = $request->status;
+        }
+    
+        $programs = Program::with('programPlan'); // Ensure relation is loaded
+    
+        if ($status !== null) {
+            $programs->where('program_type', $status);
+        }
+    
+        return DataTables::of($programs)
+            ->editColumn('renewal_date', function ($program) {
+                return optional($program->programPlan)->renewal_date 
+                    ? $program->programPlan->renewal_date->format('m/d') 
+                    : '-';
+            })
+            ->addColumn('action', function ($program) {
+                return '
+                    <a href="' . url('/manage-admin/program', ['id' => $program->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3 mindway-btn-blue">Manage</a>
+                ';
+            })
+            ->rawColumns(['action'])
+            ->filterColumn('renewal_date', function ($query, $keyword) {
+                // Apply search filter correctly to programPlan relationship
+                $query->whereHas('programPlan', function ($q) use ($keyword) {
+                    $q->whereRaw('LOWER(renewal_date) LIKE ?', ["%".strtolower($keyword)."%"]);
+                });
+            })
+            ->make(true);
+    }
+    
     public function viewsession()
     {
         $Programs = Session::with('counselor')->get();
@@ -1677,6 +2098,97 @@ class AdminController extends Controller
         return view('admin.edit-program', compact('Program', 'customerPercentage', 'totalCustomers', 'customers'));
     }
 
+    // public function programEmployees(Request $request)
+    // {
+    //     $programId = $request->programId;
+    //     $customers = CustomreBrevoData::where('program_id', $programId)->get();
+    
+    //     return DataTables::of($customers)
+    //         ->editColumn('max_session', function ($customer) use ($programId) {
+    //             return intval($customer->max_session) . '
+    //                 <a href="' . route('plus-session', ['customerId' => $customer->id, 'programId' => $programId]) . '"
+    //                     class="mindway-btn btn btn-success btn-sm remove-btn"
+    //                     style="background-color: #E4E4E4 !important;color:#7C7C7C !important;margin-left: 10px;">
+    //                     Add
+    //                 </a>
+    //                 <a href="' . route('minus-session', ['customerId' => $customer->id, 'programId' => $programId]) . '"
+    //                     class="mindway-btn btn btn-success btn-sm remove-btn"
+    //                     style="background-color: #E4E4E4 !important;color:#7C7C7C !important;margin-left: 10px;">
+    //                     Low
+    //                 </a>';
+    //         })
+    
+    //         ->addColumn('name_email', function ($customer) {
+    //             return '
+    //                 <span class="fw-semibold">' . htmlspecialchars($customer->name) . '</span><br>
+    //                 <span class="fw-normal">' . htmlspecialchars($customer->email) . '</span>';
+    //         })
+    
+    //         ->addColumn('level', function ($customer) {
+    //             $badgeClass = ($customer->level == 'member') ? 'member-style' : 'admin-style';
+    //             return '<span class="badge btn btn-primary theme-btn ' . $badgeClass . '">' . htmlspecialchars($customer->level) . '</span>';
+    //         })
+            
+    //         ->addColumn('action', function ($customer) use ($programId) {
+    //             return '<a href="' . route('remove-cusomer-program', ['customerId' => $customer->id, 'programId' => $programId]) . '"
+    //                     class="mindway-btn btn btn-success btn-sm remove-btn"
+    //                     style="background-color: #E4E4E4 !important;color:#7C7C7C !important">
+    //                     Remove
+    //                     <i class="typcn typcn-view btn-icon-append"></i>
+    //                 </a>';
+    //         })
+    //         ->rawColumns(['max_session', 'name_email', 'level', 'action']) // Ensure raw HTML columns are processed
+    //         ->make(true);
+    // }
+    
+    public function programEmployees(Request $request)
+{
+    $programId = $request->programId;
+    $customers = CustomreBrevoData::where('program_id', $programId)->get();
+
+    return DataTables::of($customers)
+        ->editColumn('max_session', function ($customer) use ($programId) {
+            return intval($customer->max_session) . '
+                <a href="' . route('plus-session', ['customerId' => $customer->id, 'programId' => $programId]) . '"
+                    class="mindway-btn btn btn-success btn-sm remove-btn"
+                    style="background-color: #E4E4E4 !important;color:#7C7C7C !important;margin-left: 10px;">
+                    Add
+                </a>
+                <a href="' . route('minus-session', ['customerId' => $customer->id, 'programId' => $programId]) . '"
+                    class="mindway-btn btn btn-success btn-sm remove-btn"
+                    style="background-color: #E4E4E4 !important;color:#7C7C7C !important;margin-left: 10px;">
+                    Low
+                </a>';
+        })
+        ->addColumn('name_email', function ($customer) {
+            return '
+                <span class="fw-semibold">' . htmlspecialchars($customer->name) . '</span><br>
+                <span class="fw-normal">' . htmlspecialchars($customer->email) . '</span>';
+        })
+        ->addColumn('level', function ($customer) {
+            $badgeClass = ($customer->level == 'member') ? 'member-style' : 'admin-style';
+            return '
+                <span class="badge btn btn-primary theme-btn ' . $badgeClass . '"
+                    data-id="' . $customer->id . '"
+                    data-level="' . $customer->level . '"
+                    onclick="openLevelModal(' . $customer->id . ', \'' . $customer->level . '\')">
+                    ' . htmlspecialchars($customer->level) . '
+                </span>';
+        })
+        ->addColumn('action', function ($customer) use ($programId) {
+            return '
+                <a href="' . route('remove-cusomer-program', ['customerId' => $customer->id, 'programId' => $programId]) . '"
+                    class="mindway-btn btn btn-success btn-sm remove-btn"
+                    style="background-color: #E4E4E4 !important;color:#7C7C7C !important">
+                    Remove
+                    <i class="typcn typcn-view btn-icon-append"></i>
+                </a>';
+        })
+        ->rawColumns(['max_session', 'name_email', 'level', 'action']) // Ensure raw HTML columns are processed
+        ->make(true);
+}
+
+
     public function RemoveReddemCode($customerId, $programId)
     {
         $customer = CustomreBrevoData::where('id', $customerId)->where('program_id', $programId)->first();
@@ -1871,27 +2383,70 @@ class AdminController extends Controller
         return view('mw-1.admin.counsellor.manage', get_defined_vars());
     }
 
+    public function getCounsellor(Request $request)
+    {
+        if ($request->ajax()) {
+            $counsellors = Counselor::query(); // Fetches all columns
+            return DataTables::of($counsellors)
+                
+                ->addColumn('action', function ($counsellor) {
+                    return '<a href="' . url('/manage-admin/counsellor-manage', ['id' => $counsellor->id]) . '" class="btn btn-success btn-sm mindway-btn-blue">Manage</a>
+                            <a href="' . url('/manage-admin/counsellor-availability', ['id' => $counsellor->id]) . '" class="btn btn-secondary btn-sm mindway-btn-blue">Availability</a>
+                            <a href="' . url('/manage-admin/counsellor-profile', ['id' => $counsellor->id]) . '" class="btn btn-primary btn-sm mindway-btn-blue">Profile</a>';
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+    }
+    
     public function counsellorManage(Request $request, $id)
     {
            $Counselor = Counselor::where('id', $id)->first();
            $user_id = $Counselor->id;
            $customers = CustomreBrevoData::all();
-           $upcomingBookings = Booking::with(['user', 'counselor', 'slot'])
-               ->where('counselor_id', $Counselor?->id)
-               ->where('status', 'confirmed')
-               ->whereHas('slot', function ($query) {
-                   $query->where('start_time', '>', now()->subHours(24));
-               })
-               ->orderBy('created_at', 'desc')
-               ->get();
+        //    $upcomingBookings = Booking::with(['user', 'counselor', 'slot'])
+        //        ->where('counselor_id', $Counselor?->id)
+        //        ->where('status', 'confirmed')
+        //        ->whereHas('slot', function ($query) {
+        //            $query->where('start_time', '>', now()->subHours(24));
+        //        })
+        //        ->orderBy('created_at', 'desc')
+        //        ->get();
+
+        $upcomingBookings = Booking::with(['user', 'counselor', 'slot'])
+            ->where('counselor_id', $Counselor?->id)
+            ->where('status', 'confirmed')
+            ->whereHas('slot', function ($query) {
+                $query->where('start_time', '>', now()->subHours(24));
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(10); // Change 10 to your desired items per page
 
                $sortOrder = $request->query('sort', 'asc'); // Default to ascending
                $CounselorSession = CounsellingSession::with('counselor')->orderBy('session_date', $sortOrder) // Sorting by session_date
                    ->get();
         //    $CounselorSession = CounsellingSession::with('counselor')->get();
            $timezone = $Counselor->timezone??'UTC';
+        //    $timezone = 'Europe/London';
            return view('mw-1.admin.counsellor.counsellor-manage', get_defined_vars());
        }
+
+       public function counsellorSession(Request $request)
+       {
+           if ($request->ajax()) {
+               // Fetch Counselling Sessions with the related counselor
+               $sessions = CounsellingSession::with('counselor') // Load the counselor relationship
+                   ->orderBy('session_date', 'asc') // Sorting by session_date (default to ascending)
+                   ->get();
+    
+               return DataTables::of($sessions)
+                   ->addColumn('counselor_name', function ($session) {
+                       return $session->counselor ? $session->counselor->name : 'No Counselor Assigned';
+                   })
+                   ->make(true);
+           }
+       }
+
 
     public function counsellerCancelSession(Request $request)
     {
