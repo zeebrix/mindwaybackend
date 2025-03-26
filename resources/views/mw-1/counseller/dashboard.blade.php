@@ -93,6 +93,12 @@
                 </tbody>
             </table>
         </div>
+        <div class="row mt-4">
+            <div class="col-md-12 d-flex justify-content-center">
+                {{ $upcomingBookings->links('pagination::bootstrap-4') }}
+            </div>
+        </div>
+
         <div class="modal fade" id="addSessionModal" tabindex="-1" aria-labelledby="addSessionModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
