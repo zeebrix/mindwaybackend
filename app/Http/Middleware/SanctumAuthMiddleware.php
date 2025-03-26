@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class CounsellorMiddleware
+class SanctumAuthMiddleware
 {
     /**
      * Handle an incoming request.
@@ -17,10 +17,10 @@ class CounsellorMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::guard('counselor')->check()) {
-            return $next($request);
+        Auth::shouldUse('api_sanctum');
+        if (!Auth::check()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
-        Auth::guard('counselor')->logout();
-        return redirect()->route('counseller.login');
+        return $next($request);
     }
 }

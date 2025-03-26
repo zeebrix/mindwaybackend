@@ -40,7 +40,7 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
@@ -67,5 +67,6 @@ class Kernel extends HttpKernel
         'customer_auth' => \App\Http\Middleware\AuthenticatedCustomersOnly::class,
         'program_auth' => \App\Http\Middleware\ProgramUserMiddleware::class,
         'counsellor' => \App\Http\Middleware\CounsellorMiddleware::class,
+        'sanctum.auth' => \App\Http\Middleware\SanctumAuthMiddleware::class,
     ];
 }
