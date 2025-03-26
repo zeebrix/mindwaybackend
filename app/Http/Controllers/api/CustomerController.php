@@ -136,14 +136,13 @@ class CustomerController extends Controller
                 $customer->status = TRUE;
                 $customer->api_auth_token = $apiAuthToken;
                 $customer->save();
-    
-                $customer = $customer->toArray();
-                $token = $customer["api_auth_token"] ?? NULL;
+                $token = $apiAuthToken ?? NULL;
                 $useSanctum = request()->header('Use-Sanctum') === 'true';
                 if($useSanctum)
                 {
                     $token = $customer->createToken('auth_token')->plainTextToken;
                 }
+                $customer = $customer->toArray();
                 $customer["bearer_token"] = $token ?? NULL ;
                 
                 return response()->json([
