@@ -2,8 +2,11 @@
 
 namespace App\Console;
 
+use App\Models\Counselor;
+use App\Services\GoogleProvider;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -13,15 +16,24 @@ class Kernel extends ConsoleKernel
      * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
      * @return void
      */
-  protected function schedule(Schedule $schedule)
+    protected function schedule(Schedule $schedule)
     {
+        $schedule->call(function () {
+            $counselors = Counselor::all();
+            foreach ($counselors as $counselor)
+            {
+                if ($counselor->googleToken) {
+                    app(GoogleProvider::class)->watchCalendar($counselor);
+                }
+            }
+        })->daily();
         // Schedule the command to run every minute
         $schedule->command('update:google-tokens')->everyTenMinutes();
         $schedule->command('sync:brevo-contacts')->everyMinute();
         $schedule->command('release:reserved-slot')->everyFiveMinutes();
         $schedule->command('delete:garbage-slots')->daily();
         $schedule->command('reminder:send-booking')->hourly();
-      
+        
 
     }
 

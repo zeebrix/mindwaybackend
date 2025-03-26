@@ -40,6 +40,6 @@ class DeleteGarbageSlots extends Command
     public function handle()
     {
         $cutoffDate = Carbon::now()->subDays(2);
-        Slot::where('booked', false)->where('date', '<', $cutoffDate)->delete();
+        Slot::where('is_booked', false)->where('date', '<', $cutoffDate)->delete();
     }
 }

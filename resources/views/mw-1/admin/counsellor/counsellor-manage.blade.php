@@ -5,8 +5,7 @@
 @section('content')
   
 <div class="row">
-        <div class="col-10 offset-1">
-
+        <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Welcome {{ $Counselor->name }}</h2>
             </div>
@@ -23,7 +22,7 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <!-- User Information -->
-                                        <div class="col-md-4" style="border-right: 4px solid #D4D4D4;">
+                                        <div class="col-md-3" style="border-right: 4px solid #D4D4D4;">
                                             <h5 class="fw-semibold">{{ optional($booking->user)->name ?? 'N/A' }}</h5>
                                             <p class="fw-bold mb-1">{{ optional($booking->user)->email ?? 'Email not provided' }}</p>
                                             <p class="fw-bold mb-0">{{ optional($booking->user)->max_session ?? 0 }} Session(s) Remaining</p>
@@ -39,7 +38,7 @@
                                             </p>
                                         </div>
                                         <!-- Actions -->
-                                        <div class="col-md-4">
+                                        <div class="col-md-3" style="border-right: 4px solid #D4D4D4;">
                                             <a class="btn btn-primary mindway-btn" href="{{ route('session.cancel', ['booking_id' => $booking->id, 'customer_id' => $booking->user_id]) }}">
                                                 Cancel
                                             </a>
@@ -57,8 +56,25 @@
                                                 data-name="{{ $booking?->counselor?->name }}"
                                                 data-program_id="{{ $booking?->brevoUser?->program_id }}"
                                                 data-customer_name="{{ $booking?->user?->name }}">
-                                                Add Session
+                                                Log Session
                                             </a>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <p style="margin: unset;">
+                                                @if($booking->communication_method == 'Video Call')
+                                                Video Call Chosen
+                                                <br>
+                                                <a target="_blank" href="{{$booking->meeting_link}}"
+                                                    class="btn btn-primary mindway-btn">
+                                                    JOIN MEETING
+                                                </a>
+                                                @else
+                                                Phone Call Chosen
+                                                <br>
+                                                <strong>Call: {{$booking?->user?->phone}}</strong>
+                                                @endif
+                                            </p>
+
                                         </div>
                                     </div>
                                 </div>
@@ -85,7 +101,16 @@
             <hr><br>
 
 
-            <h2>All Counselling Sessions</h2>
+            <!-- <h2>All Counselling Sessions</h2> -->
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <h2 style="margin: 0;">All Counselling Sessions</h2>
+                <select id="sortSessions" style="padding: 8px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer;">
+                    <option value="asc" {{ request('sort') == 'asc' ? 'selected' : '' }}>Sort Ascending</option>
+                    <option value="desc" {{ request('sort') == 'desc' ? 'selected' : '' }}>Sort Descending</option>
+                </select>
+            </div>
+
+            <br/>
 
             <div class="mb-3">
                 <input type="text" id="searchInput" class="form-control"
@@ -291,6 +316,12 @@
 
 @section('js')
     <script>
+        document.getElementById('sortSessions').addEventListener('change', function () {
+            let sortOrder = this.value;
+            let currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('sort', sortOrder); // Update the sort parameter
+            window.location.href = currentUrl.toString(); // Reload the page with the new URL
+        });
         document.getElementById('searchInput').addEventListener('input', function () {
             const searchValue = this.value.toLowerCase();
             const rows = document.querySelectorAll('#customersTable .customer-row');

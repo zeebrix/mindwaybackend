@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use App\Services\SlotGenerationService;
 use App\Services\CounselorService;
 use App\Services\CalendarService;
+use Illuminate\Support\Facades\DB;
+
 class CounselorController extends Controller
 {
     private $counselorService;
@@ -31,16 +33,101 @@ class CounselorController extends Controller
             $customer->id??0,
             $gender ?? 'Male'
         );
-        $allCounsellor = $this->counselorService->getAllCounselors(
-            $gender ?? 'Male'
-        );
+        $allCounsellor = $this->counselorService->getAllCounselors();
         return response()->json([ 
             'recommended_counselor' => $recommendedCounselor,
             'all_counselors' => $allCounsellor,
             'customer' => $customer,
         ]);
     }
-
+    public function getCounselorsPagination(Request $request)
+    {
+        $customer = Customer::with(['Program' => function ($query) {
+            $query->limit(1); // Fetch only one related object
+        }])->with('preference')->find($request->customer_id);
+       
+        $preference = $customer ? $customer->preference : null;
+        $recommendedCounselors = [];
+        $page =$request->page??1;
+        if ($preference && $page == 1) {
+            $bindings = [
+                $preference->language, // String
+                $preference->location  // String
+            ];
+            
+            // JSON_SEARCH conditions for specialization
+            $specializationConditions = [];
+            foreach ($preference->specializations as $specialization) {
+                $specializationConditions[] = 'JSON_SEARCH(specialization, "one", ?)';
+                $bindings[] = $specialization;
+            }
+            
+            // JSON_SEARCH conditions for communication_method
+            $communicationConditions = [];
+            foreach ($preference->communication_methods as $method) {
+                $communicationConditions[] = 'JSON_SEARCH(communication_method, "one", ?)';
+                $bindings[] = $method;
+            }
+            
+            // Add gender bindings
+            $genderPlaceholders = implode(',', array_fill(0, count($preference->gender), '?'));
+            $bindings = array_merge($bindings, $preference->gender);
+            
+            // Step 1: Create Subquery with Match Score
+            $subQuery = Counselor::select('*')
+                ->selectRaw("
+                    (CASE WHEN gender IN ($genderPlaceholders) THEN 3 ELSE 0 END) +
+                    (CASE WHEN (" . implode(' OR ', $specializationConditions) . ") THEN 1 ELSE 0 END) +
+                    (CASE WHEN (" . implode(' OR ', $communicationConditions) . ") THEN 2 ELSE 0 END) +
+                    (CASE WHEN language = ? THEN 4 ELSE 0 END) +
+                    (CASE WHEN location = ? THEN 5 ELSE 0 END)
+                    AS match_score
+                ", $bindings);
+            
+            // Get raw SQL query and merge bindings properly
+            $rawSql = $subQuery->toSql();
+            $maxScoreQuery = DB::table(DB::raw("({$rawSql}) as ranked_counselors"))
+                ->mergeBindings($subQuery->getQuery())
+                ->selectRaw('MAX(match_score) as max_score')
+                ->value('max_score');
+            
+            $maxScore = $maxScoreQuery ?? 0; // Default to 0 if no matches
+            
+            // Step 3: Retrieve Counselors with the Highest Match Score
+            $recommendedCounselors = Counselor::select('*')
+                ->selectRaw("
+                    (CASE WHEN gender IN ($genderPlaceholders) THEN 3 ELSE 0 END) +
+                    (CASE WHEN (" . implode(' OR ', $specializationConditions) . ") THEN 1 ELSE 0 END) +
+                    (CASE WHEN (" . implode(' OR ', $communicationConditions) . ") THEN 2 ELSE 0 END) +
+                    (CASE WHEN language = ? THEN 4 ELSE 0 END) +
+                    (CASE WHEN location = ? THEN 5 ELSE 0 END)
+                    AS match_score
+                ", $bindings)
+                ->having('match_score', '=', $maxScore)
+                ->orderByDesc('match_score')
+                ->orderBy('id')
+                ->get();
+            
+        
+            $recommendedCounselors = $this->counselorService->formatCounselors($recommendedCounselors);
+        }
+        $allCounselors = $this->counselorService->getAllCounselors(
+            pagination: $request->pagination??true, // Default: true
+            page: $page,
+            offset: $request->offset??15,
+            location:$request->location??null
+        );
+        $response = [
+            'all_counselors' => $allCounselors,
+            'customer' => $customer,
+        ];
+        if ($page == 1) {
+            $response['recommended_counselor'] = $recommendedCounselors ?? [];
+        }
+        
+        return response()->json($response);
+        
+    }
     public function setAvailability(Request $request)
     {
         $validated = $request->validate([
@@ -115,5 +202,37 @@ class CounselorController extends Controller
             $validated['customer_id'],
             $limit
         );   
+    }
+
+    public function getPreferenceInfo()
+    {
+        $filters = Counselor::distinct()->get(['specialization', 'location', 'language', 'communication_method']);
+        return response()->json([
+        'specializations' => $filters->pluck('specialization')
+            ->map(fn($item) => json_decode($item, true) ?? [])
+            ->flatten()
+            ->reject(fn($item) => $item === "")
+            ->unique()
+            ->values(),
+            
+        'locations' => $filters->pluck('location')
+            ->filter()
+            ->reject(fn($item) => $item === "")
+            ->unique()
+            ->values(),
+            
+        'languages' => $filters->pluck('language')
+            ->filter()
+            ->reject(fn($item) => $item === "")
+            ->unique()
+            ->values(),
+            
+        'communication_methods' => $filters->pluck('communication_method')
+            ->map(fn($item) => json_decode($item, true) ?? [])
+            ->flatten()
+            ->reject(fn($item) => $item === "")
+            ->unique()
+            ->values(),
+        ]);
     }
 }

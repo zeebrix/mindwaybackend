@@ -167,7 +167,7 @@
                 // Function to load time zones (fetch only once)
                 function loadTimeZones() {
                     if (timeZones.length === 0) { // Fetch only if not already loaded
-                        fetch('public/mw-1/timezones.json')
+                        fetch('/public/mw-1/timezones.json')
                             .then(response => response.json())
                             .then(data => {
                                 timeZones = data.timezones; // Assign fetched data

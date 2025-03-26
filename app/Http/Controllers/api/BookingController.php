@@ -66,6 +66,12 @@ class BookingController extends Controller
         $notice_period = isset($counselor) ?$counselor->notice_period : 12;
         $customer_timezone = isset($request->customer_timezone) ? $request->customer_timezone : 'UTC';
         $customer = Customer::where('id', $request->customer_id)->first();
+        try {
+           $customer->timezone = $customer_timezone;
+           $customer->save();
+        } catch (\Throwable $th) {
+            Log::info('Timezone saving error'.$th->getMessage());
+        }
         if ($customer->max_session <= 0) {
             return response()->json([
                 'message' => 'You have reached to the max session limit'
@@ -174,10 +180,12 @@ class BookingController extends Controller
             $brevo->save();
             
         }
+        DB::commit();
         $recipient = $customer->email;
         $subject = 'Session Confirmed With '.$counselor->name;
         $template = 'emails.booking-confirmation-employee';
         $data = [
+            'communication_method' => $booking->communication_method,
             'full_name' => $customer->name,
             'counselor_name' => $counselor->name,
             'start_time' => Carbon::parse($slot->start_time)->setTimezone($customer_timezone),
@@ -185,7 +193,8 @@ class BookingController extends Controller
             'duration' => '50 minutes',
             'meeting_link' => $meetingLink,
             'max_session' => $customer->max_session,
-            'intake_link' => $counselor->intake_link
+            'intake_link' => $counselor->intake_link,
+            'phone' => $request->phone??'',
         ];
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
 
@@ -194,6 +203,7 @@ class BookingController extends Controller
         $subject = 'New Session Scheduled';
         $template = 'emails.booking-confirmation-counselor';
         $data = [
+            'communication_method' => $booking->communication_method,
              'employee_email' => $booking?->user?->email,
             'employee_phone' => $booking?->user?->phone,
             'full_name' => $counselor->name,
@@ -202,15 +212,22 @@ class BookingController extends Controller
             'start_time' => Carbon::parse($slot->start_time)->setTimezone($counselor->timezone),
             'max_session' => $customer->max_session,
             'meeting_link' => $meetingLink,
-             'timezone' => $counselor->timezone,
+            'timezone' => $counselor->timezone,
+            'phone' => $request->phone??'',
         ];
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
-         DB::commit();
+         
           return response()->json($booking->load('slot'));
 }
 catch (\Exception $e) {
     // If anything goes wrong, roll back the transaction
     DB::rollBack();
+    Log::error('An error occurred in book slot', [
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString(),
+    ]);
     // Optionally, log the error or return a response
    return response()->json(['message'=> $e->getMessage()]);
 }
@@ -241,11 +258,11 @@ catch (\Exception $e) {
             ], 422);
         }
         $booking->slot->update(['is_booked' => false]);
-        $booking->update([
-            'slot_id' => $newSlot->id,
-            'status' => 'confirmed',
-            'communication_method' => ($validated['communication_method']) 
-        ]);
+        $booking->slot_id = $newSlot->id;
+        $booking->status = 'confirmed';
+        $booking->communication_method = $validated['communication_method'];
+        $booking->save();
+
         $newSlot->update(['is_booked' => true]);
         $booking = Booking::findOrFail($validated['booking_id']);
         $eventId = $booking->event_id;
@@ -297,16 +314,23 @@ catch (\Exception $e) {
         $booking->meeting_link = $meetingLink;
         $booking->save();
         $recipient = $booking->user->email;
+        try {
+            Customer::where('email',$recipient)->update(['timezone'=>$customer_timezone]);
+        } catch (\Throwable $th) {
+            Log::info('Timezone saving error'.$th->getMessage());
+        }
         $subject = 'Your Session Has Been Rescheduled';
         $template = 'emails.counsellor-slot-rescheduled-employee';
         $data = [
+            'communication_method' => $validated['communication_method'],
             'full_name' => $booking->user->name,
             'counselor_name' => $booking->counselor->name,
             'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($customer_timezone),
-            'end_time' => Carbon::parse($booking->slot->end_time)->setTimezone($booking->counselor->timezone),
+            'end_time' => Carbon::parse($booking->slot->end_time)->setTimezone($customer_timezone),
             'timezone' => $customer_timezone,
             'meeting_link' => $meetingLink,
-            'intake_link' => $booking->counselor->intake_link??''
+            'intake_link' => $booking->counselor->intake_link??'',
+            'phone' => $booking->user->phone??''
         ];
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
 
@@ -315,6 +339,7 @@ catch (\Exception $e) {
         $subject = 'Your Session Has Been Rescheduled';
         $template = 'emails.counsellor-slot-rescheduled-counselor';
         $data = [
+            'communication_method' => $validated['communication_method'],
             'employee_email' => $booking->user->email,
             'employee_phone' => $booking->user->phone,
             'full_name' => $booking->counselor->name,
@@ -322,6 +347,7 @@ catch (\Exception $e) {
             'max_session' => $booking?->brevoUser?->max_session??'',
             'timezone' => $booking->counselor->timezone,
             'meeting_link' => $meetingLink,
+            'phone' => $booking->user->phone??'',
             'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($booking->counselor->timezone),
             'company_name' => $booking?->brevoUser?->program?->company_name,
         ];

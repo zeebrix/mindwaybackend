@@ -1687,13 +1687,14 @@ class AdminController extends Controller
             $customer3 = CustomerRelatedProgram::where('customer_id', $customerId)->first();
             if($customer3)
             {
-                $brevo = new BrevoService();
-                $brevo->removeUserFromList($customer3->email);
                 $customer3->delete();
             }
             if($customer->app_customer_id)
             {
-                Customer::where('id',$customer->app_customer_id)->delete();
+                $data = Customer::where('id',$customer->app_customer_id)->first();
+                $brevo = new BrevoService();
+                $brevo->removeUserFromList($data->email);
+                $data->delete();
             }
         }
 
@@ -1707,6 +1708,14 @@ class AdminController extends Controller
         if ($customer) {
             $customer->max_session = $customer->max_session - 1;
             $customer->save();
+            if($customer->app_customer_id){
+                $customer3 = Customer::where('id',$customer->app_customer_id)->first();
+                if($customer3)
+                {
+                    $customer3->max_session = $customer3->max_session - 1;
+                    $customer3->save();
+                }
+            }
         }
 
         return back()->with('message', 'Session updated successfully!');
@@ -1863,23 +1872,27 @@ class AdminController extends Controller
         return view('mw-1.admin.counsellor.manage', get_defined_vars());
     }
 
-    public function counsellorManage($id)
+    public function counsellorManage(Request $request, $id)
     {
-        $Counselor = Counselor::where('id', $id)->first();
-        $user_id = $Counselor->id;
-        $customers = CustomreBrevoData::all();
-        $upcomingBookings = Booking::with(['user', 'counselor', 'slot'])
-            ->where('counselor_id', $Counselor?->id)
-            ->where('status', 'confirmed')
-            ->whereHas('slot', function ($query) {
-                // $query->where('start_time', '>', now());
-            })
-            ->orderBy('created_at', 'desc')
-            ->get();
-        $CounselorSession = CounsellingSession::with('counselor')->get();
-        $timezone = $Counselor->timezone??'UTC';
-        return view('mw-1.admin.counsellor.counsellor-manage', get_defined_vars());
-    }
+           $Counselor = Counselor::where('id', $id)->first();
+           $user_id = $Counselor->id;
+           $customers = CustomreBrevoData::all();
+           $upcomingBookings = Booking::with(['user', 'counselor', 'slot'])
+               ->where('counselor_id', $Counselor?->id)
+               ->where('status', 'confirmed')
+               ->whereHas('slot', function ($query) {
+                   $query->where('start_time', '>', now()->subHours(24));
+               })
+               ->orderBy('created_at', 'desc')
+               ->get();
+
+               $sortOrder = $request->query('sort', 'asc'); // Default to ascending
+               $CounselorSession = CounsellingSession::with('counselor')->orderBy('session_date', $sortOrder) // Sorting by session_date
+                   ->get();
+        //    $CounselorSession = CounsellingSession::with('counselor')->get();
+           $timezone = $Counselor->timezone??'UTC';
+           return view('mw-1.admin.counsellor.counsellor-manage', get_defined_vars());
+       }
 
     public function counsellerCancelSession(Request $request)
     {
@@ -2174,7 +2187,8 @@ class AdminController extends Controller
                 if ($employee['email'] && $employee['email'] !== null) {
 
                     $customer = CustomreBrevoData::where('email', $employee['email'])->first();
-                    if (!$customer) {
+                    if (!$customer)
+                    {
                         $customer = new CustomreBrevoData();
                         $customer->email = $employee['email'];
                         $customer->name = $employee['name'];
@@ -2184,6 +2198,11 @@ class AdminController extends Controller
                         $customer->level = 'member';
                         $customer->save();
                     }
+                    $company_name = $Program->company_name??$customer->company_name??null;
+                    $max_session = $Program->max_session??$customer->max_session??0;
+                    $code = $Program->code??'';
+                    $brevoService = new BrevoService();
+                    $brevoService->addUserToList($employee['email'], $employee['name'], $code, $company_name, $max_session, 9);
                 }
             }
         }

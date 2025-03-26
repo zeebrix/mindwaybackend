@@ -24,6 +24,7 @@ use App\Models\Safety;
 use App\Repositories\CustomersRepository;
 use App\Services\CustomerService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 class CustomerController extends Controller
@@ -156,10 +157,12 @@ class CustomerController extends Controller
 
     public function register(CustomerRegisterRequest $request)
     {
+        Log::info('Customer Register Request:', $request->all());
         return $this->customerService->store($request->all());
     }
     public function registerByEmail(CustomerRegisterByEmailRequest $request)
     {
+        Log::info('Customer Register Request By Email:', $request->all());
         return $this->customerService->store($request->all());
     }
     public function verifySignup(CustomerRegisterVerificationRequest $request)

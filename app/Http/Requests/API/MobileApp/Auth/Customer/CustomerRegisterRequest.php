@@ -32,12 +32,7 @@ class CustomerRegisterRequest extends BaseAPIRequest {
                         ->where('email', $value)
                         ->whereNull('deleted_at')
                         ->exists();
-        
-                    $existsInCustomerbrevot = DB::table('customre_brevo_data')
-                        ->where('email', $value)
-                        ->exists();
-        
-                    if ($existsInCustomers || $existsInCustomerbrevot) {
+                    if ($existsInCustomers) {
                         $fail('The email has already been taken.');
                     }
                 },
@@ -47,6 +42,13 @@ class CustomerRegisterRequest extends BaseAPIRequest {
             'password' => 'required|string|min:6|confirmed',
             'password_confirmation' => 'required|min:6',
             'gender_preference' => 'nullable|string',
+            'program_id' => 'required',
+        ];
+    }
+    public function messages()
+    {
+        return [
+            'program_id.required' => 'An error occurred while setting up your account. Please try agin after reopen the app.',
         ];
     }
     public function passedValidation()

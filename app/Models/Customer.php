@@ -41,6 +41,7 @@ class Customer extends Authenticatable
         'meditation_experience',
         'nick_name',
         'department_id',
+        'timezone',
     ];
     
     protected $appends = ['single_program'];
@@ -52,6 +53,10 @@ class Customer extends Authenticatable
     public function reserveSlot()
     {
         return $this->hasOne(Slot::class, 'customer_id', 'id')->whereNotNull('customer_id')->where('is_booked',false);
+    }
+    public function preference()
+    {
+        return $this->hasOne(UserPreference::class, 'user_id', 'id');
     }
     public function Program()
     {

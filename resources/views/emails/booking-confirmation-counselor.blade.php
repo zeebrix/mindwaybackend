@@ -20,6 +20,9 @@
         @if($meeting_link)
             <strong> Join Link:     </strong> {{ $meeting_link }}<br />
         @endif
+        @if($phone)
+            <strong> Phone call chosen: </strong> {{ $phone }}<br />
+        @endif
     </p>
     <p>If you have any questions, feel free to reach out to the bookings team.
     </p>

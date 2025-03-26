@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Google_Service_Calendar_ConferenceData;
 use Google_Service_Calendar_CreateConferenceRequest;
+use Illuminate\Support\Str;
+use Google\Service\Calendar\Channel;
+
 class GoogleProvider extends AbstractProvider
 {
     private ?GoogleClient $httpClient = null;
@@ -227,5 +230,201 @@ class GoogleProvider extends AbstractProvider
         }
 
         return $this->httpClient;
+    }
+    public function getAllEventsOld(string $accessToken, string $timeMin = null, string $timeMax = null)
+    {
+        // Fetch the stored access token
+        $this->getHttpClient()->setAccessToken(Crypt::decrypt($accessToken));
+
+        // Initialize Google Calendar service
+        $calendarService = $this->getCalendarService();
+
+        // Get Calendar default timezone
+        $calendar = $calendarService->calendarList->get('primary');
+        $calendarTimeZone = $calendar->getTimeZone(); // Default calendar timezone
+
+        // Set time range to the current month's remaining days if null
+        if (!$timeMin || !$timeMax) {
+            $now = now();
+            $timeMin = $now->toRfc3339String(); // Today's date and time
+            $timeMax = $now->endOfMonth()->toRfc3339String(); // Last day of the current month
+        }
+
+        // Get events
+        $events = $calendarService->events->listEvents('primary', [
+            'timeMin' => $timeMin,
+            'timeMax' => $timeMax,
+            'singleEvents' => true,
+            'orderBy' => 'startTime'
+        ])->getItems();
+        // Format response
+        return collect($events)->map(function ($event) use ($calendarTimeZone) {
+            return [
+                'event_id' => $event->getId(),
+                'summary' => $event->getSummary(),
+                'description' => $event->getDescription() ?? '',
+                'start_time' => $event->getStart()->getDateTime() ?? $event->getStart()->getDate(),
+                'start_timezone' => $event->getStart()->getTimeZone() ?? $calendarTimeZone,
+                'end_time' => $event->getEnd()->getDateTime() ?? $event->getEnd()->getDate(),
+                'end_timezone' => $event->getEnd()->getTimeZone() ?? $calendarTimeZone,
+                'attendees' => $event->getAttendees() ?? [],
+                'meeting_link' => $event->getConferenceData() && $event->getConferenceData()->getEntryPoints() 
+                                ? $event->getConferenceData()->getEntryPoints()[0]->uri 
+                                : null,
+            ];
+        })->toArray();
+    }
+    public function getAllEvents(string $accessToken, string $timeMin = null, string $timeMax = null)
+    {
+        // Fetch the stored access token
+        $this->getHttpClient()->setAccessToken(Crypt::decrypt($accessToken));
+
+        // Initialize Google Calendar service
+        $calendarService = $this->getCalendarService();
+
+        // Set time range to the current month's remaining days if null
+        if (!$timeMin || !$timeMax) {
+            $now = now();
+            $timeMin = $now->toRfc3339String(); // Today's date and time
+            $timeMax = $now->endOfMonth()->toRfc3339String(); // Last day of the current month
+        }
+
+        // Fetch all calendars
+        $calendarList = $calendarService->calendarList->listCalendarList()->getItems();
+        $allEvents = [];
+
+        foreach ($calendarList as $calendar) {
+            $calendarId = $calendar->getId();
+            $calendarTimeZone = $calendar->getTimeZone() ?? 'UTC';
+
+            // Get events for the current calendar
+            $events = $calendarService->events->listEvents($calendarId, [
+                'timeMin' => $timeMin,
+                'timeMax' => $timeMax,
+                'singleEvents' => true,
+                'orderBy' => 'startTime'
+            ])->getItems();
+
+            // Format and store events
+            foreach ($events as $event) {
+                $allEvents[] = [
+                    'calendar_id' => $calendarId,
+                    'calendar_name' => $calendar->getSummary(),
+                    'event_id' => $event->getId(),
+                    'summary' => $event->getSummary(),
+                    'description' => $event->getDescription() ?? '',
+                    'start_time' => $event->getStart()->getDateTime() ?? $event->getStart()->getDate(),
+                    'start_timezone' => $event->getStart()->getTimeZone() ?? $calendarTimeZone,
+                    'end_time' => $event->getEnd()->getDateTime() ?? $event->getEnd()->getDate(),
+                    'end_timezone' => $event->getEnd()->getTimeZone() ?? $calendarTimeZone,
+                    'attendees' => $event->getAttendees() ?? [],
+                    'meeting_link' => $event->getConferenceData() && $event->getConferenceData()->getEntryPoints() 
+                                    ? $event->getConferenceData()->getEntryPoints()[0]->uri 
+                                    : null,
+                ];
+            }
+        }
+        return $allEvents;
+    }
+    public function watchCalendarOLD($counselor)
+    {
+        $accessToken = $counselor->googleToken->access_token;
+        $client = $this->getHttpClient();
+        $client->setAccessToken(Crypt::decrypt($accessToken));
+
+        $calendarService = $this->getCalendarService();
+        $this->stopAllWebhooks($counselor);
+        $channel = new Channel();
+        $channel->setId(Str::uuid());
+        $channel->setType('web_hook');
+        $channel->setAddress(env('GOOGLE_CALENDAR_WEBHOOK_URL'));
+        $response = $calendarService->events->watch('primary', $channel);
+        $counselor->update([
+            'google_webhook_channel_id' => $response->id,
+            'google_webhook_resource_id' => $response->resourceId,
+            'google_webhook_expiration' => $response->expiration ?? null
+        ]);
+        Log::info('Google Calendar Watch Response:', (array) $response);
+        return $response;
+    }
+    public function watchCalendar($counselor)
+    {
+        $accessToken = $counselor->googleToken->access_token;
+        $client = $this->getHttpClient();
+        $client->setAccessToken(Crypt::decrypt($accessToken));
+
+        $calendarService = $this->getCalendarService();
+        $this->stopAllWebhooks($counselor); // Stop existing webhooks before creating new ones
+
+        // Fetch all user calendars
+        $calendarList = $calendarService->calendarList->listCalendarList()->getItems();
+        $webhookData = [];
+
+        foreach ($calendarList as $calendar) {
+            $calendarId = $calendar->getId();
+            $channel = new Channel();
+            $channel->setId(Str::uuid());
+            $channel->setType('web_hook');
+            $channel->setAddress(env('GOOGLE_CALENDAR_WEBHOOK_URL'));
+
+            try {
+                $response = $calendarService->events->watch($calendarId, $channel);
+                Log::info("Google Calendar Watch Response for {$calendarId}:", (array) $response);
+
+                // Store webhook details for tracking (optional)
+                $webhookData[] = [
+                    'calendar_id' => $calendarId,
+                    'channel_id' => $response->id,
+                    'resource_id' => $response->resourceId,
+                    'expiration' => $response->expiration ?? null,
+                ];
+            } catch (\Exception $e) {
+                Log::error("Failed to watch calendar {$calendarId}: " . $e->getMessage());
+            }
+        }
+
+        // Optionally, store webhook data in DB (if tracking multiple webhooks per user)
+        $counselor->update([
+            'google_webhook_data' => json_encode($webhookData),
+        ]);
+
+        return $webhookData;
+    }
+    public function stopAllWebhooks($counselor)
+    {
+        if (!$counselor->google_webhook_data) {
+            Log::info("No existing webhooks to stop for counselor: {$counselor->id}");
+            return;
+        }
+        try {
+            $calendarService = $this->getCalendarService();
+            $webhooks = json_decode($counselor->google_webhook_data, true);
+
+            foreach ($webhooks as $webhook) {
+                if (empty($webhook['channel_id']) || empty($webhook['resource_id'])) {
+                    continue; // Skip invalid entries
+                }
+
+                $channel = new Channel();
+                $channel->setId($webhook['channel_id']);
+                $channel->setResourceId($webhook['resource_id']);
+
+                try {
+                    $calendarService->channels->stop($channel);
+                    Log::info("Stopped webhook for calendar: {$webhook['calendar_id']} (Channel ID: {$webhook['channel_id']})");
+                } catch (\Exception $e) {
+                    Log::error("Error stopping webhook for calendar {$webhook['calendar_id']}: " . $e->getMessage());
+                }
+            }
+
+            // Clear all webhook data
+            $counselor->update([
+                'google_webhook_data' => null,
+            ]);
+
+            Log::info("Stopped all webhooks for counselor: {$counselor->id}");
+        } catch (\Exception $e) {
+            Log::error("Error stopping all webhooks for counselor {$counselor->id}: " . $e->getMessage());
+        }
     }
 }

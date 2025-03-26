@@ -125,7 +125,7 @@
                             data-bs-target="#addSessionModal" data-id="{{ $data->id }}"
                             data-name="{{ $data->company_name }}" data-program_id="{{ $data->program_id }}"
                             data-customer_name="{{ $data->name }}">
-                            Add
+                            Log
                         </button>
                     </td>
                 </tr>

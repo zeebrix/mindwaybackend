@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\CustomreBrevoData;
+use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Auth;
 class CustomerBrevoDataObserver
@@ -46,11 +47,15 @@ class CustomerBrevoDataObserver
     public function deleted(CustomreBrevoData $customer)
     {
         try {
-              $firebaseUser = $this->auth->getUserByEmail($customer->email);
-              $this->auth->deleteUser($firebaseUser->uid);
-              $this->auth->revokeRefreshTokens($firebaseUser->uid);
+
+            $firebaseUser = $this->auth->getUserByEmail($customer->email);
+            $this->auth->updateUser($firebaseUser->uid, ['disabled' => true]);
+            // $this->auth->deleteUser($firebaseUser->uid);
+            $this->auth->revokeRefreshTokens($firebaseUser->uid);
+            Log::info("Firebase user disabled", ['uid' => $firebaseUser->uid, 'email' => $customer->email]);
         } catch (\Throwable $th) {
-            //throw $th;
+            Log::info("Firebase user disabled Error ".$th->getMessage());
+
         }
     }
 

@@ -531,6 +531,11 @@
                                             style="background-color: #E4E4E4 !important;color:#7C7C7C !important;margin-left: 10px;">
                                             Add
                                         </a>
+                                        <a href="{{ route('minus-session', ['customerId' => $data->id, 'programId' => $Program->id]) }}"
+                                            class="mindway-btn btn btn-success btn-sm remove-btn"
+                                            style="background-color: #E4E4E4 !important;color:#7C7C7C !important;margin-left: 10px;">
+                                            Low
+                                        </a>
                                     </td>
                                     <td class="border-bottom-0">
 
