@@ -151,7 +151,13 @@ class CustomerService
                     }
                 }
             }
-            $customer["bearer_token"] = $customer["api_auth_token"] ?? NULL;
+            $token = $customer["api_auth_token"] ?? NULL;
+            $useSanctum = request()->header('Use-Sanctum') === 'true';
+            if($useSanctum)
+            {
+                $token = $customer->createToken('auth_token')->plainTextToken;
+            }
+            $customer["bearer_token"] = $token ?? NULL;
             DB::commit();
             return response()->json([
                 'code' => 200,
