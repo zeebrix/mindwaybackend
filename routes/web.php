@@ -174,26 +174,16 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::get('/counsellor',[AdminController::class,'counsellorDisp']);
     Route::get('/counsellor-manage/{id}',[AdminController::class,'counsellorManage']);
     Route::get('/counsellor-availability/{id}',[AdminController::class,'counsellorAvailability']);
-
     Route::get('/counseller-session-cancel', [AdminController::class,'counsellerCancelSession'])->name('session.cancel');
-Route::post('/counseller-session-rebook', [AdminController::class,'counsellerRebbokSession'])->name('session.rebook');
-
-
+    Route::post('/counseller-session-rebook', [AdminController::class,'counsellerRebbokSession'])->name('session.rebook');
     Route::get('/counsellor-profile/{id}',[AdminController::class,'counsellorProfile'])->name('admin.counsellor.profile');
-
     Route::post('/availability-save',[AdminController::class,'availabilitySave'])->name('manage-admin.availabilitySave');
-
     Route::post('/profile-save',[AdminController::class,'profileSave'])->name('manage-admin.profileSave');
     Route::post('/add-counsellor',[AdminController::class,'storeCounsellor'])->name('manage-admin.addCounsellor');
-
-
-      //Add SOS audios Routesm
     Route::get('/add-sos-audio',[AdminController::class,'addSosAudio']);
     Route::post('/sos-audio-add',[AdminController::class,'audioSosAdd']);
     Route::get('/view-sos-audio',[AdminController::class,'viewSosAudio']);
     Route::get('/delete-sos-audio/{id}',[AdminController::class,'deleteSosAudio']);
-
-    // Add course routes
     Route::get('/view-sleep-course',[AdminController::class,'viewSleepCourse']);
     Route::get('/view-sleep-audio',[AdminController::class,'viewSleepAudio']);
     Route::get('/edit-sleep-audio/{id}',[AdminController::class,'editSleepAudio']);

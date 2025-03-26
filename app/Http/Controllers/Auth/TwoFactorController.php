@@ -125,14 +125,13 @@ class TwoFactorController extends Controller
                 'one_time_password' => [__('The one time password is invalid.')],
             ]);
         }
-        session(['user_id' => $user_id]);
-        if (session('user_id')) {
+        Auth::guard('counselor')->login($user);
+        if (Auth::guard('counselor')->user()) {
             $request->session()->remove('2fa:user:id');
             $request->session()->remove('2fa:auth:remember');
             $request->session()->remove('2fa:auth:attempt');
             return redirect()->route('counseller.dashboard');
         }
-
         return redirect()->route('counseller.login')->withErrors([
             'password' => __('The provided credentials are incorrect.'),
         ]);

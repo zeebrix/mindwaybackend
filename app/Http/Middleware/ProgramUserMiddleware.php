@@ -22,7 +22,5 @@ class ProgramUserMiddleware
         }
         Auth::guard('programs')->logout();
         return redirect('manage-program/login');
-        return abort(401,'Unauthorized');
-       
     }
 }

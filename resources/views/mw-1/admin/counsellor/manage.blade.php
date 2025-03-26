@@ -1,7 +1,22 @@
 @extends('mw-1.layout.app')
-
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 @section('selected_menu', 'active')
-
+<style>
+    .tagify.form-control {
+        padding: unset !important;
+        display: flex;
+        width: unset;
+    }
+    .select2-container {
+    z-index: 99999 !important; /* Ensure it appears above other elements */
+}
+.select2-container--open .select2-dropdown {
+    top: 100% !important; /* Forces dropdown to appear below */
+    bottom: auto !important;
+    position: inherit !important;
+}
+</style>
 @section('content')
 <div class="card w-100">
     <div class="card-body p-4">
@@ -88,11 +103,22 @@
                             <option value="Other">Other</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="tags">Enter Specialization:</label>
-                        <input type="text" id="tagsInput" class="form-control" placeholder="Type and press Enter" />
-                        <ul id="tagsList" style="margin-top: 10px; padding: 0; list-style: none;"></ul>
-                        <input type="hidden" name="tags" id="hiddenTags" />
+                   
+                    <div class="me-3">
+                        <label class="form-label" for="location">Select Location:</label>
+                        <select id="location" class="form-control select2" style="width: 300px;">
+                            <option value="">Select a location</option>
+                        </select>
+                    </div>
+                    <div class="me-3">
+                        <label class="form-label" for="language">Select Language:</label>
+                        <select id="language" class="form-control select2" multiple="multiple" style="width: 300px;">
+                            <option value="">Select a language</option>
+                        </select>
+                    </div>
+                    <div class="me-3">
+                        <label class="form-label" for="specializations">Select Specialization:</label>
+                        <input type="text" style="padding: unset;" id="tagsInput" name="tags" class="form-control" placeholder="Select Specialization" />
                     </div>
                     <div class="mb-3">
                         <label for="gender" class="form-label">Communication Method </label>
@@ -106,7 +132,7 @@
                         <select id="timezone" name="timezone" class="form-control">
                             <option value="">Select a timezone</option>
                             @foreach ($timezones['timezones'] as $timezone)
-                            <option value="{{ $timezone['name'] }}" >
+                            <option value="{{ $timezone['name'] }}">
                                 {{ $timezone['name'] }}
                             </option>
                             @endforeach
@@ -122,4 +148,71 @@
         </div>
     </div>
 </div>
+@endsection
+@section('js')
+<script src="{{ asset('/mw-1/dropdowns.js') }}"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let input = document.querySelector("#tagsInput");
+        // Define predefined options
+        let specializations = [
+            "Stress & Burnout",
+            "Anxiety",
+            "Depression",
+            "Grief & Loss",
+            "Sleep Difficulties",
+            "Conflict Resolution",
+            "Family & Relationship Issues",
+            "Leader/Manager Support",
+            "Addiction",
+            "Trauma & PTSD",
+            "Work-Life Balance",
+            "Personal Development",
+            "Career Counselling",
+            "Mindfulness",
+            "Coping Strategies",
+            "Life Transitions",
+            "Anger Management",
+            "Confidence Building",
+            "Parenting Support",
+            "Sexuality & Identity Issues",
+            "Workplace Bullying & Harassment",
+            "Communication Skills",
+            "Motivation & Goal Setting",
+            "Eating Disorders",
+            "Body Image Issues",
+            "Cognitive Behavioural Therapy (CBT)",
+            "Emotional Regulation",
+            "Finding Purpose",
+            "Personal Boundaries",
+            "Phobias & Fears",
+            "Spirituality & Faith Issues",
+            "Domestic Violence Support"
+        ];
+        let selectedSpecializations = @json($specialization ?? []);
+        // Initialize Tagify with whitelist
+        let tagify = new Tagify(input, {
+            whitelist: specializations, // Predefined options
+            enforceWhitelist: true, // Prevent custom i nput
+            dropdown: {
+                enabled: 0, // Show suggestions when typing
+                maxItems: 10
+            }
+        });
+        tagify.addTags(selectedSpecializations);
+        document.querySelector("form").addEventListener("submit", function() {
+            input.value = tagify.value.map(item => item.value).join(", ");
+        });
+    });
+</script>
+<script>
+    $('#addCounsellorModal').on('shown.bs.modal', function() {
+        $('#location, #language').select2({
+            allowClear: true,
+            dropdownParent: $('#addCounsellorModal'),
+            width: '100%',
+        });
+    });
+</script>
 @endsection

@@ -23,39 +23,18 @@ use Illuminate\Support\Facades\Artisan;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
-
-Route::get('/update-access-token', function () {
-  Artisan::call('update:google-tokens');
-       return response()->json(['message' => 'update:google-tokens created successfully.']);
-  
-});
-Route::get('/storage-link', function () {
-  Artisan::call('storage:link');
-       return response()->json(['message' => 'Storage link created successfully.']);
-  
-});
-
-Route::post('/reddemprogramcode', [CustomerController::class, 'ReddemProgramCode']);
-Route::post('/get-code-information', [CustomerController::class, 'getCodeInformation']);
-
-Route::get('/getuserprograms', [CustomerController::class, 'getuserprograms']);
-Route::post('/updatedeviceid', [CustomerController::class, 'updatedeviceid']);
-//Customers Routes
-Route::group(["prefix" => "customer", "middleware" => ["appauth"]], function () {
-  //All Public Routes
-
-  Route::post('/send-password-reset-otp', [CustomerController::class, 'passwordReset']);
+Route::group(["prefix" => "customer", "middleware" => ["auth:sanctum"]], function () {
+  Route::post('/login', [CustomerController::class, 'login'])->withoutMiddleware('auth:sanctum');
+  Route::post('/send-password-reset-otp', [CustomerController::class, 'passwordReset'])->withoutMiddleware('auth:sanctum');
   Route::post('/find-customer-by-email', [CustomerController::class, 'findMe']);
-  Route::post('verify-otp', [CustomerController::class, 'verifyOTP']);
-  Route::post('register-by-email', [CustomerController::class, 'registerByEmail']);
-  Route::post('/signup', [CustomerController::class, 'register']);
-  Route::post('/verify-signup', [CustomerController::class, 'verifySignup']);
-  Route::post('/login', [CustomerController::class, 'login']);
-  Route::post('/forget-password', [CustomerController::class, 'forgetPassword']);
-  Route::post('/reset-password', [CustomerController::class, 'resetPassword']);
+  Route::post('verify-otp', [CustomerController::class, 'verifyOTP'])->withoutMiddleware('auth:sanctum');
+  Route::post('register-by-email', [CustomerController::class, 'registerByEmail'])->withoutMiddleware('auth:sanctum');
+  Route::post('/signup', [CustomerController::class, 'register'])->withoutMiddleware('auth:sanctum');
+  Route::post('/verify-signup', [CustomerController::class, 'verifySignup'])->withoutMiddleware('auth:sanctum');
+  
+  Route::post('/forget-password', [CustomerController::class, 'forgetPassword'])->withoutMiddleware('auth:sanctum');
+  Route::post('/reset-password', [CustomerController::class, 'resetPassword'])->withoutMiddleware('auth:sanctum');
 
-  Route::post('/all-counselor', [CounsellerController::class, 'findRecommendedCounselor']);
   Route::get('/get-counselor-calendar/{id}', [CounsellerController::class, 'getCounselorCalendar']);
   Route::delete('/remove-session/{sessionId}', [CounsellerController::class, 'removeSession'])->name('remove-session');
   Route::post('/book-session', [CounsellerController::class, 'bookSession'])->name('book-session');

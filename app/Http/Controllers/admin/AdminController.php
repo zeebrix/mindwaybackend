@@ -1868,7 +1868,6 @@ class AdminController extends Controller
         $path = public_path('mw-1' . DIRECTORY_SEPARATOR . 'timezones.json');
         $json = File::get($path);
         $timezones = json_decode($json, true);
-
         return view('mw-1.admin.counsellor.manage', get_defined_vars());
     }
 
@@ -2024,6 +2023,9 @@ class AdminController extends Controller
     {
         $request->validate([
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'location' => 'required|string', 
+            'language' => 'required|array', 
+            'language.*' => 'string',
         ]);
 
         $counsellorId = $request->counsellorId;
@@ -2036,7 +2038,8 @@ class AdminController extends Controller
         $Counselor->gender = $request->gender;
         $Counselor->intake_link = $request->intake_link;
         $Counselor->notice_period = $request->notice_period;
-
+        $Counselor->language = json_encode($request->language);
+        $Counselor->location = $request->location;
         $imageName = '';
         if ($request->hasFile('logo')) {
             $image = $request->file('logo'); // Use `file()` for clarity

@@ -144,7 +144,7 @@ class CounsellerController extends Controller
 
     public function seecounselling()
     {
-        if(session('user_id'))
+        if(Auth::guard('counselor')->user())
         {
             return redirect()->route('counseller.dashboard');
         }
@@ -166,40 +166,27 @@ class CounsellerController extends Controller
             }
 
             // Password matches, log the user in and redirect to the dashboard
-            $counsellorId = $Counselor->id;
             if (Auth::guard('programs')->check()) {
                 Auth::guard('programs')->logout();
             }
-            session()->forget('user_id'); // Clear previous session data
-            session(['user_id' => $counsellorId]); // Store the new user_id
+            session()->forget('user_id');
+            Auth::guard('counselor')->login($Counselor);
             return redirect()->route('counseller.dashboard');
-            // return view('admin.session_dashboard_view')->with(['user_id' => $Counselor->id]);
-        } else {
-            return back()->with('error', 'Wrong Login Details');
-        }
-
-        // Redirect based on the email
-        if ($request->email === 'counselling@mindwayapp.com' && $request->password === 'Partnership8!') {
-            return view('admin.session_dashboard_view');
         } else {
             return back()->with('error', 'Wrong Login Details');
         }
     }
     public function counselorDashboard()
     {
-        if(!$user_id = session('user_id'))
+        $Counselor = Auth::guard('counselor')->user();
+        $counsellorId = $Counselor->id??null;
+        if(!$counsellorId)
         {
             return redirect()->route('counseller.login');
         }
-        // Password matches, log the user in and redirect to the dashboard
-        $counsellorId = $user_id;
-        $Counselor = Counselor::find($user_id);
         if (Auth::guard('programs')->check()) {
             Auth::guard('programs')->logout();
         }
-        session()->forget('user_id'); // Clear previous session data
-        session(['user_id' => $counsellorId]); // Store the new user_id
-
         $customers = CustomreBrevoData::all();
         $upcomingBookings = Booking::with(['user','counselor', 'slot'])
         ->where('counselor_id', $counsellorId)
@@ -215,13 +202,14 @@ class CounsellerController extends Controller
     }
     public function logout()
     {
-        session()->forget('user_id'); // Clear previous session data
+        Auth::guard('counselor')->logout();
         return redirect()->route('counseller.login');
     }
 
     public function index()
     {
-        $user_id = session('user_id');
+        $user = Auth::guard('counselor')->user();
+        $user_id = $user->id;
         $customers = CustomreBrevoData::all();
         return view('mw-1.counseller.sessions.manage', get_defined_vars());
         return view('admin.session_dashboard_view')->with(['user_id' => $user_id]);
@@ -330,7 +318,7 @@ class CounsellerController extends Controller
        $request->validate([
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        $Counselor = Counselor::where('id', session('user_id'))->first();
+        $Counselor = Auth::guard('counselor')->user();
         $imageName = '';
         if ($request->hasFile('logo')) {
             $image = $request->file('logo'); // Use `file()` for clarity
@@ -347,8 +335,8 @@ class CounsellerController extends Controller
 
     public function counsellerhome()
     {
-
-        $counsellor_id = session('user_id');
+        $user = Auth::guard('counselor')->user();
+        $counsellor_id = $user->id;
         if ($counsellor_id) {
             $Counselor = Counselor::where('id', $counsellor_id)->first();
 
@@ -363,7 +351,8 @@ class CounsellerController extends Controller
 
     public function counsellerAvailability()
     {
-        $user_id = session('user_id');
+        $user = Auth::guard('counselor')->user();
+        $user_id = $user->id;
         $counselor = Counselor::where('id', $user_id)->firstOrFail();
 
         
@@ -476,8 +465,8 @@ class CounsellerController extends Controller
         $validated = $request->validate([
             'timezone' => 'nullable|string', // Make sure timezone is a nullable string (optional)
         ]);
-
-        $user_id = isset($request->counselorId) ? $request->counselorId : session('user_id');
+        $user = Auth::guard('counselor')->user();
+        $user_id = isset($request->counselorId) ? $request->counselorId : $user->id??null;
         $counselor = Counselor::findOrFail($user_id);
         DB::beginTransaction();
         try {
@@ -503,7 +492,7 @@ class CounsellerController extends Controller
 
     public function counsellerProfile()
     {
-        $Counselor = Counselor::where('id', session('user_id'))->first();
+        $Counselor = Auth::guard('counselor')->user();
         $timezones = $this->timezones();
         $path = public_path('mw-1' . DIRECTORY_SEPARATOR . 'timezones.json');
         $json = File::get($path);
@@ -516,8 +505,11 @@ class CounsellerController extends Controller
     {
         $request->validate([
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'location' => 'required|string', 
+            'language' => 'required|array', 
+            'language.*' => 'string',
         ]);
-        $Counselor = Counselor::where('id', session('user_id'))->first();
+        $Counselor = Auth::guard('counselor')->user();
         $specilization = json_decode($Counselor->specialization);
         if(isset($request->tags) && $request->tags != '')
         {
@@ -528,6 +520,8 @@ class CounsellerController extends Controller
         $Counselor->gender = $request->gender;
         $Counselor->intake_link = $request->intake_link;
         $Counselor->notice_period = $request->notice_period;
+        $Counselor->language = json_encode($request->language);
+        $Counselor->location = $request->location;
 
         $imageName = '';
         if ($request->hasFile('logo')) {
@@ -551,8 +545,9 @@ class CounsellerController extends Controller
     }
     public function setting()
     {
-        $user_id = session('user_id');
-        $counselor = Counselor::where('id', $user_id)->first();
+
+       
+        $counselor = Auth::guard('counselor')->user();
 
         // Pass current 2FA state, secret, and QR code (if enabled)
         $qrCodeUrl = null;
@@ -587,8 +582,8 @@ class CounsellerController extends Controller
     }
     public function counsellerSettingSave(Request $request)
     {
-        $user_id = session('user_id');
-        $counselor = Counselor::where('id', $user_id)->first();
+       
+        $counselor = Auth::guard('counselor')->user();
         $google2fa = new Google2FA();
 
         if ($request->has('enable_2fa')) {

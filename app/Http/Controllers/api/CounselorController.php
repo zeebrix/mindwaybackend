@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Services\SlotGenerationService;
 use App\Services\CounselorService;
 use App\Services\CalendarService;
+use GPBMetadata\Google\Api\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CounselorController extends Controller
@@ -136,8 +137,8 @@ class CounselorController extends Controller
             'availability.*.start_time' => 'required|date_format:H:i',
             'availability.*.end_time' => 'required|date_format:H:i|after:start_time',
         ]);
-        $user_id = session('user_id')??4;
-        $counselor = Counselor::where('id',$user_id )->firstOrFail();
+        
+        $counselor = Auth::guard('counselor')->user();
         
         // Clear existing availability
         $counselor->availabilities()->delete();

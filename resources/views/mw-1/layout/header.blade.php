@@ -24,9 +24,9 @@
                $Program = Auth::guard('programs')->user();
             @endphp
             <img style="object-fit: contain;" src="{{ asset('storage/logo/' . $Program->logo) }}" alt="" width="35" height="35" class="rounded-circle">
-              @elseif (session('user_id'))
+              @elseif (Auth::guard('counselor')->check())
             @php
-              $counselor = App\Models\Counselor::where('id', session('user_id'))->first();
+              $counselor = Auth::guard('counselor')->user();;
             @endphp
 
             @if ($counselor->avatar !== 'default.png')
@@ -63,7 +63,7 @@
               <a href="{{ route('program.logout') }}" class="btn btn-outline-primary mx-3 mt-2 d-block">Logout</a>
 
               {{-- @include('mw-1.layout.employeer-sidebar') --}}
-              @elseif (session('user_id'))
+              @elseif (Auth::guard('counselor')->check())
 
               <a href="{{ route('counsellor.logout') }}" class="btn btn-outline-primary mx-3 mt-2 d-block">Logout</a>
 
