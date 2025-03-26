@@ -155,7 +155,7 @@ class CustomerService
             $useSanctum = request()->header('Use-Sanctum') === 'true';
             if($useSanctum)
             {
-                $token = $customer->createToken('auth_token')->plainTextToken;
+                $token = $customer2->createToken('auth_token')->plainTextToken;
             }
             $customer["bearer_token"] = $token ?? NULL;
             DB::commit();
