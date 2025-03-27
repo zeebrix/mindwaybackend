@@ -126,7 +126,7 @@ class CounselorService
                 'bio' => $counselor->description,
                 'intake_link' => $counselor->intake_link,
                 'location' => $counselor->location,
-                'language' => $counselor->language,
+                'language' => json_decode($counselor->language, true),
                 'intro_file' => $counselor->intro_file,
                 'avatar' => $counselor->avatar,
                 'specialization' => json_decode($counselor->specialization, true) ?? [],

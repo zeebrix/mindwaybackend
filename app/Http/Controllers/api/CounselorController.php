@@ -65,12 +65,14 @@ class CounselorController extends Controller
             
             // JSON_SEARCH conditions for communication_method
             $communicationConditions = [];
+            $preference->communication_methods ??= ['Phone Call', "Video Call"];
             foreach ($preference->communication_methods as $method) {
                 $communicationConditions[] = 'JSON_SEARCH(communication_method, "one", ?)';
                 $bindings[] = $method;
             }
             
             // Add gender bindings
+            $preference->gender ??= ['Male', "Female"];
             $genderPlaceholders = implode(',', array_fill(0, count($preference->gender), '?'));
             $bindings = array_merge($bindings, $preference->gender);
             
@@ -221,12 +223,21 @@ class CounselorController extends Controller
             ->reject(fn($item) => $item === "")
             ->unique()
             ->values(),
+
             
-        'languages' => $filters->pluck('language')
+        'languages' =>$filters->pluck('language')
             ->filter()
-            ->reject(fn($item) => $item === "")
+            ->flatMap(function ($item) {
+                return json_decode($item, true); // decode JSON strings to arrays
+            })
+            ->filter()
             ->unique()
-            ->values(),
+            ->values(),            
+        // 'languages' => $filters->pluck('language')
+        //     ->filter()
+        //     ->reject(fn($item) => $item === "")
+        //     ->unique()
+        //     ->values(),
             
         'communication_methods' => $filters->pluck('communication_method')
             ->map(fn($item) => json_decode($item, true) ?? [])

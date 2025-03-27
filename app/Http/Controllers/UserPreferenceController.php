@@ -13,7 +13,7 @@ class UserPreferenceController extends Controller
     public function index(Request $request): JsonResponse
     {
         $preferences = UserPreference::where('user_id', $request->user_id)->first();
-
+        $preferences['gender'] ??= ['Male', 'Female'];
         return response()->json(['data' => $preferences,'status' => true]);
     }
     public function store(Request $request): JsonResponse
