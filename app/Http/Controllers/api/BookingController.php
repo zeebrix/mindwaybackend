@@ -306,6 +306,8 @@ catch (\Exception $e) {
             'line' => $th->getLine(),
             'trace' => $th->getTraceAsString(),
             ]);
+            $meetingLink = null;
+            $eventId = null;
         }
         
         

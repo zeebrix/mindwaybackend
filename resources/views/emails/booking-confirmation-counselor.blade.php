@@ -17,7 +17,7 @@
         <strong> Phone: </strong> {{$employee_phone}}<br />
         <strong> Date & Time:   </strong> {{ $start_time }} ({{$timezone}})<br />
         <strong> Sessions Remaining: </strong> {{ $max_session }}<br />
-        @if($meeting_link)
+        @if($meeting_link && $communication_method == 'Video Call')
             <strong> Join Link:     </strong> {{ $meeting_link }}<br />
         @endif
         @if($phone)

@@ -51,67 +51,58 @@ class CounselorController extends Controller
         $recommendedCounselors = [];
         $page =$request->page??1;
         if ($preference && $page == 1) {
-            $bindings = [
-                $preference->language, // String
-                $preference->location  // String
-            ];
+            $bindings = [];
             
-            // JSON_SEARCH conditions for specialization
+            // Prepare gender placeholders and bindings
+            $genderPlaceholders = implode(',', array_fill(0, count($preference->gender), '?'));
+            $bindings = array_merge($bindings, $preference->gender);
+            
+            // Prepare specialization conditions
             $specializationConditions = [];
             foreach ($preference->specializations as $specialization) {
                 $specializationConditions[] = 'JSON_SEARCH(specialization, "one", ?)';
                 $bindings[] = $specialization;
             }
             
-            // JSON_SEARCH conditions for communication_method
+            // Prepare communication method conditions
             $communicationConditions = [];
-            foreach ($preference->communication_methods as $method) {
-                $communicationConditions[] = 'JSON_SEARCH(communication_method, "one", ?)';
-                $bindings[] = $method;
+            if ($preference->communication_methods) {
+                foreach ($preference->communication_methods as $method) {
+                    $communicationConditions[] = 'JSON_SEARCH(communication_method, "one", ?)';
+                    $bindings[] = $method;
+                }
             }
             
-            // Add gender bindings
-            $genderPlaceholders = implode(',', array_fill(0, count($preference->gender), '?'));
-            $bindings = array_merge($bindings, $preference->gender);
+            // Prepare language condition
+            $languageConditions = [];
+            foreach ((array)$preference->language as $language) {
+                $languageConditions[] = 'JSON_SEARCH(language, "one", ?)';
+                $bindings[] = $language;
+            }
             
-            // Step 1: Create Subquery with Match Score
-            $subQuery = Counselor::select('*')
+            // Add location to bindings
+            $bindings[] = $preference->location;
+            
+            // Create the main query with proper scoring and prioritization
+            $counselors = Counselor::select('*')
                 ->selectRaw("
-                    (CASE WHEN gender IN ($genderPlaceholders) THEN 3 ELSE 0 END) +
-                    (CASE WHEN (" . implode(' OR ', $specializationConditions) . ") THEN 1 ELSE 0 END) +
-                    (CASE WHEN (" . implode(' OR ', $communicationConditions) . ") THEN 2 ELSE 0 END) +
-                    (CASE WHEN language = ? THEN 4 ELSE 0 END) +
-                    (CASE WHEN location = ? THEN 5 ELSE 0 END)
-                    AS match_score
-                ", $bindings);
-            
-            // Get raw SQL query and merge bindings properly
-            $rawSql = $subQuery->toSql();
-            $maxScoreQuery = DB::table(DB::raw("({$rawSql}) as ranked_counselors"))
-                ->mergeBindings($subQuery->getQuery())
-                ->selectRaw('MAX(match_score) as max_score')
-                ->value('max_score');
-            
-            $maxScore = $maxScoreQuery ?? 0; // Default to 0 if no matches
-            
-            // Step 3: Retrieve Counselors with the Highest Match Score
-            $recommendedCounselors = Counselor::select('*')
-                ->selectRaw("
-                    (CASE WHEN gender IN ($genderPlaceholders) THEN 3 ELSE 0 END) +
-                    (CASE WHEN (" . implode(' OR ', $specializationConditions) . ") THEN 1 ELSE 0 END) +
-                    (CASE WHEN (" . implode(' OR ', $communicationConditions) . ") THEN 2 ELSE 0 END) +
-                    (CASE WHEN language = ? THEN 4 ELSE 0 END) +
-                    (CASE WHEN location = ? THEN 5 ELSE 0 END)
-                    AS match_score
+                    (
+                        CASE WHEN gender IN ($genderPlaceholders) THEN 30 ELSE 0 END +
+                        CASE WHEN (" . implode(' OR ', $specializationConditions) . ") THEN 10 ELSE 0 END +
+                        CASE WHEN (" . implode(' OR ', $communicationConditions) . ") THEN 20 ELSE 0 END +
+                        CASE WHEN (" . implode(' OR ', $languageConditions) . ") THEN 40 ELSE 0 END +
+                        CASE WHEN location = ? THEN 50 ELSE 0 END
+                    ) as match_score
                 ", $bindings)
-                ->having('match_score', '=', $maxScore)
+                ->havingRaw('match_score > 0') // Only get counselors with at least one match
                 ->orderByDesc('match_score')
                 ->orderBy('id')
+                ->limit(3) // Get only top 3 matches
                 ->get();
             
-        
-            $recommendedCounselors = $this->counselorService->formatCounselors($recommendedCounselors);
+            $recommendedCounselors = $this->counselorService->formatCounselors($counselors);
         }
+        
         $allCounselors = $this->counselorService->getAllCounselors(
             pagination: $request->pagination??true, // Default: true
             page: $page,

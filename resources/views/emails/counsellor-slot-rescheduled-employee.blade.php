@@ -12,7 +12,7 @@
     <p>Your session with {{$counselor_name}} has been rescheduled. Here are the new details.</p>
     <p>
     New Date & Time:  {{ $start_time }} ({{$timezone}})<br/>
-    @if($meeting_link)
+    @if($meeting_link && $communication_method == 'Video Call')
     Join Link:  {{ $meeting_link }}
     @endif
     @if($communication_method == 'Phone Call')
