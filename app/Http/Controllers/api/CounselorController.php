@@ -53,12 +53,11 @@ class CounselorController extends Controller
         $page = $request->page ?? 1;
         if ($preference && $page == 1) {
             $counselorIds = Booking::where('user_id',$request->customer_id)->where('status','!=','cancelled')->pluck('counselor_id');
-            if($counselorIds)
+            if(count($counselorIds))
             {
                 $counselors = Counselor::whereIn('id',$counselorIds)
                 ->orderBy('id')
                 ->limit(3)->get();
-
             }
             else
             {
