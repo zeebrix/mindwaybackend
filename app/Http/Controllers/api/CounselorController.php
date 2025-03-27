@@ -52,54 +52,56 @@ class CounselorController extends Controller
         $page = $request->page ?? 1;
         if ($preference && $page == 1) {
             $bindings = [];
-
+        
             // Prepare gender placeholders and bindings
             $genderPlaceholders = implode(',', array_fill(0, count($preference->gender), '?'));
             $bindings = array_merge($bindings, $preference->gender);
-
-            // Prepare specialization conditions
-            $specializationConditions = [];
-            foreach ($preference->specializations as $specialization) {
-                $specializationConditions[] = 'JSON_SEARCH(specialization, "one", ?)';
-                $bindings[] = $specialization;
-            }
-
-            // Prepare communication method conditions
-            $communicationConditions = [];
-            if ($preference->communication_methods) {
-                foreach ($preference->communication_methods as $method) {
-                    $communicationConditions[] = 'JSON_SEARCH(communication_method, "one", ?)';
-                    $bindings[] = $method;
-                }
-            }
-
-            // Prepare language condition
-            $languageConditions = [];
-            foreach ((array)$preference->language as $language) {
-                $languageConditions[] = 'JSON_SEARCH(language, "one", ?)';
-                $bindings[] = $language;
-            }
-
+        
+            // Prepare specialization bindings
+            $bindings = array_merge($bindings, $preference->specializations);
+        
+            // Prepare communication method bindings
+            $bindings = array_merge($bindings, $preference->communication_methods);
+        
+            // Prepare language bindings
+            $bindings = array_merge($bindings, (array)$preference->language);
+        
             // Add location to bindings
             $bindings[] = $preference->location;
-
+            // dd($bindings);
             // Create the main query with proper scoring and prioritization
             $counselors = Counselor::select('*')
                 ->selectRaw("
+                (
+                    CASE WHEN gender IN ($genderPlaceholders) THEN 30 ELSE 0 END +
+        
                     (
-                        CASE WHEN gender IN ($genderPlaceholders) THEN 30 ELSE 0 END +
-                        CASE WHEN (" . implode(' OR ', $specializationConditions) . ") THEN 10 ELSE 0 END +
-                        CASE WHEN (" . implode(' OR ', $communicationConditions) . ") THEN 20 ELSE 0 END +
-                        CASE WHEN (" . implode(' OR ', $languageConditions) . ") THEN 40 ELSE 0 END +
-                        CASE WHEN location = ? THEN 50 ELSE 0 END
-                    ) as match_score
-                ", $bindings)
+                        SELECT COUNT(*) * 10 
+                        FROM JSON_TABLE(specialization, '$[*]' COLUMNS (spec VARCHAR(255) PATH '$')) AS jt
+                        WHERE jt.spec IN (" . implode(',', array_fill(0, count($preference->specializations), '?')) . ")
+                    ) +
+        
+                    (
+                        SELECT COUNT(*) * 20 
+                        FROM JSON_TABLE(communication_method, '$[*]' COLUMNS (method VARCHAR(255) PATH '$')) AS jt
+                        WHERE jt.method IN (" . implode(',', array_fill(0, count($preference->communication_methods), '?')) . ")
+                    ) +
+        
+                    (
+                        SELECT COUNT(*) * 40 
+                        FROM JSON_TABLE(language, '$[*]' COLUMNS (lang VARCHAR(255) PATH '$')) AS jl
+                        WHERE jl.lang IN (" . implode(',', array_fill(0, count((array)$preference->language), '?')) . ")
+                    ) +
+        
+                    CASE WHEN location = ? THEN 50 ELSE 0 END
+                ) as match_score
+            ", $bindings)
                 ->havingRaw('match_score > 0') // Only get counselors with at least one match
                 ->orderByDesc('match_score')
                 ->orderBy('id')
                 ->limit(3) // Get only top 3 matches
                 ->get();
-
+                dd($counselors->toArray());
             $recommendedCounselors = $this->counselorService->formatCounselors($counselors);
         }
 
