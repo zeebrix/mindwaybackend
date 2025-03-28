@@ -417,7 +417,7 @@ class CounsellerController extends Controller
     public function SaveCounselorIntroVideo(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'intro_video' => 'required|mimetypes:video/mp4,video/mov,video/avi,video/webm|max:10240', // Max 10MB
+            'intro_video' => 'required|file|mimes:mp4,mov,avi,webm|max:51200', // Max 50MB
         ]);
         if ($validator->fails()) {
             return response()->json([
