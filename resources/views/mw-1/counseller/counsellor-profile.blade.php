@@ -646,40 +646,39 @@
     document.getElementById('uploadIntroTrigger').addEventListener('click', function() {
         document.getElementById('uploadIntroInput').click();
     });
-    document.getElementById('uploadIntroInput').addEventListener('change', function() {
-        const file = this.files[0];
-        if (!file) return;
+    $('#uploadIntroInput').on('change', function () {
+            const file = this.files[0];
+            if (!file) return;
 
-        // Prepare FormData
-        const formData = new FormData();
-        formData.append('intro_video', file);
-        formData.append('counselorId', "{{$Counselor->id}}");
-        // Send AJAX request
-        fetch("{{ url('/api/save-counsellor-intro-video') }}", {
-                method: "POST",
+            let formData = new FormData();
+            formData.append('intro_video', file);
+            formData.append('counselorId', "{{ $Counselor->id }}");
+
+            $.ajax({
+                url: "{{ url('/api/save-counsellor-intro-video') }}",
+                type: "POST",
+                data: formData,
+                contentType: false,  // Prevent jQuery from setting contentType
+                processData: false,  // Prevent jQuery from converting FormData
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')  // CSRF Token
                 },
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status == 'success') {
-                    toastr.success("Intro Video Added Successfully");
-                    setTimeout(() => {
-                        location.reload();
-                    }, 4000);
-                } else {
-                    toastr.error("Error uploading File");
-                    // alert("Error uploading logo");
+                success: function (data) {
+                    if (data.status === 'success') {
+                        toastr.success("Intro Video Added Successfully");
+                        setTimeout(() => {
+                            location.reload();
+                        }, 4000);
+                    } else {
+                        toastr.error("Error uploading File");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    toastr.error("An unexpected error occurred");
+                    console.error(xhr.responseText);  // Log error for debugging
                 }
-            })
-            .catch(error => {
-                toastr.error("An unexpected error occurred");
-                // console.error("Error:", error);
-                // alert("An unexpected error occurred.");
             });
-    });
+        });
     document.getElementById('uploadLogoInput').addEventListener('change', function() {
         const file = this.files[0];
         if (!file) return;

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use PragmaRX\Google2FA\Google2FA;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -415,9 +416,15 @@ class CounsellerController extends Controller
     }
     public function SaveCounselorIntroVideo(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'intro_video' => 'required|mimetypes:video/mp4,video/mov,video/avi,video/webm|max:10240', // Max 10MB
         ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'errors' => $validator->errors()
+            ], 422); // 422 Unprocessable Entity
+        }
         $Counselor = Counselor::where('id', $request->counselorId)->first();
         $imageName = '';
         if ($request->hasFile('intro_video')) {
