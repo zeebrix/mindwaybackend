@@ -416,15 +416,7 @@ class CounsellerController extends Controller
     }
     public function SaveCounselorIntroVideo(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'intro_video' => 'required|file|mimes:mp4,mov,avi,webm|max:51200', // Max 50MB
-        ]);
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => $validator->errors()
-            ], 422); // 422 Unprocessable Entity
-        }
+        
         $Counselor = Counselor::where('id', $request->counselorId)->first();
         $imageName = '';
         if ($request->hasFile('intro_video')) {
