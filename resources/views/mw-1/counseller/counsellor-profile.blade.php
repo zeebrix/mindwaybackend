@@ -658,7 +658,7 @@
         fetch("{{ url('/save-counsellor-intro-video') }}", {
                 method: "POST",
                 headers: {
-                    'X-CSRF-TOKEN': "{{ csrf_token() }}",
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                 },
                 body: formData,
             })
