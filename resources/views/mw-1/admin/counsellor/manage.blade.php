@@ -183,7 +183,7 @@
             enforceWhitelist: true, // Prevent custom i nput
             dropdown: {
                 enabled: 0, // Show suggestions when typing
-                maxItems: 10
+                maxItems: 100
             }
         });
         tagify.addTags(selectedSpecializations);
