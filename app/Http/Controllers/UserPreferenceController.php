@@ -20,13 +20,13 @@ class UserPreferenceController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'specializations' => 'nullable|array',
-            'specializations.*' => 'string',
+            'specializations.*' => 'nullable|string',
             'location' => 'nullable|string',
             'language' => 'nullable|string',
             'gender' => 'nullable|array',
-            'gender.*' => 'string',
+            'gender.*' => 'nullable|string',
             'communication_methods' => 'nullable|array',
-            'communication_methods.*' => 'string',
+            'communication_methods.*' => 'nullable|string',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -38,6 +38,9 @@ class UserPreferenceController extends Controller
     
         // Validation passed, save preferences
         $validated = $validator->validated();
+        $validated['specializations'] = $validated['specializations'] ?? [];
+        $validated['gender'] = $validated['gender'] ?? [];
+        $validated['communication_methods'] = $validated['communication_methods'] ?? [];
         $preferences = UserPreference::updateOrCreate(
             ['user_id' => $request->user_id],
             $validated

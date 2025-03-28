@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\Counselor;
 use App\Models\CounselorAvailability;
 use App\Models\Customer;
+use App\Models\Slot;
 use Illuminate\Http\Request;
 use App\Services\SlotGenerationService;
 use App\Services\CounselorService;
@@ -42,6 +43,19 @@ class CounselorController extends Controller
             'customer' => $customer,
         ]);
     }
+    public function getSanitizedPlaceholders($array) {
+        $sanitizedArray = array_filter($array, function($value) {
+            return $value !== null && $value !== '' && $value !== 'null';
+        });
+    
+        if (empty($sanitizedArray)) {
+            return ['', []];
+        }
+    
+        $placeholders = implode(',', array_fill(0, count($sanitizedArray), '?'));
+        return [$placeholders, $sanitizedArray];
+    }
+    
     public function getCounselorsPagination(Request $request)
     {
         $customer = Customer::with(['Program' => function ($query) {
@@ -51,36 +65,58 @@ class CounselorController extends Controller
         $preference = $customer ? $customer->preference : null;
         $recommendedCounselors = [];
         $page = $request->page ?? 1;
+       
         if ($preference && $page == 1) {
             $counselorIds = Booking::where('user_id',$request->customer_id)->where('status','!=','cancelled')->pluck('counselor_id');
+            $counselors  = [];
             if(count($counselorIds))
             {
-                $counselors = Counselor::whereIn('id',$counselorIds)
+                $counselors = Counselor::whereHas('availabilities') ->addSelect([
+                    'next_available_slot' => Slot::select('start_time')
+                        ->whereColumn('counselor_id', 'counselors.id')
+                        ->where('start_time', '>', DB::raw('NOW() + INTERVAL counselors.notice_period HOUR')) // Add the counselor's dynamic notice period
+                        ->where('is_booked', false)
+                        ->whereNull('customer_id')
+                        ->orderBy('start_time', 'asc')
+                        ->limit(1)
+                ])
+                ->whereIn('id',$counselorIds)
                 ->orderBy('id')
                 ->limit(3)->get();
             }
-            else
+            if(empty($counselor))
             {
                 $bindings = [];
         
-                // Prepare gender placeholders and bindings
-                $genderPlaceholders = implode(',', array_fill(0, count($preference->gender), '?'));
-                $bindings = array_merge($bindings, $preference->gender);
-            
-                // Prepare specialization bindings
-                $bindings = array_merge($bindings, $preference->specializations);
-            
-                // Prepare communication method bindings
-                $bindings = array_merge($bindings, $preference->communication_methods);
-            
-                // Prepare language bindings
-                $bindings = array_merge($bindings, (array)$preference->language);
-            
-                // Add location to bindings
-                $bindings[] = $preference->location;
-                // dd($bindings);
-                // Create the main query with proper scoring and prioritization
-                $counselors = Counselor::select('*')
+              
+
+                list($genderPlaceholders, $genderBindings) = $this->getSanitizedPlaceholders($preference->gender);
+                $bindings = array_merge($bindings, $genderBindings);
+                
+                list($specializationPlaceholders, $specializationBindings) = $this->getSanitizedPlaceholders($preference->specializations);
+                $bindings = array_merge($bindings, $specializationBindings);
+                
+                list($communicationMethodPlaceholders, $communicationMethodBindings) = $this->getSanitizedPlaceholders($preference->communication_methods);
+                $bindings = array_merge($bindings, $communicationMethodBindings);
+
+                // Handle language bindings
+                list($languagePlaceholders, $languageBindings) = $this->getSanitizedPlaceholders((array) $preference->language);
+                $bindings = array_merge($bindings, $languageBindings);
+                
+                $location = $preference->location ?? ''; // Default to empty string if location is null
+                $bindings[] = $location;
+                
+                $counselors = Counselor::whereHas('availabilities')
+                ->select('*')
+                ->addSelect([
+                    'next_available_slot' => Slot::select('start_time')
+                        ->whereColumn('counselor_id', 'counselors.id')
+                        ->where('start_time', '>', DB::raw('NOW() + INTERVAL counselors.notice_period HOUR')) // Add the counselor's dynamic notice period
+                        ->where('is_booked', false)
+                        ->whereNull('customer_id')
+                        ->orderBy('start_time', 'asc')
+                        ->limit(1)
+                ])
                     ->selectRaw("
                     (
                         CASE WHEN gender IN ($genderPlaceholders) THEN 30 ELSE 0 END +
@@ -88,19 +124,19 @@ class CounselorController extends Controller
                         (
                             SELECT COUNT(*) * 10 
                             FROM JSON_TABLE(specialization, '$[*]' COLUMNS (spec VARCHAR(255) PATH '$')) AS jt
-                            WHERE jt.spec IN (" . implode(',', array_fill(0, count($preference->specializations), '?')) . ")
+                            WHERE jt.spec IN ($specializationPlaceholders)
                         ) +
             
                         (
                             SELECT COUNT(*) * 20 
                             FROM JSON_TABLE(communication_method, '$[*]' COLUMNS (method VARCHAR(255) PATH '$')) AS jt
-                            WHERE jt.method IN (" . implode(',', array_fill(0, count($preference->communication_methods), '?')) . ")
+                            WHERE jt.method IN ($communicationMethodPlaceholders)
                         ) +
             
                         (
                             SELECT COUNT(*) * 40 
                             FROM JSON_TABLE(language, '$[*]' COLUMNS (lang VARCHAR(255) PATH '$')) AS jl
-                            WHERE jl.lang IN (" . implode(',', array_fill(0, count((array)$preference->language), '?')) . ")
+                            WHERE jl.lang IN ($languagePlaceholders)
                         ) +
             
                         CASE WHEN location = ? THEN 50 ELSE 0 END
