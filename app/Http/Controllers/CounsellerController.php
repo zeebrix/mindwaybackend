@@ -413,6 +413,23 @@ class CounsellerController extends Controller
             return redirect()->route('counsellersesion.index')->with('error', 'Program ID not found.');
         }
     }
+    public function SaveCounselorIntroVideo(Request $request)
+    {
+        $request->validate([
+            'intro_video' => 'required|mimetypes:video/mp4,video/mov,video/avi,video/webm|max:10240', // Max 10MB
+        ]);
+        $Counselor = Counselor::where('id', $request->counselorId)->first();
+        $imageName = '';
+        if ($request->hasFile('intro_video')) {
+            $image = $request->file('intro_video'); // Use `file()` for clarity
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('/Intro', $imageName); // Saves to storage/logo
+            $Counselor->intro_file = $imageName;
+        }
+        $Counselor->save();
+        return response()->json(['status' => 'success', 'message' => 'File Saved Successfully']);
+   
+    }
    public function saveCounsellorLogo(Request $request)
     {
        $request->validate([

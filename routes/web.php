@@ -109,6 +109,7 @@ Route::post('/profile-save', [CounsellerController::class, 'profileSave'])->name
 Route::post('/save-timezone', [CounsellerController::class, 'saveTimezone'])->name('timezone.store');
 
 Route::post('/save-counsellor-logo',[CounsellerController::class,'saveCounsellorLogo']);
+Route::post('/save-counsellor-intro-video',[CounsellerController::class,'SaveCounselorIntroVideo']);
 
 // Route::post('/save-timezone', [CounsellerController::class, 'saveTimezone'])->name('timezone.store');
 Route::post('/availability-save', [CounsellerController::class, 'setAvailability'])->name('counseller.availabilitySave');
@@ -135,6 +136,7 @@ Route::group(['prefix' => 'manage-admin', 'middleware' => ['auth']], function ()
   Route::post('/setting',[AdminController::class,'saveSetting'])->name('admin.save-setting');
   Route::post('/add-counselor',[AdminController::class,'Addcounselor']);
   Route::post('/save-counsellor-logo',[AdminController::class,'SaveCounselorLogo']);
+  Route::post('/save-counsellor-intro-video',[AdminController::class,'SaveCounselorIntroVideo']);
     Route::get('/view-dashboard',[AdminController::class,'viewCustomer'])->name('admin.view-dashboard');
     Route::get('/users/data', [AdminController::class, 'getUsers'])->name('admin.users-data');
     Route::get('/delete-customer/{id}',[AdminController::class,'deleteCustomer']);

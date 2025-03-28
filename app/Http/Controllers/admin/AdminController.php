@@ -2635,7 +2635,23 @@ class AdminController extends Controller
 
         return response()->json(['status' => 'success', 'message' => 'Image Saved Successfully']);
     }
-
+    public function SaveCounselorIntroVideo(Request $request)
+    {
+        $request->validate([
+            'intro_video' => 'required|mimetypes:video/mp4,video/mov,video/avi,video/webm|max:10240', // Max 10MB
+        ]);
+        $Counselor = Counselor::where('id', $request->counselorId)->first();
+        $imageName = '';
+        if ($request->hasFile('intro_video')) {
+            $image = $request->file('intro_video'); // Use `file()` for clarity
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('intro_video', $imageName); // Saves to storage/logo
+            $Counselor->intro_file = $imageName;
+        }
+        $Counselor->save();
+        return response()->json(['status' => 'success', 'message' => 'File Saved Successfully']);
+   
+    }
 
     public function storeCounsellor(Request $request)
     {
