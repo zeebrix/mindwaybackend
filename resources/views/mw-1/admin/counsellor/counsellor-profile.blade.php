@@ -663,7 +663,7 @@
         formData.append('counsellorId', counsellorId);
         formData.append('logo', file);
         // Send AJAX request
-        fetch("{{ url('/manage-admin/save-counsellor-logo') }}", {
+        fetch("{{ url('/manage-admin/admin-save-counsellor-logo') }}", {
                 method: "POST",
                 headers: {
                     'X-CSRF-TOKEN': "{{ csrf_token() }}",
@@ -700,7 +700,7 @@
         formData.append('intro_video', file);
         formData.append('counselorId', "{{$Counselor->id}}");
         // Send AJAX request
-        fetch("{{ url('/save-counsellor-intro-video') }}", {
+        fetch("{{ url('/manage-admin/admin-save-counsellor-intro-video') }}", {
                 method: "POST",
                 headers: {
                     'X-CSRF-TOKEN': "{{ csrf_token() }}",

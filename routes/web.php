@@ -135,8 +135,8 @@ Route::group(['prefix' => 'manage-admin', 'middleware' => ['auth']], function ()
   Route::get('/setting',[AdminController::class,'setting'])->name('admin.setting');
   Route::post('/setting',[AdminController::class,'saveSetting'])->name('admin.save-setting');
   Route::post('/add-counselor',[AdminController::class,'Addcounselor']);
-  Route::post('/save-counsellor-logo',[AdminController::class,'SaveCounselorLogo']);
-  Route::post('/save-counsellor-intro-video',[AdminController::class,'SaveCounselorIntroVideo']);
+  Route::post('/admin-save-counsellor-logo',[AdminController::class,'SaveCounselorLogo']);
+  Route::post('/admin-save-counsellor-intro-video',[AdminController::class,'SaveCounselorIntroVideo']);
     Route::get('/view-dashboard',[AdminController::class,'viewCustomer'])->name('admin.view-dashboard');
     Route::get('/users/data', [AdminController::class, 'getUsers'])->name('admin.users-data');
     Route::get('/delete-customer/{id}',[AdminController::class,'deleteCustomer']);
