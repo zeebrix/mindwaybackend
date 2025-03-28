@@ -2645,7 +2645,7 @@ class AdminController extends Controller
         if ($request->hasFile('intro_video')) {
             $image = $request->file('intro_video'); // Use `file()` for clarity
             $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->storeAs('intro_video', $imageName); // Saves to storage/logo
+            $image->storeAs('Intro', $imageName); // Saves to storage/logo
             $Counselor->intro_file = $imageName;
         }
         $Counselor->save();
