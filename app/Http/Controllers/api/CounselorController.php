@@ -48,8 +48,9 @@ class CounselorController extends Controller
             return $value !== null && $value !== '' && $value !== 'null';
         });
     
+        // If empty, return a dummy placeholder to prevent SQL errors
         if (empty($sanitizedArray)) {
-            return ['', []];
+            return ['?', ['dummy_value']]; // Prevents "IN ()" error
         }
     
         $placeholders = implode(',', array_fill(0, count($sanitizedArray), '?'));
@@ -105,7 +106,6 @@ class CounselorController extends Controller
                 
                 $location = $preference->location ?? ''; // Default to empty string if location is null
                 $bindings[] = $location;
-                
                 $counselors = Counselor::whereHas('availabilities')
                 ->select('*')
                 ->addSelect([
@@ -117,31 +117,27 @@ class CounselorController extends Controller
                         ->orderBy('start_time', 'asc')
                         ->limit(1)
                 ])
-                    ->selectRaw("
-                    (
-                        CASE WHEN gender IN ($genderPlaceholders) THEN 30 ELSE 0 END +
-            
-                        (
-                            SELECT COUNT(*) * 10 
-                            FROM JSON_TABLE(specialization, '$[*]' COLUMNS (spec VARCHAR(255) PATH '$')) AS jt
-                            WHERE jt.spec IN ($specializationPlaceholders)
-                        ) +
-            
-                        (
-                            SELECT COUNT(*) * 20 
-                            FROM JSON_TABLE(communication_method, '$[*]' COLUMNS (method VARCHAR(255) PATH '$')) AS jt
-                            WHERE jt.method IN ($communicationMethodPlaceholders)
-                        ) +
-            
-                        (
-                            SELECT COUNT(*) * 40 
-                            FROM JSON_TABLE(language, '$[*]' COLUMNS (lang VARCHAR(255) PATH '$')) AS jl
-                            WHERE jl.lang IN ($languagePlaceholders)
-                        ) +
-            
-                        CASE WHEN location = ? THEN 50 ELSE 0 END
-                    ) as match_score
-                ", $bindings)
+                ->selectRaw("
+                (
+                    CASE WHEN gender IN ($genderPlaceholders) THEN 30 ELSE 0 END +
+                    COALESCE(
+                        (SELECT COUNT(*) * 10 
+                         FROM JSON_TABLE(specialization, '$[*]' COLUMNS (spec VARCHAR(255) PATH '$')) AS jt
+                         WHERE jt.spec IN ($specializationPlaceholders)
+                        ), 0) +
+                    COALESCE(
+                        (SELECT COUNT(*) * 20 
+                         FROM JSON_TABLE(communication_method, '$[*]' COLUMNS (method VARCHAR(255) PATH '$')) AS jt
+                         WHERE jt.method IN ($communicationMethodPlaceholders)
+                        ), 0) +
+                    COALESCE(
+                        (SELECT COUNT(*) * 40 
+                         FROM JSON_TABLE(language, '$[*]' COLUMNS (lang VARCHAR(255) PATH '$')) AS jl
+                         WHERE jl.lang IN ($languagePlaceholders)
+                        ), 0) +
+                    CASE WHEN location = ? THEN 50 ELSE 0 END
+                ) as match_score
+            ", $bindings)
                     ->havingRaw('match_score > 0') // Only get counselors with at least one match
                     ->orderByDesc('match_score')
                     ->orderBy('id')

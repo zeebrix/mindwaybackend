@@ -39,7 +39,6 @@ class UpdateAccessToken extends Command
             // Ensure refresh token exists before using it
             if (!empty($token->refresh_token)) {
                 try {
-                    // Make the API call to refresh the access token
                     $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
                         'client_id' => config('services.google.client_id'),
                         'client_secret' => config('services.google.client_secret'),
@@ -64,7 +63,6 @@ class UpdateAccessToken extends Command
 
                         $this->info("Access token for User ID: {$token->counseller_id} updated successfully.");
                     } else {
-                        // If the request was not successful, log the error
                         $errorResponse = $response->json();
                         if (isset($errorResponse['error']) && $errorResponse['error'] == 'invalid_grant') {
                             $this->error("Refresh token for User ID: {$token->counseller_id} is invalid or expired. Please reauthorize.");
@@ -73,8 +71,6 @@ class UpdateAccessToken extends Command
                         }
                     }
                 } catch (\Exception $e) {
-                    //
-                    // Log the exception error
                     $this->error("Error updating token for User ID: {$token->counseller_id}. Exception: {$e->getMessage()}");
                 }
             } else {
