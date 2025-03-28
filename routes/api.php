@@ -206,3 +206,4 @@ Route::get('/sync-old-data', function () {
 });
 
 Route::post('/google/calendar/webhook', [GoogleController::class, 'handleWebhook'])->name('google.calendar.webhook');
+Route::post('/save-counsellor-intro-video',[CounsellerController::class,'SaveCounselorIntroVideo']);

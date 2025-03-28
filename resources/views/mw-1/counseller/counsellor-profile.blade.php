@@ -655,7 +655,7 @@
         formData.append('intro_video', file);
         formData.append('counselorId', "{{$Counselor->id}}");
         // Send AJAX request
-        fetch("{{ url('/save-counsellor-intro-video') }}", {
+        fetch("{{ url('/api/save-counsellor-intro-video') }}", {
                 method: "POST",
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
