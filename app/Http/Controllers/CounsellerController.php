@@ -430,7 +430,7 @@ class CounsellerController extends Controller
         if ($request->hasFile('intro_video')) {
             $image = $request->file('intro_video'); // Use `file()` for clarity
             $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $image->storeAs('/Intro', $imageName); // Saves to storage/logo
+            $image->storeAs('public/Intro', $imageName); // Saves to storage/logo
             $Counselor->intro_file = $imageName;
         }
         $Counselor->save();
