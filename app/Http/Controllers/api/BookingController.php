@@ -372,6 +372,12 @@ catch (\Exception $e) {
         if(!$slot)
         {
             return response()->json(['message' => 'Slot already booked or reserved try different one.'], 400);
+        }
+        $customer = Customer::where('id', $request->customer_id)->first();
+        if ($customer->max_session <= 0) {
+            return response()->json([
+                'message' => 'You have reached to the max session limit.'
+            ], 400);
         }        
         Slot::where('is_booked',false)->where('id','!=',$slot->id)->where('customer_id',$validated['customer_id'])->update(['customer_id'=>null]);
         $slot->customer_id = $validated['customer_id'];
