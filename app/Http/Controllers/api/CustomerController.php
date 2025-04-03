@@ -43,7 +43,11 @@ class CustomerController extends Controller
         $email = $request->input('email');
         $customer = DB::table('customers')->where('email', $email)->first();
         if (!$customer) {
-            return back()->withErrors(['email' => 'No account found with this email address.']);
+            return response()->json([
+                'code' => 421,
+                'status' => 'Error',
+                'message' => 'No account found with this email address.'
+            ], 421);
         }
         $token = Str::random(64);
         DB::table('password_resets')->updateOrInsert(
@@ -56,8 +60,6 @@ class CustomerController extends Controller
         );
         // Generate the reset link
         $resetLink = url("/app-reset-password/{$token}?email={$email}");
-        // Send the reset link to the user (email)
-        // Here you can use Laravel Mail to send the reset link
         \Mail::to($email)->send(new \App\Mail\ResetPasswordMail($resetLink));
         return response()->json(['success'=>true]);
     }

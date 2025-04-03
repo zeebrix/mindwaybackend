@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Log;
 use SendinBlue\Client\ApiException;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use SendinBlue\Client\Model\RemoveContactFromList;
 
 
@@ -252,15 +253,11 @@ class CustomerService
                 ], 421);
             }
             if ($useSanctum) {
-                $credentials = [
-                    'email' => $modelValues['email'],
-                    'password' => $modelValues['password']
-                ];
-                if (!Auth::attempt($credentials)) {
+                if (!Hash::check($modelValues['password'], $user->password)) {
                     return response()->json([
                         'code' => 421,
                         'status' => 'Error',
-                        'message' => 'Password or email incorrect. If you’re still having trouble, reset your password'
+                        'message' => 'Password or email incorrect. If you’re still having trouble, reset your password.'
                     ], 401);
                 }
                 $token = $user->createToken('auth_token')->plainTextToken;
