@@ -258,9 +258,9 @@ class CustomerService
                 ];
                 if (!Auth::attempt($credentials)) {
                     return response()->json([
-                        'code' => 401,
-                        'status' => 'Unauthorized',
-                        'message' => 'Invalid credentials'
+                        'code' => 421,
+                        'status' => 'Error',
+                        'message' => 'Password or email incorrect. If you’re still having trouble, reset your password'
                     ], 401);
                 }
                 $token = $user->createToken('auth_token')->plainTextToken;
