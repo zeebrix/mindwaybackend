@@ -51,8 +51,8 @@ class UpdateAccessToken extends Command
                     // Check if the request was successful
                     if ($response->successful()) {
                         $accessToken = $response->json('access_token');
+                        $expiresIn = $response->json('expires_in'); // Expiration time in seconds
                         $refreshToken = $response->json('refresh_token');
-                        $expiresIn = $response->json('expires_in');
                         $updateData = [
                             'access_token' => Crypt::encrypt($accessToken),
                             'expires_in' => $expiresIn,
@@ -64,7 +64,8 @@ class UpdateAccessToken extends Command
                         DB::table('google_tokens')
                             ->where('id', $token->id)
                             ->update($updateData);
-                            Log::info("✅ Access token updated successfully.", [
+                        
+                        Log::info("✅ Access token updated successfully.", [
                                 'User ID' => $token->counseller_id,
                                 'Token Expires In' => $expiresIn,
                                 'New Refresh Token' => $refreshToken ? 'Yes' : 'No', // Log whether a new refresh token was provided
