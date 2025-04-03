@@ -23,12 +23,9 @@
             @endif
 
             <div class="table-responsive">
-                <table class="table text-nowrap mb-0 align-middle">
+                <table class="table text-nowrap mb-0 align-middle" id="Yajra-dataTable">
                     <thead class="text-dark fs-4">
                         <tr>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Sr. No</h6>
-                            </th>
                             <th class="border-bottom-0">
                                 <h6 class="fw-semibold mb-0">Id</h6>
                             </th>
@@ -59,7 +56,7 @@
                             </th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <!-- <tbody>
                         @php($count = 0)
                         @foreach ($getAudio as $data)
                             @php($count++)
@@ -113,7 +110,7 @@
                             </tr>
                         @endforeach
 
-                    </tbody>
+                    </tbody> -->
                 </table>
             </div>
         </div>
@@ -121,4 +118,9 @@
 
 
 
+@endsection
+
+
+@section('js')
+    @include('mw-1.admin.sos-audio.datatable')
 @endsection

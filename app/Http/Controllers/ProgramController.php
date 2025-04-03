@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use PragmaRX\Google2FA\Google2FA;
 use App\Models\ProgramDepartment;
 use App\Services\BrevoService;
+use Illuminate\Support\Facades\Hash;
 use SendinBlue\Client\Model\RemoveContactFromList;
 use SendinBlue\Client\ApiException;
 class ProgramController extends Controller
@@ -46,12 +47,11 @@ class ProgramController extends Controller
 
     public function checkLogin(Request $request)
     {
-        // Retrieve the program by the provided email
         if (!$request->has('email') || !$request->has('password')) {
             return back()->with('error', 'Email and Password is can not empty');
         }
         $custBrevoData = CustomreBrevoData::where(['email' => $request->email, 'level' => 'admin'])->first();
-        if (!$custBrevoData) {
+        if (!$custBrevoData || !$custBrevoData?->MultiLoginProgram) {
             return back()->with('error', 'Sorry Account Not Found');
         }
         $program = Program::where('id', $custBrevoData->program_id)->first();
@@ -72,9 +72,16 @@ class ProgramController extends Controller
         if($is_trial_end){
             return back()->with('error', 'Sorry Your trial period is end');
         }
-         session()->forget('loginUserName');
-        // Check if program exists and if the password matches (without hashing)
-        if ($program && $custBrevoData?->MultiLoginProgram?->password === $request->password ) {
+        session()->forget('loginUserName');
+        $programPassword = $custBrevoData?->MultiLoginProgram?->password;
+        if ($program && Hash::needsRehash($programPassword))
+        {
+            $programLoginUser = $custBrevoData?->MultiLoginProgram;
+            $programLoginUser->password = Hash::make($programPassword);
+            $programLoginUser->save();
+            $programPassword = $programLoginUser->password;
+        }
+        if ($program &&  Hash::check($request->password, $programPassword)) {
             if ($program->program_type == 0) {
                 return back()->with('error', 'Your account is deactivated');
             }
@@ -88,19 +95,11 @@ class ProgramController extends Controller
                 $request->session()->put('2fa:auth:remember', $request->has('remember'));
                 return redirect()->route('program.2fa');
             }
-            if ($request->email === 'Yvette@mindwayapp.com') {
-                // Redirect to a different view for this email
-                return view('admin.session_dashboard_view');
-            } else {
-                // Redirect to the dashboard for other emails
-                Auth::guard('programs')->login($program);
-                session()->put('loginUserName', $custBrevoData->name ?? '');
-                session()->forget('user_id');
-                return redirect("/manage-program/view-dashboard");
-            }
+            Auth::guard('programs')->login($program);
+            session()->put('loginUserName', $custBrevoData->name ?? '');
+            session()->forget('user_id');
+            return redirect("/manage-program/view-dashboard");
         }
-
-        // Authentication failed...
         return back()->with('error', 'Password or email incorrect. If you’re still having trouble, reset your password');
     }
     public function decisionDashboardView()

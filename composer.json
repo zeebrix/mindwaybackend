@@ -18,7 +18,8 @@
         "maatwebsite/excel": "^3.1",
         "pragmarx/google2fa-laravel": "^2.2",
         "sendinblue/api-v3-sdk": "^8.4",
-        "simplesoftwareio/simple-qrcode": "^4.2"
+        "simplesoftwareio/simple-qrcode": "^4.2",
+        "yajra/laravel-datatables-oracle": "^9.21"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

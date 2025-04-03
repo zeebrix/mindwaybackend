@@ -1,6 +1,6 @@
 @if(Auth::guard('programs')->check())
 @include('mw-1.layout.employeer-sidebar')
-@elseif (session('user_id'))
+@elseif (Auth::guard('counselor')->check())
 @include('mw-1.layout.counseller-sidebar')
 @else
 @if (auth()->check())

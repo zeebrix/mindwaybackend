@@ -175,15 +175,20 @@ class PasswordResetController extends Controller
             'password' => bcrypt($request->input('password')),
         ]);
         DB::table('password_resets')->where('email', $request->input('email'))->delete();
-        $factory = (new Factory)->withServiceAccount('public/mw-1' . DIRECTORY_SEPARATOR . 'firebase-credentials.json');
-        $auth = $factory->createAuth();
-        $user = $auth->getUserByEmail($request->input('email'));
 
-        // Update the user's password
-        $updatedUser = $auth->updateUser($user->uid, [
-            'password' => $request->input('password'),
-        ]);
-        $auth->revokeRefreshTokens($user->uid);
+        try {
+            $factory = (new Factory)->withServiceAccount('public/mw-1' . DIRECTORY_SEPARATOR . 'firebase-credentials.json');
+            $auth = $factory->createAuth();
+            $user = $auth->getUserByEmail($request->input('email'));
+    
+             $auth->updateUser($user->uid, [
+                'password' => $request->input('password'),
+            ]);
+            $auth->revokeRefreshTokens($user->uid);
+            
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
         return back()->withErrors(['email' => 'Password Updated Successfully Go to the App and logged in Again.']);
     }
 }

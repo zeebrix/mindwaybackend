@@ -23,12 +23,9 @@
             @endif
 
             <div class="table-responsive">
-                <table class="table text-nowrap mb-0 align-middle">
+                <table class="table text-nowrap mb-0 align-middle" id="Yajra-dataTable">
                     <thead class="text-dark fs-4">
                         <tr>
-                            <th class="border-bottom-0">
-                                <h6 class="fw-semibold mb-0">Sr. No</h6>
-                            </th>
                             <th class="border-bottom-0">
                                 <h6 class="fw-semibold mb-0">Id</h6>
                             </th>
@@ -57,9 +54,6 @@
                         @foreach ($viewCourse as $data)
                             @php($count++)
                             <tr>
-                                <td class="border-bottom-0">
-                                    <h6 class="fw-normal mb-0">{{ $count }}</h6>
-                                </td>
                                 <td class="border-bottom-0">
                                     <h6 class="fw-semibold mb-1">{{ $data->id }}</h6>
                                 </td>
@@ -99,4 +93,8 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('js')
+    @include('mw-1.admin.courses.datatable')
 @endsection

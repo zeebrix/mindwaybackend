@@ -55,7 +55,6 @@
     
     
     
-    
     /* Custom modal styles */
     .custom-modal {
         background: rgba(240, 240, 240, 1);
@@ -500,19 +499,20 @@
                     <h3 class="fw-normal">Employees ({{ count($customers) }})</h3>
 
                     <div class="search-input">
-                        <i class="ti ti-search" style="font-size: 16px; margin-left: 15px;"></i>
+                        <!-- <i class="ti ti-search" style="font-size: 16px; margin-left: 15px;"></i>
                         <input
                             style="width: 195px; margin-left: 10px; height: 40px;border-radius:20px;background-color:#F7F7F7"
-                            type="text" id="searchInput" class="form-control" placeholder="Search details">
+                            type="text" id="searchInput" class="form-control" placeholder="Search details"> -->
                     </div>
 
                     <h2 class="fw-bold" style="margin-left: 60px;font-size:15px">Level</h2>
-                    <h2 class="fw-bold" style="margin-left: 195px;font-size:15px">Session Left</h2>
+                    <h2 class="fw-bold" style="margin-left: 120px;font-size:15px">Session Left</h2>
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table text-nowrap mb-0 align-middle" id="employeeTable">
-                        <tbody>
+                    <table class="table text-nowrap mb-0 align-middle" id="Yajra-dataTable">
+
+                        <!-- <tbody>
                             @foreach ($customers as $data)
                                 <tr>
                                     <td class="border-bottom-0" style="width: 350px;"><span
@@ -548,7 +548,7 @@
                                     </td>
                                 </tr>
                             @endforeach
-                        </tbody>
+                        </tbody> -->
                     </table>
                 </div>
             </div>
@@ -606,6 +606,8 @@
 @endsection
 
 @section('js')
+
+@include('mw-1.admin.programs.session-datatable')
     <script>
         const renewalDateInput = document.getElementById('renewal_date');
 
@@ -640,21 +642,22 @@
                 makeFieldsRequired(fields);
             }
         });
-        document.getElementById('searchInput').addEventListener('keyup', function() {
-            const filter = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#employeeTable tbody tr');
 
-            rows.forEach(row => {
-                const name = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
-                const email = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
+        // document.getElementById('searchInput').addEventListener('keyup', function() {
+        //     const filter = this.value.toLowerCase();
+        //     const rows = document.querySelectorAll('#employeeTable tbody tr');
 
-                if (name.includes(filter) || email.includes(filter)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        });
+        //     rows.forEach(row => {
+        //         const name = row.querySelector('td:nth-child(1)').innerText.toLowerCase();
+        //         const email = row.querySelector('td:nth-child(2)').innerText.toLowerCase();
+
+        //         if (name.includes(filter) || email.includes(filter)) {
+        //             row.style.display = '';
+        //         } else {
+        //             row.style.display = 'none';
+        //         }
+        //     });
+        // });
 
 
         function toggleAdditionalReasons() {
@@ -685,77 +688,83 @@
             }
         }
 
-        document.querySelectorAll('#changeLevel').forEach(td => {
-            td.addEventListener('click', function() {
-                // Get user ID and current level
-                const memberId = this.getAttribute('data-id');
-                var currentLevel = this.getAttribute("data-level");
+    // Function to open the level change modal
+    function openLevelModal(memberId, currentLevel) {
+        // Set the modal values
+        document.getElementById('memberIdInput').value = memberId;
+        if (currentLevel === 'member') {
+            document.getElementById('levelMember').checked = true;
+        } else if (currentLevel === 'admin') {
+            document.getElementById('levelAdmin').checked = true;
+        }
+        // Show the modal
+        $('#adminLevelModal').modal('show');
+    }
 
-                // Set the modal values
-                document.getElementById('memberIdInput').value = memberId;
-                if (currentLevel === 'member') {
-                    document.getElementById('levelMember').checked = true;
-                } else if (currentLevel === 'admin') {
-                    document.getElementById('levelAdmin').checked = true;
+    function openLevelModal(memberId, currentLevel) {
+        // Set the modal values
+        document.getElementById('memberIdInput').value = memberId;
+        if (currentLevel === 'member') {
+            document.getElementById('levelMember').checked = true;
+        } else if (currentLevel === 'admin') {
+            document.getElementById('levelAdmin').checked = true;
+        }
+        // Show the modal
+        $('#adminLevelModal').modal('show');
+    }
+
+    // Function to handle the level update
+    function updateLevel() {
+        var memberId = document.getElementById("memberIdInput").value;
+        const newLevel = document.querySelector('input[name="level"]:checked').value;
+
+        if (!memberId) {
+            alert('Please select a member.');
+            return;
+        }
+
+        // Send the API request to update admin level
+        fetch('/update-customer-level', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    member_id: memberId,
+                    admin_level: newLevel
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    toastr.success("Admin level updated successfully!");
+
+                    // Refresh the DataTable
+                    $('#Yajra-dataTable').DataTable().ajax.reload();
+
+                    // Hide the modal
+                    $('#adminLevelModal').modal('hide');
+                } else {
+                    alert('Failed to update admin level.');
                 }
-                // Show the modal
-                $('#adminLevelModal').modal('show');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while updating the admin level.');
             });
-        });
-        // Handle the submit button click
-        document.getElementById("submitAdminLevel").addEventListener("click", function() {
-            var memberId = document.getElementById("memberIdInput").value;
-            const newLevel = document.querySelector('input[name="level"]:checked').value;
+    }
 
-            if (!memberId) {
-                alert('Please select a member.');
-                return;
-            }
-
-            // Send the API request to update admin level
-            fetch('/update-customer-level', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        member_id: memberId,
-                        admin_level: newLevel
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        toastr.success("Admin level updated successfully!");
-
-                        // alert('Admin level updated successfully!');
-                        setTimeout(() => {
-                            const td = document.querySelector(`#changeLevel[data-id="${memberId}"]`);
-                            const span = td.querySelector('span');
-                            span.textContent = newLevel;
-                            if (newLevel === 'member') {
-                                span.classList.add('member-style');
-                                span.classList.remove('admin-style');
-                            } else {
-                                span.classList.add('admin-style');
-                                span.classList.remove('member-style');
-                            }
-                            td.setAttribute('data-level', newLevel);
-                            $('#adminLevelModal').modal('hide'); // Hide the modal
-                        }, 3000);
-
-                    } else {
-                        alert('Failed to update admin level.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while updating the admin level.');
-                });
-        });
-
-
+    // Attach the event listener to the submit button
+    document.addEventListener('DOMContentLoaded', function () {
+        const submitButton = document.getElementById('submitAdminLevel');
+        if (submitButton) {
+            submitButton.addEventListener('click', function (event) {
+                event.preventDefault(); // Prevent default form submission
+                updateLevel(); // Call the update function
+            });
+        }
+    });
 
         const programTypeSelect = document.getElementById('program_typeSelect');
         if (programTypeSelect) {

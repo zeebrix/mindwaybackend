@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Log;
 
 use SendinBlue\Client\ApiException;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use SendinBlue\Client\Model\RemoveContactFromList;
 
 
@@ -151,7 +153,13 @@ class CustomerService
                     }
                 }
             }
-            $customer["bearer_token"] = $customer["api_auth_token"] ?? NULL;
+            $token = $customer["api_auth_token"] ?? NULL;
+            $useSanctum = request()->header('Use-Sanctum') === 'true';
+            if($useSanctum)
+            {
+                $token = $customer2->createToken('auth_token')->plainTextToken;
+            }
+            $customer["bearer_token"] = $token ?? NULL;
             DB::commit();
             return response()->json([
                 'code' => 200,
@@ -232,9 +240,10 @@ class CustomerService
 
     public function login(array $modelValues = [])
     {
-        if (\Auth::guard('api')->attempt(['email' => request('email'), 'password' => request('password')])) {
-            $apiAuthToken = $this->repository->getUniqueValue(10, 'api_auth_token');
-            $user = \Auth::guard('api')->user();
+        $useSanctum = request()->header('Use-Sanctum') === 'true';
+        $guard = $useSanctum ? 'api_sanctum' : 'api'; 
+        $user = \App\Models\Customer::where('email', $modelValues['email'])->first();
+        if ($user) {
             if(!$user->single_program)
             {
                 return response()->json([
@@ -243,6 +252,25 @@ class CustomerService
                     'message' => 'This account is not setup Correctly.'
                 ], 421);
             }
+            if ($useSanctum) {
+                if (!Hash::check($modelValues['password'], $user->password)) {
+                    return response()->json([
+                        'code' => 421,
+                        'status' => 'Error',
+                        'message' => 'Password or email incorrect. If you’re still having trouble, reset your password.'
+                    ], 401);
+                }
+                $token = $user->createToken('auth_token')->plainTextToken;
+                $user["bearer_token"] = $token ?? NULL;
+                return response()->json([
+                    'code' => 200,
+                    'status' => 'Success',
+                    'message' => 'Login successfully.',
+                    'data' => $user
+                ], 200);
+            }
+            \Auth::guard($guard)->login($user);
+            $apiAuthToken = $this->repository->getUniqueValue(10, 'api_auth_token');
             $user->api_auth_token = $apiAuthToken;
             $user->save();
             $user = $user->toArray();

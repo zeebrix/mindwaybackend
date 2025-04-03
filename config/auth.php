@@ -40,22 +40,21 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
-
-        'api' => [
-            'driver' => 'passport',
-            'provider' => 'customers',
-        ],
-        'api' => [
-            'driver' => 'token',
-            'provider' => 'users',
-        ],
         'api' => [
             'driver' => 'session',
+            'provider' => 'customers',
+        ],
+        'api_sanctum' => [
+            'driver' => 'sanctum',
             'provider' => 'customers',
         ],
         'programs' => [
             'driver' => 'session',
             'provider' => 'programs',
+        ],
+        'counselor' => [
+            'driver' => 'session',
+            'provider' => 'counselors',
         ],
     ],
 
@@ -89,7 +88,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\Program::class,
         ],
-
+        'counselors' => [ 
+            'driver' => 'eloquent',
+            'model' => App\Models\Counselor::class,  
+        ],
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',

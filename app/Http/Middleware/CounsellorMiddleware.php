@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CounsellorMiddleware
 {
@@ -16,9 +17,10 @@ class CounsellorMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if ($request->session()->has('user_id')) {
+        if (Auth::guard('counselor')->check()) {
             return $next($request);
         }
+        Auth::guard('counselor')->logout();
         return redirect()->route('counseller.login');
     }
 }

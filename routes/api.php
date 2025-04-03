@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Artisan;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+
 Route::get('/update-access-token', function () {
   Artisan::call('update:google-tokens');
        return response()->json(['message' => 'update:google-tokens created successfully.']);
@@ -204,3 +206,4 @@ Route::get('/sync-old-data', function () {
 });
 
 Route::post('/google/calendar/webhook', [GoogleController::class, 'handleWebhook'])->name('google.calendar.webhook');
+Route::post('/save-counsellor-intro-video',[CounsellerController::class,'SaveCounselorIntroVideo']);

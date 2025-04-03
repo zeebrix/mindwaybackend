@@ -18,7 +18,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use PragmaRX\Google2FA\Google2FA;
+use Yajra\DataTables\Facades\DataTables;
 
 class CounsellerController extends Controller
 {
@@ -144,7 +146,7 @@ class CounsellerController extends Controller
 
     public function seecounselling()
     {
-        if(session('user_id'))
+        if(Auth::guard('counselor')->user())
         {
             return redirect()->route('counseller.dashboard');
         }
@@ -166,40 +168,27 @@ class CounsellerController extends Controller
             }
 
             // Password matches, log the user in and redirect to the dashboard
-            $counsellorId = $Counselor->id;
             if (Auth::guard('programs')->check()) {
                 Auth::guard('programs')->logout();
             }
-            session()->forget('user_id'); // Clear previous session data
-            session(['user_id' => $counsellorId]); // Store the new user_id
+            session()->forget('user_id');
+            Auth::guard('counselor')->login($Counselor);
             return redirect()->route('counseller.dashboard');
-            // return view('admin.session_dashboard_view')->with(['user_id' => $Counselor->id]);
-        } else {
-            return back()->with('error', 'Wrong Login Details');
-        }
-
-        // Redirect based on the email
-        if ($request->email === 'counselling@mindwayapp.com' && $request->password === 'Partnership8!') {
-            return view('admin.session_dashboard_view');
         } else {
             return back()->with('error', 'Wrong Login Details');
         }
     }
     public function counselorDashboard()
     {
-        if(!$user_id = session('user_id'))
+        $Counselor = Auth::guard('counselor')->user();
+        $counsellorId = $Counselor->id??null;
+        if(!$counsellorId)
         {
             return redirect()->route('counseller.login');
         }
-        // Password matches, log the user in and redirect to the dashboard
-        $counsellorId = $user_id;
-        $Counselor = Counselor::find($user_id);
         if (Auth::guard('programs')->check()) {
             Auth::guard('programs')->logout();
         }
-        session()->forget('user_id'); // Clear previous session data
-        session(['user_id' => $counsellorId]); // Store the new user_id
-
         $customers = CustomreBrevoData::all();
         $upcomingBookings = Booking::with(['user','counselor', 'slot'])
         ->where('counselor_id', $counsellorId)
@@ -208,24 +197,124 @@ class CounsellerController extends Controller
             $query->where('start_time', '>', now()->subHours(24));
         })
         ->orderBy('created_at', 'desc')
-        ->get();
+        ->paginate(10);
         $timezone = $Counselor->timezone??'UTC';
+        // $timezone = 'Europe/London';
         return view('mw-1.counseller.dashboard', get_defined_vars());
 
     }
     public function logout()
     {
-        session()->forget('user_id'); // Clear previous session data
+        Auth::guard('counselor')->logout();
         return redirect()->route('counseller.login');
     }
 
     public function index()
     {
-        $user_id = session('user_id');
+        $user = Auth::guard('counselor')->user();
+        $user_id = $user->id;
         $customers = CustomreBrevoData::all();
         return view('mw-1.counseller.sessions.manage', get_defined_vars());
         return view('admin.session_dashboard_view')->with(['user_id' => $user_id]);
     }
+    
+    public function getCounsellerSesions(Request $request)
+    {
+    if ($request->ajax()) {
+        $searchText = $request->input('search.value'); // Get the search term from DataTables
+
+        $customers = CustomreBrevoData::query();
+
+        // Apply search filter if a search term is provided
+        if (!empty($searchText)) {
+            $customers->where(function ($query) use ($searchText) {
+                $query->where('name', 'like', '%' . $searchText . '%') // Search by name
+                      ->orWhere('email', 'like', '%' . $searchText . '%') // Search by email
+                      ->orWhere('company_name', 'like', '%' . $searchText . '%'); // Search by company name
+            });
+        }
+
+        return DataTables::of($customers)
+            ->addColumn('count', function ($customer) use (&$count) {
+                // Add row number (count)
+                return '<h6 class="fw-normal mb-0">' . ++$count . '</h6>';
+            })
+            ->addColumn('name_email', function ($customer) {
+                // Combine name and email into a single column
+                return '
+                    <h6 class="fw-semibold mb-1"><b>' . $customer->name . '</b></h6>
+                    <p class="mb-0 fw-semibold">' . $customer->email . '</p>';
+            })
+            ->addColumn('company_name', function ($customer) {
+                // Display company name
+                return '<h6 class="mb-0 fw-bold"><b>' . $customer->company_name . '</b></h6>';
+            })
+            ->addColumn('max_session', function ($customer) {
+                // Display max session count
+                return '<h6 class="mb-0 fw-semibold"><b>' . $customer->max_session . '</b></h6>';
+            })
+            ->addColumn('action', function ($customer) {
+                // Add the "Log" button with data attributes
+                return '
+                    <button type="button" class="btn btn-primary add-session-btn mindway-btn" 
+                        style="background-color: #688EDC !important; color: #F7F7F7 !important" 
+                        data-bs-toggle="modal" data-bs-target="#addSessionModal" 
+                        data-id="' . $customer->id . '" 
+                        data-name="' . $customer->company_name . '" 
+                        data-program_id="' . $customer->program_id . '" 
+                        data-customer_name="' . $customer->name . '">
+                        Log
+                    </button>';
+            })
+            ->rawColumns(['count', 'name_email', 'company_name', 'max_session', 'action']) // Ensure HTML is rendered
+            ->make(true);
+    }
+}
+
+
+// public function getCounsellerSesions(Request $request)
+// {
+//     if ($request->ajax()) {
+//         $customers = CustomreBrevoData::query(); // Fetches all columns
+
+//         return DataTables::of($customers)
+//             ->addColumn('count', function ($customer) use (&$count) {
+//                 // Add row number (count)
+//                 return '<h6 class="fw-normal mb-0">' . ++$count . '</h6>';
+//             })
+//             ->addColumn('name_email', function ($customer) {
+//                 // Combine name and email into a single column
+//                 return '
+//                     <h6 class="fw-semibold mb-1"><b>' . $customer->name . '</b></h6>
+//                     <p class="mb-0 fw-semibold">' . $customer->email . '</p>';
+//             })
+//             ->addColumn('company_name', function ($customer) {
+//                 // Display company name
+//                 return '<h6 class="mb-0 fw-bold"><b>' . $customer->company_name . '</b></h6>';
+//             })
+//             ->addColumn('max_session', function ($customer) {
+//                 // Display max session count
+//                 return '<h6 class="mb-0 fw-semibold"><b>' . $customer->max_session . '</b></h6>';
+//             })
+//             ->addColumn('action', function ($customer) {
+//                 // Add the "Log" button with data attributes
+//                 return '
+//                     <button type="button" class="btn btn-primary add-session-btn mindway-btn" 
+//                         style="background-color: #688EDC !important; color: #F7F7F7 !important" 
+//                         data-bs-toggle="modal" data-bs-target="#addSessionModal" 
+//                         data-id="' . $customer->id . '" 
+//                         data-name="' . $customer->company_name . '" 
+//                         data-program_id="' . $customer->program_id . '" 
+//                         data-customer_name="' . $customer->name . '">
+//                         Log
+//                     </button>';
+//             })
+//             ->rawColumns(['count', 'name_email', 'company_name', 'max_session', 'action']) // Ensure HTML is rendered
+//             ->make(true);
+//     }
+// }
+
+
     public function store(Request $request)
     {
         // Initialize the reason array
@@ -325,12 +414,29 @@ class CounsellerController extends Controller
             return redirect()->route('counsellersesion.index')->with('error', 'Program ID not found.');
         }
     }
+    public function SaveCounselorIntroVideo(Request $request)
+    {
+        $request->validate([
+            'intro_video' => 'required|mimetypes:video/mp4,video/mov,video/avi,video/webm|max:10240', // Max 10MB
+        ]);
+        $Counselor = Counselor::where('id', $request->counselorId)->first();
+        $imageName = '';
+        if ($request->hasFile('intro_video')) {
+            $image = $request->file('intro_video'); // Use `file()` for clarity
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('Intro', $imageName); // Saves to storage/logo
+            $Counselor->intro_file = $imageName;
+        }
+        $Counselor->save();
+        return response()->json(['status' => 'success', 'message' => 'File Saved Successfully']);
+   
+    }
    public function saveCounsellorLogo(Request $request)
     {
        $request->validate([
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        $Counselor = Counselor::where('id', session('user_id'))->first();
+        $Counselor = Auth::guard('counselor')->user();
         $imageName = '';
         if ($request->hasFile('logo')) {
             $image = $request->file('logo'); // Use `file()` for clarity
@@ -347,8 +453,8 @@ class CounsellerController extends Controller
 
     public function counsellerhome()
     {
-
-        $counsellor_id = session('user_id');
+        $user = Auth::guard('counselor')->user();
+        $counsellor_id = $user->id;
         if ($counsellor_id) {
             $Counselor = Counselor::where('id', $counsellor_id)->first();
 
@@ -363,7 +469,8 @@ class CounsellerController extends Controller
 
     public function counsellerAvailability()
     {
-        $user_id = session('user_id');
+        $user = Auth::guard('counselor')->user();
+        $user_id = $user->id;
         $counselor = Counselor::where('id', $user_id)->firstOrFail();
 
         
@@ -476,8 +583,8 @@ class CounsellerController extends Controller
         $validated = $request->validate([
             'timezone' => 'nullable|string', // Make sure timezone is a nullable string (optional)
         ]);
-
-        $user_id = isset($request->counselorId) ? $request->counselorId : session('user_id');
+        $user = Auth::guard('counselor')->user();
+        $user_id = isset($request->counselorId) ? $request->counselorId : $user->id??null;
         $counselor = Counselor::findOrFail($user_id);
         DB::beginTransaction();
         try {
@@ -503,7 +610,7 @@ class CounsellerController extends Controller
 
     public function counsellerProfile()
     {
-        $Counselor = Counselor::where('id', session('user_id'))->first();
+        $Counselor = Auth::guard('counselor')->user();
         $timezones = $this->timezones();
         $path = public_path('mw-1' . DIRECTORY_SEPARATOR . 'timezones.json');
         $json = File::get($path);
@@ -516,8 +623,11 @@ class CounsellerController extends Controller
     {
         $request->validate([
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'location' => 'required|string', 
+            'language' => 'required|array', 
+            'language.*' => 'string',
         ]);
-        $Counselor = Counselor::where('id', session('user_id'))->first();
+        $Counselor = Auth::guard('counselor')->user();
         $specilization = json_decode($Counselor->specialization);
         if(isset($request->tags) && $request->tags != '')
         {
@@ -528,6 +638,8 @@ class CounsellerController extends Controller
         $Counselor->gender = $request->gender;
         $Counselor->intake_link = $request->intake_link;
         $Counselor->notice_period = $request->notice_period;
+        $Counselor->language = json_encode($request->language);
+        $Counselor->location = $request->location;
 
         $imageName = '';
         if ($request->hasFile('logo')) {
@@ -551,8 +663,9 @@ class CounsellerController extends Controller
     }
     public function setting()
     {
-        $user_id = session('user_id');
-        $counselor = Counselor::where('id', $user_id)->first();
+
+       
+        $counselor = Auth::guard('counselor')->user();
 
         // Pass current 2FA state, secret, and QR code (if enabled)
         $qrCodeUrl = null;
@@ -587,8 +700,8 @@ class CounsellerController extends Controller
     }
     public function counsellerSettingSave(Request $request)
     {
-        $user_id = session('user_id');
-        $counselor = Counselor::where('id', $user_id)->first();
+       
+        $counselor = Auth::guard('counselor')->user();
         $google2fa = new Google2FA();
 
         if ($request->has('enable_2fa')) {
