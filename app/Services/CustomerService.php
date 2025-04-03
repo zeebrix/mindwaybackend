@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 
 use SendinBlue\Client\ApiException;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Auth;
 use SendinBlue\Client\Model\RemoveContactFromList;
 
 
@@ -251,7 +252,17 @@ class CustomerService
                 ], 421);
             }
             if ($useSanctum) {
-                \Auth::guard($guard)->login($user);
+                $credentials = [
+                    'email' => $modelValues['email'],
+                    'password' => $modelValues['password']
+                ];
+                if (!Auth::attempt($credentials)) {
+                    return response()->json([
+                        'code' => 401,
+                        'status' => 'Unauthorized',
+                        'message' => 'Invalid credentials'
+                    ], 401);
+                }
                 $token = $user->createToken('auth_token')->plainTextToken;
                 $user["bearer_token"] = $token ?? NULL;
                 return response()->json([
