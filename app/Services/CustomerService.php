@@ -251,6 +251,7 @@ class CustomerService
                 ], 421);
             }
             if ($useSanctum) {
+                \Auth::guard($guard)->login($user);
                 $token = $user->createToken('auth_token')->plainTextToken;
                 $user["bearer_token"] = $token ?? NULL;
                 return response()->json([

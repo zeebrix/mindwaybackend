@@ -217,7 +217,7 @@ class BookingController extends Controller
         ];
         sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
          
-          return response()->json($booking->load('slot'));
+        return response()->json($booking->load('slot'));
 }
 catch (\Exception $e) {
     // If anything goes wrong, roll back the transaction
