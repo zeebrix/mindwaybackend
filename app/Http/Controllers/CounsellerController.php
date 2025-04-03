@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 use PragmaRX\Google2FA\Google2FA;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -412,6 +413,23 @@ class CounsellerController extends Controller
             // Handle the case where session data is not found
             return redirect()->route('counsellersesion.index')->with('error', 'Program ID not found.');
         }
+    }
+    public function SaveCounselorIntroVideo(Request $request)
+    {
+        $request->validate([
+            'intro_video' => 'required|mimetypes:video/mp4,video/mov,video/avi,video/webm|max:10240', // Max 10MB
+        ]);
+        $Counselor = Counselor::where('id', $request->counselorId)->first();
+        $imageName = '';
+        if ($request->hasFile('intro_video')) {
+            $image = $request->file('intro_video'); // Use `file()` for clarity
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->storeAs('Intro', $imageName); // Saves to storage/logo
+            $Counselor->intro_file = $imageName;
+        }
+        $Counselor->save();
+        return response()->json(['status' => 'success', 'message' => 'File Saved Successfully']);
+   
     }
    public function saveCounsellorLogo(Request $request)
     {

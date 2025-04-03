@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Log;
 
 use SendinBlue\Client\ApiException;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use SendinBlue\Client\Model\RemoveContactFromList;
 
 
@@ -151,7 +153,13 @@ class CustomerService
                     }
                 }
             }
-            $customer["bearer_token"] = $customer["api_auth_token"] ?? NULL;
+            $token = $customer["api_auth_token"] ?? NULL;
+            $useSanctum = request()->header('Use-Sanctum') === 'true';
+            if($useSanctum)
+            {
+                $token = $customer2->createToken('auth_token')->plainTextToken;
+            }
+            $customer["bearer_token"] = $token ?? NULL;
             DB::commit();
             return response()->json([
                 'code' => 200,
@@ -245,16 +253,20 @@ class CustomerService
                 ], 421);
             }
             if ($useSanctum) {
+                if (!Hash::check($modelValues['password'], $user->password)) {
+                    return response()->json([
+                        'code' => 421,
+                        'status' => 'Error',
+                        'message' => 'Password or email incorrect. If you’re still having trouble, reset your password.'
+                    ], 401);
+                }
                 $token = $user->createToken('auth_token')->plainTextToken;
                 $user["bearer_token"] = $token ?? NULL;
                 return response()->json([
                     'code' => 200,
                     'status' => 'Success',
                     'message' => 'Login successfully.',
-                    'data' => [
-                        'user' => $user,
-                        'bearer_token' => $token
-                    ]
+                    'data' => $user
                 ], 200);
             }
             \Auth::guard($guard)->login($user);

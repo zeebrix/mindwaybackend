@@ -141,7 +141,8 @@
         let input = document.querySelector("#tagsInput");
         // Define predefined options
         let specializations = [
-            "Stress & Burnout",
+            "Stress ",
+            "Burnout",
             "Anxiety",
             "Depression",
             "Grief & Loss",
@@ -172,7 +173,8 @@
             "Personal Boundaries",
             "Phobias & Fears",
             "Spirituality & Faith Issues",
-            "Domestic Violence Support"
+            "Domestic Violence Support",
+            "Health & Wellness"
         ];
         let selectedSpecializations = @json($specialization ?? []);
         // Initialize Tagify with whitelist
@@ -181,7 +183,7 @@
             enforceWhitelist: true, // Prevent custom i nput
             dropdown: {
                 enabled: 0, // Show suggestions when typing
-                maxItems: 10
+                maxItems: 100
             }
         });
         tagify.addTags(selectedSpecializations);

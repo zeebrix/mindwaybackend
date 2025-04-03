@@ -23,10 +23,20 @@ use Illuminate\Support\Facades\Artisan;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+
+Route::post('/reddemprogramcode', [CustomerController::class, 'ReddemProgramCode']);
+Route::post('/get-code-information', [CustomerController::class, 'getCodeInformation']);
+
+Route::get('/getuserprograms', [CustomerController::class, 'getuserprograms']);
+Route::post('/updatedeviceid', [CustomerController::class, 'updatedeviceid']);
+
+
+
 Route::group(["prefix" => "customer", "middleware" => ["auth:sanctum"]], function () {
   Route::post('/login', [CustomerController::class, 'login'])->withoutMiddleware('auth:sanctum');
   Route::post('/send-password-reset-otp', [CustomerController::class, 'passwordReset'])->withoutMiddleware('auth:sanctum');
-  Route::post('/find-customer-by-email', [CustomerController::class, 'findMe']);
+  Route::post('/find-customer-by-email', [CustomerController::class, 'findMe'])->withoutMiddleware('auth:sanctum');
   Route::post('verify-otp', [CustomerController::class, 'verifyOTP'])->withoutMiddleware('auth:sanctum');
   Route::post('register-by-email', [CustomerController::class, 'registerByEmail'])->withoutMiddleware('auth:sanctum');
   Route::post('/signup', [CustomerController::class, 'register'])->withoutMiddleware('auth:sanctum');

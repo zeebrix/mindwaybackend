@@ -400,7 +400,38 @@
                         </div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card" style="border-radius: 20px">
+                            <div style="height: 75px; cursor: pointer;" class="card-body d-flex align-items-center p-4" id="uploadIntroTrigger">
+                                <div style="margin-right: 20px; margin-top:5px" class="d-flex flex-column">
+                                    <input type="file" id="uploadIntroInput" style="display: none;" accept="video/*" />
+                                    <h5>Upload Intro Video</h5>
+                                </div>
+                                <div id="videoPreviewContainer">
+                                    <img id="videoThumbnail" height="30px" width="40px" class="popup"
+                                        src="{{ asset('mw-1/assets/images/play.png') }}" alt="logo image">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @if($Counselor->intro_file ?? false)
+                    <div class="col-6">
+                        <div class="card" style="border-radius: 20px">
+                            <div style="height: 100%;" id="uploadIntroTrigger">
+                                <div id="videoPreviewContainer" class="d-flex justify-content-center mb-3" >
+                                   
+                                    <video id="uploadedVideo" width="200" height="200">
+                                        <source src="{{ asset('storage/Intro/'.$Counselor->intro_file) }}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
 
+                </div>
                 <div class="text-center">
                     <button type="submit" class="mindway-btn-blue btn btn-primary">Submit</button>
                 </div>
@@ -435,7 +466,8 @@
 
         // Define predefined options
         let specializations = [
-            "Stress & Burnout",
+            "Stress ",
+            "Burnout",
             "Anxiety",
             "Depression",
             "Grief & Loss",
@@ -466,7 +498,8 @@
             "Personal Boundaries",
             "Phobias & Fears",
             "Spirituality & Faith Issues",
-            "Domestic Violence Support"
+            "Domestic Violence Support",
+            "Health & Wellness"
         ];
         let selectedSpecializations = @json($specialization ?? []);
         // Initialize Tagify with whitelist
@@ -475,7 +508,7 @@
             enforceWhitelist: true, // Prevent custom input
             dropdown: {
                 enabled: 0, // Show suggestions when typing
-                maxItems: 10
+                maxItems: 100
             }
         });
         tagify.addTags(selectedSpecializations);
@@ -630,7 +663,7 @@
         formData.append('counsellorId', counsellorId);
         formData.append('logo', file);
         // Send AJAX request
-        fetch("{{ url('/manage-admin/save-counsellor-logo') }}", {
+        fetch("{{ url('/manage-admin/admin-save-counsellor-logo') }}", {
                 method: "POST",
                 headers: {
                     'X-CSRF-TOKEN': "{{ csrf_token() }}",
@@ -652,6 +685,44 @@
             .catch(error => {
                 toastr.error("An unexpected error occurred");
                 console.error("Error:", error);
+            });
+    });
+
+    document.getElementById('uploadIntroTrigger').addEventListener('click', function() {
+        document.getElementById('uploadIntroInput').click();
+    });
+    document.getElementById('uploadIntroInput').addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+
+        // Prepare FormData
+        const formData = new FormData();
+        formData.append('intro_video', file);
+        formData.append('counselorId', "{{$Counselor->id}}");
+        // Send AJAX request
+        fetch("{{ url('/manage-admin/admin-save-counsellor-intro-video') }}", {
+                method: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+                body: formData,
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == 'success') {
+                    toastr.success("Intro Video Added Successfully");
+                    setTimeout(() => {
+                        location.reload();
+                    }, 4000);
+                } else {
+                    toastr.error("Error uploading File");
+                    // alert("Error uploading logo");
+                }
+            })
+            .catch(error => {
+                toastr.error("An unexpected error occurred");
+                // console.error("Error:", error);
+                // alert("An unexpected error occurred.");
             });
     });
 </script>

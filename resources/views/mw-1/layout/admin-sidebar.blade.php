@@ -26,7 +26,23 @@
                          <span class="hide-menu">Users</span>
                      </a>
                  </li>
+                 <li class="sidebar-item">
+                     <a class="sidebar-link" href="{{ url('/manage-admin/view-programs?status=1') }}" aria-expanded="false">
+                         <span>
+                             <i class="ti ti-article"></i>
+                         </span>
+                         <span class="hide-menu">Program</span>
+                     </a>
+                 </li>
 
+                 <li class="sidebar-item">
+                     <a class="sidebar-link" href="{{ url('/manage-admin/counsellor') }}" aria-expanded="false">
+                         <span>
+                             <i class="ti ti-article"></i>
+                         </span>
+                         <span class="hide-menu">Sessions</span>
+                     </a>
+                 </li>
                  <li class="sidebar-item">
                      <a class="sidebar-link" href="{{ url('/manage-admin/view-home') }}" aria-expanded="false">
                          <span>
@@ -167,24 +183,6 @@
                              <i class="ti ti-article"></i>
                          </span>
                          <span class="hide-menu">Quote</span>
-                     </a>
-                 </li>
-
-                 <li class="sidebar-item">
-                     <a class="sidebar-link" href="{{ url('/manage-admin/view-programs?status=1') }}" aria-expanded="false">
-                         <span>
-                             <i class="ti ti-article"></i>
-                         </span>
-                         <span class="hide-menu">Program</span>
-                     </a>
-                 </li>
-
-                 <li class="sidebar-item">
-                     <a class="sidebar-link" href="{{ url('/manage-admin/counsellor') }}" aria-expanded="false">
-                         <span>
-                             <i class="ti ti-article"></i>
-                         </span>
-                         <span class="hide-menu">Sessions</span>
                      </a>
                  </li>
                  <li class="sidebar-item">

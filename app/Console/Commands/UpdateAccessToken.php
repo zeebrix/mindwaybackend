@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
+
 class UpdateAccessToken extends Command
 {
     /**
@@ -39,7 +41,6 @@ class UpdateAccessToken extends Command
             // Ensure refresh token exists before using it
             if (!empty($token->refresh_token)) {
                 try {
-                    // Make the API call to refresh the access token
                     $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
                         'client_id' => config('services.google.client_id'),
                         'client_secret' => config('services.google.client_secret'),
@@ -50,21 +51,26 @@ class UpdateAccessToken extends Command
                     // Check if the request was successful
                     if ($response->successful()) {
                         $accessToken = $response->json('access_token');
-                        $expiresIn = $response->json('expires_in'); // Expiration time in seconds
-                        // $newExpiresAt = Carbon::now()->addSeconds($expiresIn);
-
-                        // Update the database with the new token and expiration time
+                        $refreshToken = $response->json('refresh_token');
+                        $expiresIn = $response->json('expires_in');
+                        $updateData = [
+                            'access_token' => Crypt::encrypt($accessToken),
+                            'expires_in' => $expiresIn,
+                            'updated_at' => now(),
+                        ];
+                        if ($refreshToken) {
+                            $updateData['refresh_token'] = Crypt::encrypt($refreshToken);
+                        }
                         DB::table('google_tokens')
                             ->where('id', $token->id)
-                            ->update([
-                                'access_token' => Crypt::encrypt($accessToken),
-                                'expires_in' => $expiresIn,
-                                'updated_at' => now(),
+                            ->update($updateData);
+                            Log::info("✅ Access token updated successfully.", [
+                                'User ID' => $token->counseller_id,
+                                'Token Expires In' => $expiresIn,
+                                'New Refresh Token' => $refreshToken ? 'Yes' : 'No', // Log whether a new refresh token was provided
                             ]);
-
                         $this->info("Access token for User ID: {$token->counseller_id} updated successfully.");
                     } else {
-                        // If the request was not successful, log the error
                         $errorResponse = $response->json();
                         if (isset($errorResponse['error']) && $errorResponse['error'] == 'invalid_grant') {
                             $this->error("Refresh token for User ID: {$token->counseller_id} is invalid or expired. Please reauthorize.");
@@ -73,8 +79,6 @@ class UpdateAccessToken extends Command
                         }
                     }
                 } catch (\Exception $e) {
-                    //
-                    // Log the exception error
                     $this->error("Error updating token for User ID: {$token->counseller_id}. Exception: {$e->getMessage()}");
                 }
             } else {

@@ -14,7 +14,7 @@
         <strong> Date & Time: </strong> {{$start_time}} ({{$timezone}})
         <strong> Client: </strong> {{$full_name}}
         <strong> Company: </strong> {{$company_name}}
-        @if($meeting_link)
+        @if($meeting_link && $communication_method == 'Video Call')
             <strong> Meeting Link : </strong> {{$meeting_link}}
         @endif
         @if($communication_method == 'Phone Call')

@@ -13,7 +13,7 @@
     <p>
     <strong>Date & Time:  </strong> {{ $start_time }} ({{$timezone}})<br/>
     <strong>Duration:  </strong> {{ $duration }}<br/>
-    @if($meeting_link)
+    @if($meeting_link && $communication_method == 'Video Call')
         <strong>Join Link:  </strong>   {{ $meeting_link }}<br/>
     @endif
     @if($communication_method == 'Phone Call')

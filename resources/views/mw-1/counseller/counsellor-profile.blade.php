@@ -398,6 +398,36 @@
                         </div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="card" style="border-radius: 20px">
+                            <div style="height: 75px; cursor: pointer;" class="card-body d-flex align-items-center p-4" id="uploadIntroTrigger">
+                                <div style="margin-right: 20px; margin-top:5px" class="d-flex flex-column">
+                                    <input type="file" id="uploadIntroInput" style="display: none;" accept="video/*" />
+                                    <h5>Upload Intro Video</h5>
+                                </div>
+                                <div id="videoPreviewContainer">
+                                    <img id="videoThumbnail" height="30px" width="40px" class="popup"
+                                        src="{{ asset('mw-1/assets/images/play.png') }}" alt="logo image">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card" style="border-radius: 20px">
+                            <div style="height: 100%;" id="uploadIntroTrigger">
+                                <div id="videoPreviewContainer" class="d-flex justify-content-center mb-3" >
+                                    @if($Counselor->intro_file ?? false)
+                                    <video id="uploadedVideo" width="200" height="200">
+                                        <source src="{{ asset('storage/Intro/'.$Counselor->intro_file) }}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="text-center">
                     <button type="submit" class="mindway-btn-blue btn btn-primary">Submit</button>
@@ -433,7 +463,8 @@
 
         // Define predefined options
         let specializations = [
-            "Stress & Burnout",
+            "Stress",
+            "Burnout",
             "Anxiety",
             "Depression",
             "Grief & Loss",
@@ -464,7 +495,8 @@
             "Personal Boundaries",
             "Phobias & Fears",
             "Spirituality & Faith Issues",
-            "Domestic Violence Support"
+            "Domestic Violence Support",
+            "Health & Wellness"
         ];
         let selectedSpecializations = @json($specialization ?? []);
         // Initialize Tagify with whitelist
@@ -473,7 +505,7 @@
             enforceWhitelist: true, // Prevent custom input
             dropdown: {
                 enabled: 0, // Show suggestions when typing
-                maxItems: 10
+                maxItems: 100
             }
         });
         tagify.addTags(selectedSpecializations);
@@ -611,7 +643,42 @@
     document.getElementById('uploadLogoTrigger').addEventListener('click', function() {
         document.getElementById('uploadLogoInput').click();
     });
+    document.getElementById('uploadIntroTrigger').addEventListener('click', function() {
+        document.getElementById('uploadIntroInput').click();
+    });
+    $('#uploadIntroInput').on('change', function () {
+            const file = this.files[0];
+            if (!file) return;
 
+            let formData = new FormData();
+            formData.append('intro_video', file);
+            formData.append('counselorId', "{{ $Counselor->id }}");
+
+            $.ajax({
+                url: "{{ url('/api/save-counsellor-intro-video') }}",
+                type: "POST",
+                data: formData,
+                contentType: false,  // Prevent jQuery from setting contentType
+                processData: false,  // Prevent jQuery from converting FormData
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')  // CSRF Token
+                },
+                success: function (data) {
+                    if (data.status === 'success') {
+                        toastr.success("Intro Video Added Successfully");
+                        setTimeout(() => {
+                            location.reload();
+                        }, 4000);
+                    } else {
+                        toastr.error("Error uploading File");
+                    }
+                },
+                error: function (xhr, status, error) {
+                    toastr.error("An unexpected error occurred");
+                    console.error(xhr.responseText);  // Log error for debugging
+                }
+            });
+        });
     document.getElementById('uploadLogoInput').addEventListener('change', function() {
         const file = this.files[0];
         if (!file) return;
