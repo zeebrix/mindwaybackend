@@ -67,7 +67,7 @@ class CounselorController extends Controller
         $recommendedCounselors = [];
         $page = $request->page ?? 1;
        
-        if ($page == 1) {
+        if ($preference && $page == 1) {
             $counselorIds = Booking::where('user_id',$request->customer_id)->where('status','!=','cancelled')->pluck('counselor_id');
             $counselors  = [];
             if(count($counselorIds))
@@ -85,9 +85,12 @@ class CounselorController extends Controller
                 ->orderBy('id')
                 ->limit(3)->get();
             }
-            if( empty($counselor)  &&  $preference)
+            if(empty($counselor))
             {
                 $bindings = [];
+        
+              
+
                 list($genderPlaceholders, $genderBindings) = $this->getSanitizedPlaceholders($preference->gender);
                 $bindings = array_merge($bindings, $genderBindings);
                 
@@ -97,12 +100,10 @@ class CounselorController extends Controller
                 list($communicationMethodPlaceholders, $communicationMethodBindings) = $this->getSanitizedPlaceholders($preference->communication_methods);
                 $bindings = array_merge($bindings, $communicationMethodBindings);
 
-                // // Handle language bindings
-                
-                $language = is_array($preference->language) ? $preference->language : [$preference->language];
-                list($languagePlaceholders, $languageBindings) = $this->getSanitizedPlaceholders($language);
+                // Handle language bindings
+                list($languagePlaceholders, $languageBindings) = $this->getSanitizedPlaceholders((array) $preference->language);
                 $bindings = array_merge($bindings, $languageBindings);
-
+                
                 $location = $preference->location ?? ''; // Default to empty string if location is null
                 $bindings[] = $location;
                 $counselors = Counselor::whereHas('availabilities')

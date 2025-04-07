@@ -417,7 +417,7 @@ class CounsellerController extends Controller
     public function SaveCounselorIntroVideo(Request $request)
     {
         $request->validate([
-            'intro_video' => 'required|mimetypes:video/mp4,video/mov,video/avi,video/webm|max:10240', // Max 10MB
+            'intro_video' => 'required|mimetypes:video/mp4,video/mov,video/avi,video/webm|max:40240', // Max 10MB
         ]);
         $Counselor = Counselor::where('id', $request->counselorId)->first();
         $imageName = '';
