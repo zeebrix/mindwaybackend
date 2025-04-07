@@ -17,7 +17,9 @@
         <strong>Join Link: </strong> {{ $meeting_link }}<br />
         @endif
     </p>
-    <p>Please join this link at the time of the session.</p>
+    @if($meeting_link)
+        <p>Please join this link at the time of the session.</p>
+    @endif
     <p>
         If you haven’t already, please take 5 minutes to <a href="{{$intake_link}}">complete the client intake and consent form.</a> If you've already completed it, feel free to disregard this step.
     </p>

@@ -628,12 +628,11 @@ class CounsellerController extends Controller
             'language.*' => 'string',
         ]);
         $Counselor = Auth::guard('counselor')->user();
-        $specilization = json_decode($Counselor->specialization);
+        $specilization = [];
         if(isset($request->tags) && $request->tags != '')
         {
-            $specilization = explode(",", $request->tags);
+            $specilization = array_map('trim', explode(',', $request->tags));
         }
-        // $Counselor->timezone = $request->timezone;
         $Counselor->description = $request->description;
         $Counselor->gender = $request->gender;
         $Counselor->intake_link = $request->intake_link;

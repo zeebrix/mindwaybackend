@@ -2585,10 +2585,12 @@ class AdminController extends Controller
 
         $counsellorId = $request->counsellorId;
         $Counselor = Counselor::where('id', $counsellorId)->first();
-        $specilization = explode(",", $request->tags); // $request->specialisations;
-        // dd($specilization);
 
-        // $Counselor->timezone = $request->timezone;
+        $specilization = [];
+        if(isset($request->tags) && $request->tags != '')
+        {
+            $specilization = array_map('trim', explode(',', $request->tags));
+        }
         $Counselor->description = $request->description;
         $Counselor->gender = $request->gender;
         $Counselor->intake_link = $request->intake_link;
@@ -2659,17 +2661,25 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:counselors,email',
             'gender' => 'required',
+            'location' => 'required|string', 
+            'language' => 'required|array', 
+            'language.*' => 'string',
         ]);
-        $tags = $request->input('tags', '');
-        $specializationArray = $tags ? explode(',', $tags) : [];
+        $specilization = [];
+        if(isset($request->tags) && $request->tags != '')
+        {
+            $specilization = array_map('trim', explode(',', $request->tags));
+        }
         $user = Counselor::create([
             'name' => $request->name,
             'email' => $request->email,
             'description' => $request->description,
             'password' => bcrypt('Test123'),
             'gender' => $request->gender,
+            'language' => json_encode($request->language),
+            'location' => $request->location,
             'timezone' => $request->timezone,
-            'specialization' => json_encode($specializationArray),
+            'specialization' => json_encode($specilization),
             'communication_method' => json_encode($request->communication_method)
         ]);
 
