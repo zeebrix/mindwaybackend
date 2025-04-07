@@ -87,7 +87,7 @@ class CounselorController extends Controller
                 ->orderBy('id')
                 ->limit(3)->get();
             }
-            if(empty($counselor) && $preference)
+            if(empty($counselors) && $preference)
             {
                 $bindings = [];
 
