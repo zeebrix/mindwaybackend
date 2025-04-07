@@ -60,7 +60,7 @@ class CounselorController extends Controller
     
     public function getCounselorsPagination(Request $request)
     {
-        Log::info('Customer_Id',$request->customer_id);
+        Log::info('Customer_Id',[$request->customer_id]);
         $customer = Customer::with(['Program' => function ($query) {
             $query->limit(1); // Fetch only one related object
         }])->with('preference')->find($request->customer_id);
