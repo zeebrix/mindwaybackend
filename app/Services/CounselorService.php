@@ -111,6 +111,48 @@ class CounselorService
             ];
         });
     }
+
+    private function getFormatedCounsellorFromCounsellorObject($counselor){
+                    
+        return [
+            'id' => $counselor->id,
+            'name' => $counselor->name,
+            'email' => $counselor->email,
+            'gender' => $counselor->gender??'Male',
+            'bio' => $counselor->description,
+            'intake_link' => $counselor->intake_link,
+            'avatar' => $counselor->avatar,
+            'location' => $counselor->location,
+            'language' => json_decode($counselor->language),
+            'intro_file' => $counselor->intro_file,
+            'specialization' => json_decode($counselor->specialization) == NULL ? json_encode([]) : $counselor->specialization??json_encode([]),
+            'communication_method' => $counselor->communication_method,
+            'about_session' => [
+                'session_time' => '50min Session',
+                'session_topic' => 'Free professional support by employer',
+                'encryption' => 'Bookings are confidential and not shared with your employer',
+                'detail' => "<p><strong>Important Information:</strong></p>
+    <p>You can cancel or update your session up to 24 hours before the session. While rare, bookings may be subject to changes; you'll be contacted to select another date. Any information shared remains confidential between you and your counsellor.</p>
+    
+    <p><strong>Stored Information:</strong></p>
+    <p>Your details and session history are kept for historical and management purposes.</p>
+    
+    <p><strong>In Case of Emergency:</strong></p>
+    <p>This service is not designed for emergencies. If you are in crisis or facing an immediate threat to yourself or others, please contact your local emergency services or crisis hotline immediately.</p>
+    
+    <p><strong>Emergency Hotline:</strong> Lifeline Australia: 13 11 14</p>"
+            ],
+            'hourly_rate' => $counselor->hourly_rate,
+            'timezone' => $counselor->timezone??'Australia/Adelaide',
+            'next_availability' => $counselor->next_available_slot ? [
+                'available_day' => \Carbon\Carbon::parse($counselor->next_available_slot)->format('L'),
+                'date' => \Carbon\Carbon::parse($counselor->next_available_slot),
+                'start_time' => \Carbon\Carbon::parse($counselor->next_available_slot),
+            ] : null,
+            'session_count' => $counselor->session_count ?? 0
+        ];
+    }
+
     private function formatCounselorsPagination($counselors)
     {
         // Check if paginated or collection
@@ -222,7 +264,7 @@ class CounselorService
                     'communication_method' => $booking->communication_method ?? '',
                     'meeting_link' => $booking->meeting_link,
                     'booking_id' => $booking->id,
-                    'counselor' => $booking->counselor,
+                    'counselor' => $this->getFormatedCounsellorFromCounsellorObject($booking->counselor),
                     'user' => [
                         'id' => $booking->user?->id,
                         'name' => $booking->user?->name,

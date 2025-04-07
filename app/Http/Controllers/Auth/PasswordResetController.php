@@ -150,6 +150,7 @@ class PasswordResetController extends Controller
 
         return redirect($route)->with('status', 'Password successfully reset.');
     }
+
     public function resetAppPassword(Request $request)
     {
         $request->validate([
