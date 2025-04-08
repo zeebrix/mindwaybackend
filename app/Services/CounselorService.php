@@ -69,8 +69,7 @@ class CounselorService
     }
     public function formatCounselors($counselors)
     {
-        return $counselors->map(function ($counselor) {
-           
+        return collect($counselors)->map(function ($counselor) {
             
             return [
                 'id' => $counselor->id,
