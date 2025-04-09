@@ -13,4 +13,4 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
-/var/www/html/mindwaybackend/public/mw-1/firebase-credentials.json
+/public/mw-1/firebase-credentials.json
