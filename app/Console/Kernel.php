@@ -27,8 +27,8 @@ class Kernel extends ConsoleKernel
                 }
             }
         })->daily();
-        // Schedule the command to run every minute
         $schedule->command('update:google-tokens')->everyTenMinutes();
+        $schedule->command('update:counselor-availability')->everyTenMinutes();
         $schedule->command('sync:brevo-contacts')->everyMinute();
         $schedule->command('release:reserved-slot')->everyFiveMinutes();
         $schedule->command('delete:garbage-slots')->daily();

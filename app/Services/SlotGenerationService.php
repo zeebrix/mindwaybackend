@@ -166,6 +166,17 @@ class SlotGenerationService
                 }
             }
         } catch (\Exception $e) {
+            try {
+                $json = json_decode($e->getMessage(), true);
+
+                $status = $json['error']['status'] ?? 'unknown';
+                if($status == 'UNAUTHENTICATED')
+                {
+                  \Log::error("Exception Recorded.");
+                }
+            } catch (\Throwable $th) {
+                //throw $th;
+            }
             \Log::error("Error in removeConflictingSlots for counselor ID: {$counselor->id}, range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}. Exception: " . $e->getMessage());
         }
     }
