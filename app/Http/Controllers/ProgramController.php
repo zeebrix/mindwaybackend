@@ -24,8 +24,10 @@ use PragmaRX\Google2FA\Google2FA;
 use App\Models\ProgramDepartment;
 use App\Services\BrevoService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use SendinBlue\Client\Model\RemoveContactFromList;
 use SendinBlue\Client\ApiException;
+use Illuminate\Support\Str;
 class ProgramController extends Controller
 {
     public function Login()
@@ -47,11 +49,23 @@ class ProgramController extends Controller
 
     public function checkLogin(Request $request)
     {
+        $email = $request->email;
+        $key = Str::lower('login_attempts_program:' . $email);
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            session()->put('account_locked_program', [
+                'message' => "Account locked. Try again in " . ceil($seconds / 60) . " minutes.",
+                'locked' => true,
+            ]);
+            return back()->with('error', 'Account locked. Try again in ' . ceil($seconds / 60) . ' minutes.');
+        }
         if (!$request->has('email') || !$request->has('password')) {
+            RateLimiter::hit($key, 3600);
             return back()->with('error', 'Email and Password is can not empty');
         }
         $custBrevoData = CustomreBrevoData::where(['email' => $request->email, 'level' => 'admin'])->first();
         if (!$custBrevoData || !$custBrevoData?->MultiLoginProgram) {
+            RateLimiter::hit($key, 3600);
             return back()->with('error', 'Sorry Account Not Found');
         }
         $program = Program::where('id', $custBrevoData->program_id)->first();
@@ -70,6 +84,7 @@ class ProgramController extends Controller
         }
 
         if($is_trial_end){
+            RateLimiter::hit($key, 3600);
             return back()->with('error', 'Sorry Your trial period is end');
         }
         session()->forget('loginUserName');
@@ -83,6 +98,7 @@ class ProgramController extends Controller
         }
         if ($program &&  Hash::check($request->password, $programPassword)) {
             if ($program->program_type == 0) {
+                RateLimiter::hit($key, 3600);
                 return back()->with('error', 'Your account is deactivated');
             }
             if ($program->is_2fa_enabled) {
@@ -93,13 +109,18 @@ class ProgramController extends Controller
                 $request->session()->put('2fa:user:id', $program->id);
                 $request->session()->put('2fa:auth:attempt', true);
                 $request->session()->put('2fa:auth:remember', $request->has('remember'));
+                RateLimiter::clear($key);
+                session()->forget('account_locked_program');
                 return redirect()->route('program.2fa');
             }
+            RateLimiter::clear($key);
+            session()->forget('account_locked_program');
             Auth::guard('programs')->login($program);
             session()->put('loginUserName', $custBrevoData->name ?? '');
             session()->forget('user_id');
             return redirect("/manage-program/view-dashboard");
         }
+        RateLimiter::hit($key, 3600);
         return back()->with('error', 'Password or email incorrect. If you’re still having trouble, reset your password');
     }
     public function decisionDashboardView()

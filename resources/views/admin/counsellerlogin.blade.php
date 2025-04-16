@@ -44,7 +44,7 @@
     }
 
     .left-section {
-      width: 348px ;
+      width: 348px;
       flex: 0.6;
       background: #E3ECFF;
       display: flex;
@@ -168,12 +168,19 @@
           <input type="password" name="password" class="form-control form-control-lg" id="exampleInputPassword1" placeholder="*********">
         </div>
         @if(session()->has('error'))
-        <span style="color:red">
+        <span style="color:red" id="login-error">
           {{ session()->get('error') }}
         </span>
         @endif
         <div class="mt-3">
-          <button class="btn btn-block btn-lg font-weight-medium auth-form-btn" style="background-color: #688EDC;border-radius:20px;color:white">Login</button>
+          <button
+            type="submit"
+            class="btn btn-block btn-lg font-weight-medium auth-form-btn"
+            style="background-color: #688EDC; border-radius: 20px; color: white; {{ session('account_locked') ? 'opacity: 0.6; cursor: not-allowed;' : '' }}"
+            {{ session('account_locked') ? 'disabled' : '' }}>
+            {{ session('account_locked') ? 'Account Locked' : 'Login' }}
+          </button>
+
         </div>
         <div class="my-2 d-flex justify-content-center">
 
@@ -194,7 +201,6 @@
   <script src="{{ asset('/js/template.js') }}"></script>
   <script src="{{ asset('/js/settings.js') }}"></script>
   <script src="{{ asset('/js/todolist.js') }}"></script>
-  <!-- endinject -->
 </body>
 
 </html>

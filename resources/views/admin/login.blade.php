@@ -44,7 +44,7 @@
     }
 
     .left-section {
-      width: 348px ;
+      width: 348px;
       background: #E3ECFF;
       display: flex;
       flex-direction: column;
@@ -168,7 +168,14 @@
         </span><a href="" style="color:red;">here.</a>
         @endif
         <div class="mt-3">
-          <button class="btn btn-block btn-lg font-weight-medium auth-form-btn" style="background-color: #688EDC;border-radius:20px;color:white">Login</button>
+          <button
+            type="submit"
+            class="btn btn-block btn-lg font-weight-medium auth-form-btn"
+            style="background-color: #688EDC; border-radius: 20px; color: white; {{ session('account_locked_admin') ? 'opacity: 0.6; cursor: not-allowed;' : '' }}"
+            {{ session('account_locked_admin') ? 'disabled' : '' }}>
+            {{ session('account_locked_admin') ? 'Account Locked' : 'Login' }}
+          </button>
+
         </div>
         <div class="my-2 d-flex justify-content-center">
 
