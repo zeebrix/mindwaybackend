@@ -178,6 +178,7 @@ class SlotGenerationService
                         'full_name' => $counselor->name,
                     ];
                     sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+                    sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
                   \Log::error("Exception Recorded.");
                 }
             } catch (\Throwable $th) {
