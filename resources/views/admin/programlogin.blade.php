@@ -171,7 +171,13 @@
         @endif
         @endif
         <div class="mt-3">
-          <button class="btn btn-block btn-lg font-weight-medium auth-form-btn" style="background-color: #688EDC;border-radius:20px;color:white">Login</button>
+        <button
+            type="submit"
+            class="btn btn-block btn-lg font-weight-medium auth-form-btn"
+            style="background-color: #688EDC; border-radius: 20px; color: white; {{ session('account_locked_program') ? 'opacity: 0.6; cursor: not-allowed;' : '' }}"
+            {{ session('account_locked_program') ? 'disabled' : '' }}>
+            {{ session('account_locked_program') ? 'Account Locked' : 'Login' }}
+          </button>
         </div>
         <div class="my-2 d-flex justify-content-center">
 

@@ -52,6 +52,7 @@ use Brevo\Client\Model\CreateContact;
 use PragmaRX\Google2FA\Google2FA;
 use App\Models\ProgramDepartment;
 use App\Services\BrevoService;
+use Illuminate\Support\Facades\RateLimiter;
 use SendinBlue\Client\Model\RemoveContactFromList;
 use SendinBlue\Client\ApiException;
 use Yajra\DataTables\Facades\DataTables;
@@ -170,6 +171,17 @@ class AdminController extends Controller
             'email' => $request->get('email'),
             'password' => $request->get('password')
         );
+        $email = $request->email;
+        $key = Str::lower('login_attempts_admin:' . $email);
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            session()->put('account_locked_admin', [
+                'message' => "Account locked. Try again in " . ceil($seconds / 60) . " minutes.",
+                'locked' => true,
+            ]);
+            return back()->with('error', 'Account locked. Try again in ' . ceil($seconds / 60) . ' minutes.');
+        }
+
         if (Auth::attempt($user_data)) {
             $user = Auth::user();
             if ($user->uses_two_factor_auth) {
@@ -185,11 +197,15 @@ class AdminController extends Controller
                 $google2fa_secret = $google2fa->generateSecretKey();
                 $otp_secret = $user->google2fa_secret;
                 $one_time_password = $google2fa->getCurrentOtp($otp_secret);
-
+                RateLimiter::clear($key);
+                session()->forget('account_locked_admin');
                 return redirect()->route('2fa')->with('one_time_password', $one_time_password);
             }
+            RateLimiter::clear($key);
+            session()->forget('account_locked_admin');
             return redirect()->route('admin.view-dashboard');
         } else {
+            RateLimiter::hit($key, 3600);
             return back()->with('error', 'Wrong Login Details');
         }
     }

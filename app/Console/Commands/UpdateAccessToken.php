@@ -33,12 +33,9 @@ class UpdateAccessToken extends Command
     public function handle()
     {
         // Fetch all rows with refresh tokens from the google_tokens table
-        $tokens = DB::table('google_tokens')->whereNotNull('refresh_token')->get();
+        $tokens = DB::table('google_tokens')->get();
 
         foreach ($tokens as $token) {
-            $this->info("Updating token for User ID: {$token->counseller_id}");
-
-            // Ensure refresh token exists before using it
             if (!empty($token->refresh_token)) {
                 try {
                     $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
@@ -70,20 +67,19 @@ class UpdateAccessToken extends Command
                                 'Token Expires In' => $expiresIn,
                                 'New Refresh Token' => $refreshToken ? 'Yes' : 'No', // Log whether a new refresh token was provided
                             ]);
-                        $this->info("Access token for User ID: {$token->counseller_id} updated successfully.");
                     } else {
                         $errorResponse = $response->json();
                         if (isset($errorResponse['error']) && $errorResponse['error'] == 'invalid_grant') {
-                            $this->error("Refresh token for User ID: {$token->counseller_id} is invalid or expired. Please reauthorize.");
+                            Log::info("Refresh token for User ID: {$token->counseller_id} is invalid or expired. Please reauthorize.");
                         } else {
-                            $this->error("Failed to refresh token for User ID: {$token->counseller_id}. Error: {$response->body()}");
+                            Log::info("Failed to refresh token for User ID: {$token->counseller_id}. Error: {$response->body()}");
                         }
                     }
                 } catch (\Exception $e) {
-                    $this->error("Error updating token for User ID: {$token->counseller_id}. Exception: {$e->getMessage()}");
+                    Log::info("Error updating token for User ID: {$token->counseller_id}. Exception: {$e->getMessage()}");
                 }
             } else {
-                $this->error("No refresh token found for User ID: {$token->counseller_id}");
+                Log::info("No refresh token found for User ID: {$token->counseller_id}");
             }
         }
 

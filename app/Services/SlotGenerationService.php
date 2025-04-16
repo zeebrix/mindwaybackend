@@ -50,8 +50,6 @@ class SlotGenerationService
         $endDate = $startDate->copy()->endOfMonth();
         while ($startDate <= $endDate) {
             $dayOfWeek = ($startDate->dayOfWeek + 6) % 7;
-
-
             // Get availability for this day
             $availability = $counselor->availabilities()
                 ->where('day', $dayOfWeek)
@@ -172,6 +170,14 @@ class SlotGenerationService
                 $status = $json['error']['status'] ?? 'unknown';
                 if($status == 'UNAUTHENTICATED')
                 {
+                  \Log::error("Exception Recorded Before Email");
+                    $recipient = $counselor->email;
+                    $subject = 'Urgent: Connect Calendar';
+                    $template = 'emails.reconnect-calendar';
+                    $data = [
+                        'full_name' => $counselor->name,
+                    ];
+                    sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
                   \Log::error("Exception Recorded.");
                 }
             } catch (\Throwable $th) {

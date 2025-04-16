@@ -18,10 +18,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
 use PragmaRX\Google2FA\Google2FA;
 use Yajra\DataTables\Facades\DataTables;
-
+use Illuminate\Support\Str;
 class CounsellerController extends Controller
 {
     public function findRecommendedCounselor(Request $request)
@@ -154,6 +155,18 @@ class CounsellerController extends Controller
     }
     public function checkLoginCounseler(Request $request)
     {
+
+        $email = $request->email;
+        $key = Str::lower('login_attempts:' . $email);
+    
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $seconds = RateLimiter::availableIn($key);
+            session()->put('account_locked', [
+                'message' => "Account locked. Try again in " . ceil($seconds / 60) . " minutes.",
+                'locked' => true,
+            ]);
+            return back()->with('error', 'Account locked. Try again in ' . ceil($seconds / 60) . ' minutes.');
+        }
         $Counselor = Counselor::where('email', $request->email)->first();
         if ($Counselor && Hash::check($request->password, $Counselor->password)) {
             if ($Counselor->uses_two_factor_auth) {
@@ -164,6 +177,8 @@ class CounsellerController extends Controller
                 $request->session()->put('2fa:user:id', $Counselor->id);
                 $request->session()->put('2fa:auth:attempt', true);
                 $request->session()->put('2fa:auth:remember', $request->has('remember'));
+                RateLimiter::clear($key);
+                session()->forget('account_locked');
                 return redirect()->route('counselor.2fa');
             }
 
@@ -173,8 +188,11 @@ class CounsellerController extends Controller
             }
             session()->forget('user_id');
             Auth::guard('counselor')->login($Counselor);
+            RateLimiter::clear($key);
+            session()->forget('account_locked');
             return redirect()->route('counseller.dashboard');
         } else {
+            RateLimiter::hit($key, 3600);
             return back()->with('error', 'Wrong Login Details');
         }
     }
