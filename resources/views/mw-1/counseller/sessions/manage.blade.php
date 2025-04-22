@@ -233,6 +233,8 @@
 
 @section('js')
 @include('mw-1.counseller.sessions.datatable')
+@include('mw-1.counseller.sessions.request-session')
+@include('mw-1.counseller.sessions.requested-session')
 
 <script>
     // Function to handle the logic when elements with the class 'add-session-btn' are added
