@@ -10,6 +10,7 @@ use App\Models\Session;
 use App\Models\CounsellingSession;
 use App\Models\Counselor;
 use App\Models\Customer;
+use App\Models\RequestSession;
 use App\Models\CustomreBrevoData;
 use App\Notifications\BookingCancellation;
 use App\Services\SlotGenerationService;
@@ -231,7 +232,7 @@ class CounsellerController extends Controller
     {
         $user = Auth::guard('counselor')->user();
         $user_id = $user->id;
-        $customers = CustomreBrevoData::all();
+        // $customers = CustomreBrevoData::all();
         return view('mw-1.counseller.sessions.manage', get_defined_vars());
         return view('admin.session_dashboard_view')->with(['user_id' => $user_id]);
     }
@@ -241,7 +242,7 @@ class CounsellerController extends Controller
     if ($request->ajax()) {
         $searchText = $request->input('search.value'); // Get the search term from DataTables
 
-        $customers = CustomreBrevoData::query();
+        $customers = CustomreBrevoData::query()->with('pendingRequest');
 
         // Apply search filter if a search term is provided
         if (!empty($searchText)) {
@@ -268,8 +269,43 @@ class CounsellerController extends Controller
                 return '<h6 class="mb-0 fw-bold"><b>' . $customer->company_name . '</b></h6>';
             })
             ->addColumn('max_session', function ($customer) {
-                // Display max session count
-                return '<h6 class="mb-0 fw-semibold"><b>' . $customer->max_session . '</b></h6>';
+                $max_session = (isset($customer->max_session) || $customer->max_session != '') ? $customer->max_session : 0 ;
+                // Display max session count with plus icon
+                if ($customer->pendingRequest && $customer->pendingRequest->status === 'pending') {
+                    return '
+                    <div class="d-flex align-items-center">
+                        <h6 class="mb-0 fw-semibold me-2"><b>' . $max_session . '</b></h6>
+                        <img src="' . asset('images/icons/timer.png') . '"
+                            class="requested-session-btn"
+                            style="cursor: pointer; width: 20px; height: 20px;"
+                            data-bs-toggle="modal"
+                            data-bs-target="#requestedModal"
+                            data-requestedId="' . $customer->pendingRequest->id . '"
+                            data-customer_name="' . $customer->name . '"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Already Requested">
+                    </div>';
+                } else {
+                    return '
+                    <div class="d-flex align-items-center">
+                        <h6 class="mb-0 fw-semibold me-2"><b>' . $max_session . '</b></h6>
+                        <img src="' . asset('images/icons/pluscircle.png') . '"
+                            class="request-session-btn"
+                            style="cursor: pointer; width: 20px; height: 20px;"
+                            data-bs-toggle="modal"
+                            data-bs-target="#requestSessionModal"
+                            data-id="' . $customer->id . '"
+                            data-name="' . $customer->company_name . '"
+                            data-program_id="' . $customer->program_id . '"
+                            data-app_customer_id="' . $customer->app_customer_id . '"
+                            data-customer_name="' . $customer->name . '"
+                            data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="Request for Extra Sessions">
+                    </div>';
+                }
+              
             })
             ->addColumn('action', function ($customer) {
                 // Add the "Log" button with data attributes
@@ -335,10 +371,53 @@ class CounsellerController extends Controller
 //     }
 // }
 
+    public function requestSession(Request $req) {
+  
+    $validatedData = $req->validate([
+        'request_session_count' => 'required|integer|min:1' // assuming request_days is positive integer
+    ]);
 
-    public function store(Request $request)
-    {
-        // Initialize the reason array
+    if(!$req->has('work_related') && !$req->has('person_related')){
+        return redirect()->route('counsellersesion.index')->with('error', 'Please select the reasons');
+    }
+
+    $reasonStrings = $this->reasons($req);
+    
+    $reqSession = new RequestSession();
+    $reasonStrings = $this->reasons($req);
+    $reqSession->reasons = $reasonStrings; 
+    $reqSession->customre_brevo_data_id = $req->customerId; 
+    $reqSession->customer_id = $req->appCustomerId; 
+    $reqSession->program_id = $req->programId; 
+    $reqSession->counselor_id = $req->counselor_id; 
+    $reqSession->request_days = $req->request_session_count; 
+    $reqSession->status = 'pending';
+    $reqSession->request_date = now()->format('Y-m-d'); // MySQL-friendly format
+    $reqSession->save();
+
+    try{
+        $program = Program::where('id', $req->programId)->first();
+            $recipient = $program->email;
+            $admin_name = $program->company_name;
+            $subject = 'Counseling Session Extension Request';
+            $template = 'emails.request-sessions.to-admin-notification';
+            $data = [
+                'admin_name' => $admin_name,
+                'review_link' => route('reviewRequest', encrypt($reqSession->id) ),
+                'request_id' => $reqSession->id,
+                'additional_sessions' => $req->request_session_count,
+                'reason' => $reasonStrings,
+            ];
+            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+
+    }catch(\Exception $ex){
+
+    }
+
+    return redirect()->route('counsellersesion.index')->with('message', 'Request sent to    Employer, We will notify you by email once the employer has made a decision');
+    }
+
+    public function reasons($request){
         $reasons = [];
         // Check if checkboxes are present and append their values to the reason array
         if ($request->has('work_related')) $reasons[] = $request->input('work_related');
@@ -351,13 +430,15 @@ class CounsellerController extends Controller
         if ($request->has('other')) $reasons[] = $request->input('other');
         if ($request->has('other_reason')) $reasons[] = $request->input('other_reason');
         if ($request->has('person_related')) $reasons[] = $request->input('person_related');
-
-        // Concatenate reasons into a single string
-
-        // Get new_user value
-        // Concatenate reasons into a single string
         $reasonString = implode(', ', $reasons);
         $reasonStrings = rtrim($reasonString, ', ');
+        return $reasonStrings;
+    }
+
+    public function store(Request $request)
+    {
+        $reasonStrings = $this->reasons($request);
+
 
         // Get new_user value
         $newUser = $request->input('new_user', 'No');

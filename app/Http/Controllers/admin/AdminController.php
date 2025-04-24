@@ -30,6 +30,7 @@ use App\Models\Booking;
 use App\Models\CounsellingSession;
 use PDF;
 use App\Models\Program;
+use App\Models\RequestSession;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use GuzzleHttp\Client;
@@ -1786,6 +1787,235 @@ class AdminController extends Controller
             ->make(true);
     }
     
+    public function viewSessionRequest(Request $request)
+    {
+        $status = 'pending';
+        return view('mw-1.admin.request-sessions.manage', get_defined_vars());
+
+    }
+    
+    public function getSessionRequest(Request $request)
+    {
+        $status = 'pending';
+        if ($request->has('status') && in_array($request->status, ['pending', 'denied', 'accepted'])) {
+            $status = $request->status;
+        }
+    
+        $programs = RequestSession::query();
+    
+        if ($status !== null) {
+            $programs->where('status', $status);
+        }
+    
+        return DataTables::of($programs)
+        ->editColumn('requested_date', function ($program) {
+            // First try to parse as Carbon object if it's not already
+            try {
+                $date = $program->request_date instanceof \Carbon\Carbon 
+                    ? $program->request_date 
+                    : \Carbon\Carbon::parse($program->request_date);
+                
+                return $date->format('m/d/Y');
+            } catch (\Exception $e) {
+                return "-";
+            }
+        })
+            ->editColumn('requested', function ($program) {
+
+                if($program->status == 'pending'){
+                    return $program->request_days ." further"; // You might want to make this dynamic
+
+                }elseif($program->status == 'accepted'){
+                    return $program->request_days ." approved"; // You might want to make this dynamic
+
+                }else{
+                    return $program->request_days ." denied"; // You might want to make this dynamic
+
+                }
+
+            })
+            
+            ->addColumn('action', function ($program) use ($status) {  // Note the use($status) here
+                $html = '<a href="'.route('admin.reviewSessionRequest', [
+                        'id' => $program->id, 
+                        'status' => $status  // Now using the filtered $status
+                    ]).'" 
+                    class="btn btn-sm btn-primary review-btn" 
+                    data-id="'.$program->id.'"
+                    data-status="'.$status.'"
+                    >
+                    Review
+                </a>';
+                return $html;
+            })
+
+            ->rawColumns(['action'])
+            ->make(true);
+    }
+
+    public function reviewSessionRequest($id, $status) {
+        $reqSession = RequestSession::where('id', $id)->first();
+        $custBrev = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+        $counselor = Counselor::where('id', $reqSession->counselor_id)->first();
+
+        if (!$reqSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Request not found'
+            ]);
+        }      
+
+        return response()->json([
+            'success' => true,
+            'client_name' => $custBrev->name ?? 'N/A',
+            'client_email' => $custBrev->email ?? 'N/A',
+            'client_id' => $custBrev->id ?? 'N/A',
+            'counselor_name' => $counselor->name ?? 'N/A',
+            'reasons' => $reqSession->reasons ?? 'N/A',
+            'requested_date' => $reqSession->request_date ?? 'N/A',
+            'approved_date' => $reqSession->accepted_date ?? 'N/A',
+            'denied_date' => $reqSession->denied_date ?? 'N/A',
+            'requested_days' => $reqSession->request_days ?? 'N/A',
+            'request_id' => $reqSession->id,
+            'status' => $status
+        ]);
+
+    }
+
+    public function approveSession(Request $req){
+        $reqId = $req->requestedId;
+
+        $reqSession = RequestSession::where('id', $reqId)->first();
+
+        $reqSession->request_days = $req->request_session_count;
+        $reqSession->status = 'accepted';
+        $accepted_date = now()->format('Y-m-d');
+        $reqSession->accepted_date = $accepted_date; 
+
+        $reqSession->save();
+
+        $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+
+        
+        $program = Program::where('id', $reqSession->program_id)->first();
+        $existProgramSession = $program->max_session;
+        $program->max_session = $existProgramSession + $req->request_session_count;
+        $program->save();
+
+        try{
+            if($custBrevoData){
+
+                $existSessions = $custBrevoData->max_session;
+                $custBrevoData->max_session = $existSessions +  $req->request_session_count;
+                $custBrevoData->save();
+
+                $recipient = $custBrevoData->email; // customer brevo data
+                if($recipient){
+                    $subject = 'Employer Notification – Sessions Approved ' . '(Request #'. $reqId .')';
+                    $template = 'emails.request-sessions.employer-notification-approve';
+                    $data = [
+                        'admin_name' => $custBrevoData->name,
+                        'approval_date' => $accepted_date,
+                        'approved_quantity' => $req->request_session_count,
+                        'approved_status' => 'Yes',
+                        'request_id' => $reqId,
+                    ];
+                    sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+                }
+            }
+        }catch(Exception $ex){
+        }
+        $this->sendEmailToCounselor($reqSession, 'accepted');
+
+        return back()->with('message', 'Request Approved Successfully!');
+
+    }
+
+    public function denySession(Request $req){
+        $reqId = $req->requestedId;
+        $reqSession = RequestSession::where('id', $reqId)->first();
+        $reqSession->status = 'denied';
+        $denied_date = now()->format('Y-m-d');
+        $reqSession->denied_date = $denied_date; 
+        $reqSession->save();
+
+        $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+
+        try{
+            if($custBrevoData){
+                $recipient = $custBrevoData->email; // customer brevo data
+                if($recipient){
+                
+            $subject = 'Session Denial Confirmation ' . '(Request #'. $reqId .')';
+            $template = 'emails.request-sessions.employer-notification-denied';
+            $data = [
+                'admin_name' =>  $custBrevoData->name,
+                'denial_date' => $denied_date,
+                'approved_quantity' => 0,
+                'approved_status' => 'No',
+                'request_id' => $reqId,
+            ];
+            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+                }
+            }
+
+        }catch(Exception $ex){
+
+        }
+
+
+        $this->sendEmailToCounselor($reqSession, 'denied');
+
+        return back()->with('message', 'Request Denied!');
+    }
+
+    public function sendEmailToCounselor($reqSession, $status){
+
+        try{
+            $counselorId = $reqSession->counselor_id;
+        
+            $counselor = Counselor::where('id', $counselorId)->first();
+            $counsellor_name = $counselor->name ?? '';
+            
+            $emp = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+            $employee_email = $emp->email ?? '';
+            $employee_name = $emp->name ?? '';
+    
+            $reqId = $reqSession->id;
+            if($status == 'denied'){
+                $finalStatus = 'No';
+                $approved_quantity = 0;
+                $template = 'emails.request-sessions.counsellor-notification-denied';
+                $subject = 'Session Denial Notification ' . '(Request #'. $reqId .')';
+    
+            }else{
+                $finalStatus = 'Yes';
+                $approved_quantity = $reqSession->request_days;
+                $template = 'emails.request-sessions.counsellor-notification-approve';
+                $subject = 'New Session Approval ' . '(Request #'. $reqId .')';
+            }
+            $date = now()->format('Y-m-d');
+    
+            $recipient = $counselor->email;
+            if($recipient){
+                $data = [
+                    'employee_name' => $employee_name,
+                    'employee_email' => $employee_email,
+                    'counsellor_name' => $counsellor_name,
+                    'approval_date' => $date,
+                    'approved_quantity' => $approved_quantity,
+                    'approved_status' => $finalStatus,
+                    'request_id' => $reqId,
+                ];
+            }
+    
+            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+        
+        }catch(Exception $ex){
+
+        }
+       }
+
     public function viewsession()
     {
         $Programs = Session::with('counselor')->get();

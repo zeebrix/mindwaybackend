@@ -26,4 +26,8 @@ class CustomreBrevoData extends Model
     {
         return $this->hasOne(ProgramMultiLogin::class,'customre_brevo_data_id','id');
     }
+    public function pendingRequest()
+    {
+        return $this->hasOne(RequestSession::class)->where('status', 'pending');
+    }
 }

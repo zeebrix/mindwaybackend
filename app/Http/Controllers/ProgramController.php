@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Counselor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Customer;
@@ -22,12 +23,15 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use PragmaRX\Google2FA\Google2FA;
 use App\Models\ProgramDepartment;
+use App\Models\RequestSession;
 use App\Services\BrevoService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use SendinBlue\Client\Model\RemoveContactFromList;
 use SendinBlue\Client\ApiException;
 use Illuminate\Support\Str;
+use Yajra\DataTables\Facades\DataTables;
+
 class ProgramController extends Controller
 {
     public function Login()
@@ -970,4 +974,196 @@ class ProgramController extends Controller
 
         return response()->json(['status' => 'success', 'message' => 'Image Saved Successfully']);
     }
+
+    public function viewSessionRequest(Request $request)
+    {
+        $status = $request->get('status', 'pending');
+        $Program = Auth::guard('programs')->user();
+
+        $requests = RequestSession::where(['status'=> $status, 'program_id' => $Program->id])->orderBy('created_at', 'desc')->paginate(10);        
+        return view('mw-1.employeer.request-sessions.manage', get_defined_vars());
+    }
+    
+
+    public function reviewSessionRequest($id, $status) {
+        $reqSession = RequestSession::where('id', $id)->first();
+        $custBrev = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+        $counselor = Counselor::where('id', $reqSession->counselor_id)->first();
+
+        if (!$reqSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Request not found'
+            ]);
+        }      
+
+        return response()->json([
+            'success' => true,
+            'client_name' => $custBrev->name ?? 'N/A',
+            'client_email' => $custBrev->email ?? 'N/A',
+            'client_id' => $custBrev->id ?? 'N/A',
+            'counselor_name' => $counselor->name ?? 'N/A',
+            'reasons' => $reqSession->reasons ?? 'N/A',
+            'requested_date' => $reqSession->request_date ?? 'N/A',
+            'approved_date' => $reqSession->accepted_date ?? 'N/A',
+            'denied_date' => $reqSession->denied_date ?? 'N/A',
+            'requested_days' => $reqSession->request_days ?? 'N/A',
+            'request_id' => $reqSession->id,
+            'status' => $status
+        ]);
+    }
+
+    public function approveSession(Request $req){
+
+        $reqId = $req->requestedId;
+        $reqSession = RequestSession::where('id', $reqId)->first();
+        $reqSession->request_days = $req->request_session_count;
+        $reqSession->status = 'accepted';
+        $accepted_date = now()->format('Y-m-d');
+        $reqSession->accepted_date = $accepted_date;
+
+        $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+
+        $program = Program::where('id', $reqSession->program_id)->first();
+        $existProgramSession = $program->max_session;
+        $program->max_session = $existProgramSession + $req->request_session_count;
+        $program->save();
+
+        try{
+            if($custBrevoData){
+                $existSessions = $custBrevoData->max_session;
+                $custBrevoData->max_session = $existSessions +  $req->request_session_count;
+                $custBrevoData->save();
+                $recipient = $custBrevoData->email; // customer brevo data
+                if($recipient){
+                    $subject = 'Employer Notification – Sessions Approved ' . '(Request #'. $reqId .')';
+            $template = 'emails.request-sessions.employer-notification-approve';
+            $data = [
+                'admin_name' => $custBrevoData->name,
+                'approval_date' => $accepted_date,
+                'approved_quantity' => $req->request_session_count,
+                'approved_status' => 'Yes',
+                'request_id' => $reqId,
+            ];
+            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+                }
+            }
+        }catch(Exception $ex){
+
+        }
+        $this->sendEmailToCounselor($reqSession, 'accepted');
+        $reqSession->save();
+        return back()->with('message', 'Request Approved Successfully!');
+    }
+
+    public function denySession(Request $req){
+        $reqId = $req->requestedId;
+        $reqSession = RequestSession::where('id', $reqId)->first();
+        $reqSession->status = 'denied';
+        $denied_date = now()->format('Y-m-d');
+        $reqSession->denied_date = $denied_date; 
+        $reqSession->save();
+        
+        $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+
+        try{
+            if($custBrevoData){
+                $recipient = $custBrevoData->email; // customer brevo data
+                if($recipient){
+        $subject = 'Session Denial Confirmation ' . '(Request #'. $reqId .')';
+        $template = 'emails.request-sessions.employer-notification-denied';
+        $data = [
+            'admin_name' => 'Admin Name here',
+            'denial_date' => $denied_date,
+            'approved_quantity' => 0,
+            'approved_status' => 'No',
+            'request_id' => $reqId,
+        ];
+
+        sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+    }
+}
+        }catch(Exception $ex){
+
+        }
+
+        $this->sendEmailToCounselor($reqSession, 'denied');
+
+        return back()->with('message', 'Request Denied!');
+    }
+
+    public function sendEmailToCounselor($reqSession, $status){
+        try{
+            $counselorId = $reqSession->counselor_id;
+            $counselor = Counselor::where('id', $counselorId)->first();
+            $counsellor_name = $counselor->name ?? '';
+            
+            $emp = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+            $employee_email = $emp->email ?? '';
+            $employee_name = $emp->name ?? '';
+    
+            $reqId = $reqSession->id;
+            if($status == 'denied'){
+                $finalStatus = 'No';
+                $approved_quantity = 0;
+                $template = 'emails.request-sessions.counsellor-notification-denied';
+                $subject = 'Session Denial Notification ' . '(Request #'. $reqId .')';
+    
+            }else{
+                $finalStatus = 'Yes';
+                $approved_quantity = $reqSession->request_days;
+                $template = 'emails.request-sessions.counsellor-notification-approve';
+                $subject = 'New Session Approval ' . '(Request #'. $reqId .')';
+            }
+            $date = now()->format('Y-m-d');
+    
+            $recipient = $counselor->email;
+    
+            $data = [
+                'employee_name' => $employee_name,
+                'employee_email' => $employee_email,
+                'counsellor_name' => $counsellor_name,
+                'approval_date' => $date,
+                'approved_quantity' => $approved_quantity,
+                'approved_status' => $finalStatus,
+                'request_id' => $reqId,
+            ];
+            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+        }catch(Exception $ex){
+
+        }
+
+    }
+
+
+    public function reviewRequest($id){
+
+        $id = decrypt($id);
+        if($id){
+            $reqSession = RequestSession::where(['id'=> $id])->first();
+            if($reqSession){
+                $progId = $reqSession->program_id;
+
+                if(Auth::guard('programs')->user()->id == $progId){
+                    $counselorId = $reqSession->counselor_id;
+        
+                    $counselor = Counselor::where('id', $counselorId)->first();
+                    $counsellor_name = $counselor->name ?? '';
+                    $emp = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+    
+                    return view('mw-1.employeer.review-request', get_defined_vars() );
+                }else{
+                    abort(404);
+                }
+
+            }else{
+                abort(404);
+            }
+        }
+    }
+
+
+
+
+
 }
