@@ -67,6 +67,9 @@ Route::get('/dashboard-setup', function () {
   return view('mw-1.layout.app');
 });
 
+Route::get('/book-session/{id}', [CounsellerController::class,'bookSession'])->name('book.session');
+
+
   Route::get('/clear', function() {
    Artisan::call('cache:clear');
    Artisan::call('config:clear');
@@ -92,6 +95,7 @@ Route::get('/counsellor-logout', [CounsellerController::class,'logout'])->name('
 
 
 Route::post('/sessions/store', [CounsellerController::class, 'store'])->name('session.store');
+Route::post('/sessions/request', [CounsellerController::class, 'requestSession'])->name('request.session');
 Route::get('/counsellersesions', [CounsellerController::class,'index'])->name('counsellersesion.index');
 
 Route::get('/counsellersesions/data', [CounsellerController::class, 'getCounsellerSesions'])->name('admin.counsellersesions-data');
@@ -307,6 +311,12 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::post('/update-quote/{id}',[AdminController::class,'updateQuote']);
     Route::get('/delete-quote/{id}',[AdminController::class,'deleteQuote']);
 
+    Route::get('/view-request-session',[AdminController::class,'viewSessionRequest']);
+    Route::get('/review-request-session/{id}/{status}',[AdminController::class,'reviewSessionRequest'])->name('admin.reviewSessionRequest');
+    Route::post('/approve-session', [AdminController::class, 'approveSession'])->name('admin.approve.session');
+    Route::post('/admin/deny-session', [AdminController::class, 'denySession'])->name('admin.deny.session');
+    Route::get('/request-session/data', [AdminController::class, 'getSessionRequest'])->name('admin.request-session-data');
+
     Route::get('/view-programs',[AdminController::class,'viewPrograms']);
     Route::get('/view-session',[AdminController::class,'viewsession']);
     Route::get('/reset-session',[AdminController::class,'resetSession'])->name('admin.program-reset-max-session');
@@ -371,5 +381,20 @@ Route::group(['prefix' => 'manage-program', 'middleware' => ['program_auth']], f
     Route::post('/save-program-logo/{id}',[ProgramController::class,'saveProgramLogo']);
 
 
+    Route::get('/view-request-session',[ProgramController::class,'viewSessionRequest']);
+    Route::get('/review-request-session/{id}/{status}',[ProgramController::class,'reviewSessionRequest'])->name('reviewSessionRequest');
+    Route::post('/approve-session', [ProgramController::class, 'approveSession'])->name('approve.session');
+    Route::post('/deny-session', [ProgramController::class, 'denySession'])->name('deny.session');
+    Route::get('/request-session/data', [ProgramController::class, 'getSessionRequest'])->name('request-session-data');
 
-});
+    Route::get('/review-request/{id}',[ProgramController::class,'reviewRequest'])->name('reviewRequest');
+
+    Route::post('/approvesession', [ProgramController::class, 'approveSession'])->name('approvedsession');
+  
+    Route::post('/denysession', [ProgramController::class, 'denySession'])->name('denysession');
+
+
+    
+  });
+  
+

@@ -43,6 +43,16 @@
                          <span class="hide-menu">Sessions</span>
                      </a>
                  </li>
+
+                 <li class="sidebar-item">
+                     <a class="sidebar-link" href="{{ url('/manage-admin/view-request-session?status=pending') }}" aria-expanded="false">
+                         <span>
+                             <i class="ti ti-article"></i>
+                         </span>
+                         <span class="hide-menu">Requested Session</span>
+                     </a>
+                 </li>
+
                  <li class="sidebar-item">
                      <a class="sidebar-link" href="{{ url('/manage-admin/view-home') }}" aria-expanded="false">
                          <span>

@@ -6,15 +6,21 @@ use App\Models\CustomreBrevoData;
 use Illuminate\Support\Facades\Log;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Auth;
+
 class CustomerBrevoDataObserver
 {
     protected $auth;
 
     public function __construct()
     {
-        $this->auth = (new Factory)
-            ->withServiceAccount(base_path('public/mw-1/firebase-credentials.json'))
-            ->createAuth();
+        try {
+
+            $this->auth = (new Factory)
+                ->withServiceAccount(base_path('public/mw-1/firebase-credentials.json'))
+                ->createAuth();
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
     /**
      * Handle the CustomreBrevoData "created" event.
@@ -24,7 +30,7 @@ class CustomerBrevoDataObserver
      */
     public function created(CustomreBrevoData $customer)
     {
-       //
+        //
     }
 
     /**
@@ -35,7 +41,7 @@ class CustomerBrevoDataObserver
      */
     public function updated(CustomreBrevoData $customer)
     {
-       //
+        //
     }
 
     /**
@@ -54,8 +60,7 @@ class CustomerBrevoDataObserver
             $this->auth->revokeRefreshTokens($firebaseUser->uid);
             Log::info("Firebase user disabled", ['uid' => $firebaseUser->uid, 'email' => $customer->email]);
         } catch (\Throwable $th) {
-            Log::info("Firebase user disabled Error ".$th->getMessage());
-
+            Log::info("Firebase user disabled Error " . $th->getMessage());
         }
     }
 
