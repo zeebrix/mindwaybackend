@@ -94,12 +94,11 @@ class GoogleProvider extends AbstractProvider
         $event->setEnd($endDateTime);
 
         $attendees = [
-        ['email' => $eventData['employee_email']], // Employee as attendee
-        //['email' => $eventData['counselor_email'], 'organizer' => true] // Counselor as organizer
+            ['email' => $eventData['employee_email']], // Employee as attendee
+            //['email' => $eventData['counselor_email'], 'organizer' => true] // Counselor as organizer
         ];
         $event->setAttendees($attendees);
-        if ($eventData['communication_method'] != 'Video Call')
-        {
+        if ($eventData['communication_method'] != 'Video Call') {
             $event->setLocation('Phone Number');
         } else {
             // Create Google Meet link
@@ -109,7 +108,7 @@ class GoogleProvider extends AbstractProvider
             $conferenceData->setCreateRequest($conferenceRequest);
             $event->setConferenceData($conferenceData);
         }
-        $createdEvent = $calendarService->events->insert('primary', $event, ['conferenceDataVersion' => 1,'sendUpdates' => 'all']);
+        $createdEvent = $calendarService->events->insert('primary', $event, ['conferenceDataVersion' => 1, 'sendUpdates' => 'all']);
         // Insert the event into the user's primary calendar
         return [
             'event_id' => $createdEvent->getId(),
@@ -118,7 +117,7 @@ class GoogleProvider extends AbstractProvider
             'start_time' => $createdEvent->getStart()->getDateTime(),
             'end_time' => $createdEvent->getEnd()->getDateTime(),
             'attendees' => $createdEvent->getAttendees(),
-            'meeting_link' => ($eventData['communication_method'] === 'Video Call') ? $createdEvent->getConferenceData()->getEntryPoints()[0]->uri??null : null,
+            'meeting_link' => ($eventData['communication_method'] === 'Video Call') ? $createdEvent->getConferenceData()->getEntryPoints()[0]->uri ?? null : null,
         ];
     }
     public function deleteEvent(string $eventId, string $accessToken)
@@ -141,7 +140,7 @@ class GoogleProvider extends AbstractProvider
     {
         // Fetch the stored access token
         $accessToken = $eventData['access_token'];
-        
+
         $this->getHttpClient()->setAccessToken(Crypt::decrypt($accessToken));
 
         // Initialize the Google Calendar service
@@ -169,17 +168,16 @@ class GoogleProvider extends AbstractProvider
             $endDateTime->setTimeZone($eventData['timezone'] ?? 'UTC');
             $event->setEnd($endDateTime);
         }
-       $attendees = [
-        ['email' => $eventData['employee_email']], // Employee as attendee
-       // ['email' => $eventData['counselor_email'], 'organizer' => true] // Counselor as organizer
+        $attendees = [
+            ['email' => $eventData['employee_email']], // Employee as attendee
+            // ['email' => $eventData['counselor_email'], 'organizer' => true] // Counselor as organizer
         ];
         $event->setAttendees($attendees);
         if (!empty($eventData['communication_method']) && $eventData['communication_method'] != 'Video Call') {
             $event->setLocation('Phone Number'); // Set location as "Phone"
             $emptyConferenceData = new Google_Service_Calendar_ConferenceData();
             $event->setConferenceData($emptyConferenceData);
-        } else 
-        {
+        } else {
             if (!empty($eventData['update_meeting_link'])) {
                 $conferenceData = $event->getConferenceData() ?: new Google_Service_Calendar_ConferenceData();
                 $conferenceRequest = new Google_Service_Calendar_CreateConferenceRequest();
@@ -188,7 +186,7 @@ class GoogleProvider extends AbstractProvider
                 $event->setConferenceData($conferenceData);
             }
         }
-        $updatedEvent = $calendarService->events->update('primary', $eventId, $event, ['conferenceDataVersion' => 1,'sendUpdates' => 'all']);
+        $updatedEvent = $calendarService->events->update('primary', $eventId, $event, ['conferenceDataVersion' => 1, 'sendUpdates' => 'all']);
         return [
             'event_id' => $updatedEvent->getId(),
             'summary' => $updatedEvent->getSummary(),
@@ -196,7 +194,7 @@ class GoogleProvider extends AbstractProvider
             'start_time' => $updatedEvent->getStart()->getDateTime(),
             'end_time' => $updatedEvent->getEnd()->getDateTime(),
             'attendees' => $updatedEvent->getAttendees(),
-            'meeting_link' => ($eventData['communication_method'] === 'Video Call') ? $updatedEvent->getConferenceData()->getEntryPoints()[0]->uri ?? null:null,
+            'meeting_link' => ($eventData['communication_method'] === 'Video Call') ? $updatedEvent->getConferenceData()->getEntryPoints()[0]->uri ?? null : null,
         ];
     }
 
@@ -268,9 +266,9 @@ class GoogleProvider extends AbstractProvider
                 'end_time' => $event->getEnd()->getDateTime() ?? $event->getEnd()->getDate(),
                 'end_timezone' => $event->getEnd()->getTimeZone() ?? $calendarTimeZone,
                 'attendees' => $event->getAttendees() ?? [],
-                'meeting_link' => $event->getConferenceData() && $event->getConferenceData()->getEntryPoints() 
-                                ? $event->getConferenceData()->getEntryPoints()[0]->uri 
-                                : null,
+                'meeting_link' => $event->getConferenceData() && $event->getConferenceData()->getEntryPoints()
+                    ? $event->getConferenceData()->getEntryPoints()[0]->uri
+                    : null,
             ];
         })->toArray();
     }
@@ -294,34 +292,34 @@ class GoogleProvider extends AbstractProvider
         $allEvents = [];
 
         foreach ($calendarList as $calendar) {
-            $calendarId = $calendar->getId();
-            $calendarTimeZone = $calendar->getTimeZone() ?? 'UTC';
-
-            // Get events for the current calendar
-            $events = $calendarService->events->listEvents($calendarId, [
-                'timeMin' => $timeMin,
-                'timeMax' => $timeMax,
-                'singleEvents' => true,
-                'orderBy' => 'startTime'
-            ])->getItems();
-
-            // Format and store events
-            foreach ($events as $event) {
-                $allEvents[] = [
-                    'calendar_id' => $calendarId,
-                    'calendar_name' => $calendar->getSummary(),
-                    'event_id' => $event->getId(),
-                    'summary' => $event->getSummary(),
-                    'description' => $event->getDescription() ?? '',
-                    'start_time' => $event->getStart()->getDateTime() ?? $event->getStart()->getDate(),
-                    'start_timezone' => $event->getStart()->getTimeZone() ?? $calendarTimeZone,
-                    'end_time' => $event->getEnd()->getDateTime() ?? $event->getEnd()->getDate(),
-                    'end_timezone' => $event->getEnd()->getTimeZone() ?? $calendarTimeZone,
-                    'attendees' => $event->getAttendees() ?? [],
-                    'meeting_link' => $event->getConferenceData() && $event->getConferenceData()->getEntryPoints() 
-                                    ? $event->getConferenceData()->getEntryPoints()[0]->uri 
-                                    : null,
-                ];
+            if ($calendar->accessRole != 'reader') {
+                $calendarId = $calendar->getId();
+                $calendarTimeZone = $calendar->getTimeZone() ?? 'UTC';
+                // Get events for the current calendar
+                $events = $calendarService->events->listEvents($calendarId, [
+                    'timeMin' => $timeMin,
+                    'timeMax' => $timeMax,
+                    'singleEvents' => true,
+                    'orderBy' => 'startTime'
+                ])->getItems();
+                // Format and store events
+                foreach ($events as $event) {
+                    $allEvents[] = [
+                        'calendar_id' => $calendarId,
+                        'calendar_name' => $calendar->getSummary(),
+                        'event_id' => $event->getId(),
+                        'summary' => $event->getSummary(),
+                        'description' => $event->getDescription() ?? '',
+                        'start_time' => $event->getStart()->getDateTime() ?? $event->getStart()->getDate(),
+                        'start_timezone' => $event->getStart()->getTimeZone() ?? $calendarTimeZone,
+                        'end_time' => $event->getEnd()->getDateTime() ?? $event->getEnd()->getDate(),
+                        'end_timezone' => $event->getEnd()->getTimeZone() ?? $calendarTimeZone,
+                        'attendees' => $event->getAttendees() ?? [],
+                        'meeting_link' => $event->getConferenceData() && $event->getConferenceData()->getEntryPoints()
+                            ? $event->getConferenceData()->getEntryPoints()[0]->uri
+                            : null,
+                    ];
+                }
             }
         }
         return $allEvents;
