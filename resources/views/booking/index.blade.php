@@ -32,12 +32,12 @@
     <div class="min-h-screen flex items-center justify-center">
         <div class="rounded-[32px] p-8 max-w-3xl w-full relative">
             <!-- Close Button -->
-            <button class="absolute right-6 top-6 text-gray-400 hover:text-gray-600">
+            <!-- <button class="absolute right-6 top-6 text-gray-400 hover:text-gray-600">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
-            </button>
+            </button> -->
 
             <!-- Header -->
             <h1 class="text-2xl font-bold text-gray-900 mb-1">Book 50min Session in for {{$customer->name}}</h1>
@@ -107,7 +107,7 @@
             </div>
 
             <!-- Timezone -->
-            <p class="text-sm text-gray-500 mt-6">Timezone: Sydney/Melbourne</p>
+            <p id="timezoneDisplay" class="text-sm text-gray-500 mt-6"></p>
 
             <!-- Confirm Button -->
             <button id="confirmButton" class="w-full mt-8 bg-[#688EDC] text-white py-3.5 rounded-full hover:bg-[#688EDC] transition-all font-medium">
@@ -162,8 +162,13 @@
         </div>
     </div>
 </div>
+<script>
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    document.getElementById('timezoneDisplay').textContent = `Timezone: ${userTimeZone}`;
+</script>
 @section('js')
 <script>
+    
     let communication_method = null;
 
     function showLoader() {
@@ -236,7 +241,9 @@
 
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            const firstDayIndex = (firstDay.getDay() + 6) % 7;
+            const jsDay = firstDay.getDay(); // JS: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+           
+            const firstDayIndex = jsDay === 0 ? 6 : jsDay-1;
             const daysInMonth = lastDay.getDate();
 
             let calendarHTML = '';
@@ -247,8 +254,8 @@
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                const formattedDate = date.toISOString().split('T')[0];
-
+                const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const formattedDate = date.toLocaleDateString('en-CA', { timeZone: userTimeZone });
                 const isAvailable = availableDateSet.has(formattedDate);
                 const isFutureOrToday = date >= new Date(today.getFullYear(), today.getMonth(), today.getDate());
 

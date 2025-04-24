@@ -128,7 +128,6 @@ class SlotGenerationService
                 $startOfMonth->toRfc3339String(),
                 $endOfMonth->toRfc3339String()
             );
-    
             if (empty($events)) {
                 \Log::info("No events found for counselor ID: {$counselor->id} in range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}");
                 return;
@@ -144,7 +143,7 @@ class SlotGenerationService
                     continue;
                 }
             }
-    
+            unset($event);
             // Fetch all slots for the counselor in the given range
             $slots = Slot::where('counselor_id', $counselor->id)->where('is_booked', false)
                 ->whereBetween('start_time', [$startOfMonth->setTimezone('UTC'), $endOfMonth->setTimezone('UTC')])
@@ -171,6 +170,12 @@ class SlotGenerationService
                 $status = $json['error']['status'] ?? 'unknown';
                 if($status == 'UNAUTHENTICATED')
                 {
+                    $counselor->update([
+                        'google_id'=>null,
+                        'google_name'=>null,
+                        'google_email'=>null,
+                        'google_picture'=>null,    
+                    ]);
                   \Log::error("Exception Recorded Before Email");
                     $recipient = $counselor->email;
                     $subject = 'Urgent: Connect Calendar';
@@ -178,8 +183,8 @@ class SlotGenerationService
                     $data = [
                         'full_name' => $counselor->name,
                     ];
-                    //sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
-                    //sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
+                    sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+                    sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
                   \Log::error("Exception Recorded.");
                 }
             } catch (\Throwable $th) {

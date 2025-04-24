@@ -23,7 +23,11 @@ class Counselor extends Authenticatable
         'google_webhook_data',
         'language',
         'location',
-        'intro_file'
+        'intro_file',
+        'google_id',
+        'google_name',
+        'google_email',
+        'google_picture'
     ];
     public function availabilities()
     {

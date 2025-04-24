@@ -14,10 +14,9 @@ class CustomerBrevoDataObserver
     public function __construct()
     {
         try {
-
             $this->auth = (new Factory)
-                ->withServiceAccount(base_path('public/mw-1/firebase-credentials.json'))
-                ->createAuth();
+            ->withServiceAccount(base_path('public/mw-1/firebase-credentials.json'))
+            ->createAuth();        
         } catch (\Throwable $th) {
             //throw $th;
         }

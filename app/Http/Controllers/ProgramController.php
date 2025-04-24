@@ -259,26 +259,40 @@ class ProgramController extends Controller
         $customerRelatedProgram->program_id = $userId; // Use the program ID obtained earlier
         $customerRelatedProgram->save();
         // Set up the SendinBlue API configuration
-        $config = Configuration::getDefaultConfiguration()->setApiKey('api-key',env('BREVO_API_KEY'));
-
-        // Create an instance of the ContactsApi
-        $apiInstance = new ContactsApi(new Client(), $config); // Use the correct Client class
-
-        // Prepare the data for creating the contact
-        $createContact = new CreateContact([
-            'email' => $request->email,
-            'attributes' => (object) [
-                'EMAIL' => $request->email,
-                'FIRSTNAME' => $request->name,
-                'CODEACCESS' => $program->code,
-                'COMPANY' => $program->company_name,
-                'MS' => $program->max_session,
-                'LASTNAME' => ""
-            ],
-            'listIds' => [9], // Assuming you want to add the contact to list ID 1
-        ]);
-
-
+        try {
+            $config = Configuration::getDefaultConfiguration()->setApiKey('api-key',env('BREVO_API_KEY'));
+            // Create an instance of the ContactsApi
+            $apiInstance = new ContactsApi(new Client(), $config); // Use the correct Client class
+            // Prepare the data for creating the contact
+            $createContact = new CreateContact([
+                'email' => $request->email,
+                'attributes' => (object) [
+                    'EMAIL' => $request->email,
+                    'FIRSTNAME' => $request->name,
+                    'CODEACCESS' => $program->code,
+                    'COMPANY' => $program->company_name,
+                    'MS' => $program->max_session,
+                    'LASTNAME' => ""
+                ],
+                'listIds' => [9], // Assuming you want to add the contact to list ID 1
+            ]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+        try {
+            if ( $request->level == 'admin') {
+                $recipient = $request->email;
+                $subject = 'You’ve Been Made an Admin for Mindway EAP';
+                $template = 'emails.become-admin-member';
+                $data = [
+                    'full_name' => $request->name ?? '',
+                    'company_name' => $program->company_name ?? '',
+                    'access_code' => $program->code ?? ''
+                ];
+                sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+            }
+        } catch (\Throwable $th) {
+        }
         try {
             // Make the request to create the contact
             $result = $apiInstance->createContact($createContact);
@@ -1073,7 +1087,7 @@ class ProgramController extends Controller
         $subject = 'Session Denial Confirmation ' . '(Request #'. $reqId .')';
         $template = 'emails.request-sessions.employer-notification-denied';
         $data = [
-            'admin_name' => 'Admin Name here',
+            'admin_name' => $custBrevoData->name ?? '',
             'denial_date' => $denied_date,
             'approved_quantity' => 0,
             'approved_status' => 'No',
