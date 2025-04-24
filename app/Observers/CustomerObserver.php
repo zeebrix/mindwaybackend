@@ -15,9 +15,14 @@ class CustomerObserver
 
     public function __construct()
     {
-        $this->auth = (new Factory)
+        try {
+            $this->auth = (new Factory)
             ->withServiceAccount(base_path('public/mw-1/firebase-credentials.json'))
-            ->createAuth();
+            ->createAuth();            
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+
     }
     /**
      * Handle the Customer "created" event.
