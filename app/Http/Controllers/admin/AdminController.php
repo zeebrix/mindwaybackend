@@ -1824,11 +1824,11 @@ class AdminController extends Controller
                         'id' => $program->id, 
                         'status' => $status  // Now using the filtered $status
                     ]).'" 
-                    class="btn btn-sm btn-primary review-btn" 
+                    class="btn btn-sm btn-primary review-btn mindway-btn" 
                     data-id="'.$program->id.'"
                     data-status="'.$status.'"
                     >
-                    Review
+                    Review Request
                 </a>';
                 return $html;
             })

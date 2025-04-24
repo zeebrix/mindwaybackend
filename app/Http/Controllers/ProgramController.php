@@ -1052,7 +1052,7 @@ class ProgramController extends Controller
         $subject = 'Session Denial Confirmation ' . '(Request #'. $reqId .')';
         $template = 'emails.request-sessions.employer-notification-denied';
         $data = [
-            'admin_name' => 'Admin Name here',
+            'admin_name' => $custBrevoData->name ?? '',
             'denial_date' => $denied_date,
             'approved_quantity' => 0,
             'approved_status' => 'No',
