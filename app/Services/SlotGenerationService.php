@@ -156,6 +156,7 @@ class SlotGenerationService
                     if ($event['summary'] === "50min Mindway EAP Session") {
                         continue;
                     }
+                    \Log::info("Checking slot ID: {$slot->id} [{$slot->start_time} - {$slot->end_time}] against event ID: {$event['event_id']} [{$event['start_time']} - {$event['end_time']}]");
                     if ($slot->start_time < $event['end_time'] && $slot->end_time > $event['start_time']) {
                         \Log::info("Deleting slot ID: {$slot->id} as it conflicts with event ID: {$event['event_id']}");
                         $slot->delete();
@@ -177,8 +178,8 @@ class SlotGenerationService
                     $data = [
                         'full_name' => $counselor->name,
                     ];
-                    sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
-                    sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
+                    //sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+                    //sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
                   \Log::error("Exception Recorded.");
                 }
             } catch (\Throwable $th) {

@@ -67,6 +67,9 @@ Route::get('/dashboard-setup', function () {
   return view('mw-1.layout.app');
 });
 
+Route::get('/book-session/{id}', [CounsellerController::class,'bookSession'])->name('book.session');
+
+
   Route::get('/clear', function() {
    Artisan::call('cache:clear');
    Artisan::call('config:clear');

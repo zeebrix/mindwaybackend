@@ -15,9 +15,14 @@ class CustomerObserver
 
     public function __construct()
     {
-        $this->auth = (new Factory)
-            ->withServiceAccount(base_path('public/mw-1/firebase-credentials.json'))
-            ->createAuth();
+        try {
+
+            $this->auth = (new Factory)
+                ->withServiceAccount(base_path('public/mw-1/firebase-credentials.json'))
+                ->createAuth();
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
     }
     /**
      * Handle the Customer "created" event.
@@ -29,7 +34,7 @@ class CustomerObserver
     {
         $customerId = $customer->id;
         $brevoData = CustomreBrevoData::where('app_customer_id', $customerId)->first();
-        if($brevoData){
+        if ($brevoData) {
             $departId = $customer->department_id;
             $brevoData->department_id = $departId;
             $brevoData->save();
@@ -46,7 +51,7 @@ class CustomerObserver
     {
         $customerId = $customer->id;
         $brevoData = CustomreBrevoData::where('app_customer_id', $customerId)->first();
-        if($brevoData){
+        if ($brevoData) {
             $departId = $customer->department_id;
             $brevoData->department_id = $departId;
             $brevoData->save();
@@ -66,31 +71,24 @@ class CustomerObserver
             try {
                 $brevo = new BrevoService();
                 $brevo->removeUserFromList($customer->email);
-            }
-            catch (\Throwable $th) {
-                Log::info("Brevo Observer delete error  ".$th->getMessage());
-    
+            } catch (\Throwable $th) {
+                Log::info("Brevo Observer delete error  " . $th->getMessage());
             }
             $firebaseUser = $this->auth->getUserByEmail($customer->email);
             $this->auth->updateUser($firebaseUser->uid, ['disabled' => true]);
             // $this->auth->deleteUser($firebaseUser->uid);
             $this->auth->revokeRefreshTokens($firebaseUser->uid);
-            try
-            {
-                $customer3 = CustomreBrevoData::where('app_customer_id',$customer->id)->first();
-                if($customer3)
-                {
+            try {
+                $customer3 = CustomreBrevoData::where('app_customer_id', $customer->id)->first();
+                if ($customer3) {
                     $customer3->delete();
                 }
-            }
-            catch (\Throwable $th) {
-                Log::info("Observer Brevo Data delete error ".$th->getMessage());
-    
+            } catch (\Throwable $th) {
+                Log::info("Observer Brevo Data delete error " . $th->getMessage());
             }
             Log::info("Firebase user disabled", ['uid' => $firebaseUser->uid, 'email' => $customer->email]);
         } catch (\Throwable $th) {
-            Log::info("Firebase user disabled Error ".$th->getMessage());
-
+            Log::info("Firebase user disabled Error " . $th->getMessage());
         }
     }
 

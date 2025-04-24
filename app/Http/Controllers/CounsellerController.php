@@ -273,16 +273,19 @@ class CounsellerController extends Controller
             })
             ->addColumn('action', function ($customer) {
                 // Add the "Log" button with data attributes
-                return '
-                    <button type="button" class="btn btn-primary add-session-btn mindway-btn" 
-                        style="background-color: #688EDC !important; color: #F7F7F7 !important" 
-                        data-bs-toggle="modal" data-bs-target="#addSessionModal" 
-                        data-id="' . $customer->id . '" 
-                        data-name="' . $customer->company_name . '" 
-                        data-program_id="' . $customer->program_id . '" 
-                        data-customer_name="' . $customer->name . '">
-                        Log
-                    </button>';
+                return '<button type="button" class="btn btn-primary add-session-btn mindway-btn" 
+            style="background-color: #688EDC !important; color: #F7F7F7 !important" 
+            data-bs-toggle="modal" data-bs-target="#addSessionModal" 
+            data-id="' . $customer->id . '" 
+            data-name="' . $customer->company_name . '" 
+            data-program_id="' . $customer->program_id . '" 
+            data-customer_name="' . $customer->name . '">
+            Log
+        </button>
+        <a href="' . route('book.session', ['id' => $customer->id]) . '" 
+            class="btn btn-success mindway-btn">
+            Book
+        </a>';
             })
             ->rawColumns(['count', 'name_email', 'company_name', 'max_session', 'action']) // Ensure HTML is rendered
             ->make(true);
@@ -747,5 +750,11 @@ class CounsellerController extends Controller
             return redirect()->route('counseller.setting')
                 ->with(['success' => 'Two-factor authentication disabled!']);
         }
+    }
+    public function bookSession(Request $request , $id)
+    {
+        $customer = CustomreBrevoData::where('id',$id)->first();
+        $counselor = Auth::guard('counselor')->user();
+        return view('booking.index')->with(['customer'=>$customer,'counselor'=>$counselor]);
     }
 }
