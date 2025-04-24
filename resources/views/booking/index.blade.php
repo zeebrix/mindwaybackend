@@ -217,7 +217,8 @@
         async function fetchAvailableDates(year, month) {
             showLoader();
             try {
-                const response = await fetch(`/api/customer/counselor/calendar?counselor_id=6&year=${year}&month=${month + 1}`, {
+                const counselor_id = "{{$counselor->id}}";
+                const response = await fetch(`/api/customer/counselor/calendar?counselor_id=${counselor_id}&year=${year}&month=${month + 1}`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'app-auth-token': token
@@ -315,7 +316,8 @@
         async function showTimeSlots(date) {
             showLoader();
             try {
-                const response = await fetch(`/api/customer/available-slots?counselor_id=6&date=${date}`, {
+                const counselor_id = "{{$counselor->id}}";
+                const response = await fetch(`/api/customer/available-slots?counselor_id=${counselor_id}&date=${date}`, {
                     headers: {
                         'app-auth-token': token
                     }
