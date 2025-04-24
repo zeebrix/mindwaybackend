@@ -196,7 +196,7 @@
 
                         <td class="text-center">
                             <a href="{{ route('reviewSessionRequest', ['id' => $request->id, 'status' => request()->get('status', 'pending')]) }}" 
-                               class="review-btn">
+                               class="review-btn mindway-btn" style="background-color: #688EDC !important; color: #F7F7F7 !important">
                                Review Request
                             </a>
                         </td>
