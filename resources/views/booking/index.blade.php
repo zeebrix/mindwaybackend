@@ -258,12 +258,12 @@
             }
 
             for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(year, month, day);
+                const date = new Date(Date.UTC(year, month, day));
                 const userTimeZone = "{{$counselor->timezone}}";
                 const formattedDate = date.toLocaleDateString('en-CA', { timeZone: userTimeZone });
                 const isAvailable = availableDateSet.has(formattedDate);
-                const isFutureOrToday = date >= new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
+                const todayFormatted = new Date().toLocaleDateString('en-CA', { timeZone: userTimeZone });
+                const isFutureOrToday = formattedDate >= todayFormatted;
                 const isDisabled = !isAvailable || !isFutureOrToday;
                 const isSelected = selectedDate === formattedDate;
                 const classes = [
