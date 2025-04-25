@@ -301,13 +301,22 @@
             const timeSlotsDiv = document.getElementById('timeSlots');
             document.getElementById('timeSlotContainer').classList.remove('hidden');
 
-            timeSlotsDiv.innerHTML = data.map(slot => {
-                const start = DateTime.fromISO(slot.start_time, { zone: 'utc' }).setZone(counselorTimeZone);
-                const startFormatted = start.toFormat('hh:mm a');
+            timeSlotsDiv.innerHTML = data
+    .filter(slot => {
+        const slotDateInCounselorTz = DateTime.fromISO(slot.start_time, { zone: 'utc' })
+            .setZone(counselorTimeZone)
+            .toISODate();
+        return slotDateInCounselorTz === date;  // Only keep slots for selected date in counselor timezone
+    })
+    .map(slot => {
+        const start = DateTime.fromISO(slot.start_time, { zone: 'utc' }).setZone(counselorTimeZone);
+        const startFormatted = start.toFormat('hh:mm a');
 
-                return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
-                        data-time="${slot.start_time}" data-id="${slot.id}">${startFormatted}</button>`;
-            }).join('');
+        return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
+                data-time="${slot.start_time}" data-id="${slot.id}">${startFormatted}</button>`;
+    })
+    .join('');
+
 
             document.querySelectorAll('.time-slot').forEach(slot => {
                 slot.addEventListener('click', function () {
