@@ -19,9 +19,10 @@
         border-top-color: #687EDC;
         animation: spin 1s linear infinite;
     }
+
     .transition-opacity {
-    transition: opacity 0.3s ease;
-}
+        transition: opacity 0.3s ease;
+    }
 
     @keyframes spin {
         to {
@@ -174,7 +175,7 @@
 </script>
 @section('js')
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const DateTime = luxon.DateTime;
         const counselorTimeZone = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}"; // Counselor's time zone
         let communication_method = null;
@@ -189,6 +190,7 @@
         function showLoader() {
             document.getElementById('loader').classList.remove('hidden');
         }
+
         function hideLoader() {
             document.getElementById('loader').classList.add('hidden');
         }
@@ -231,72 +233,104 @@
 
         // Generate the calendar for the selected month
         // Generate the calendar for the selected month
-async function generateCalendar(year, month) {
-    const availableDates = await fetchAvailableDates(year, month);
-    const availableSet = new Set(availableDates.map(d => d.date));
+        async function generateCalendar(year, month) {
+            // Fetch available dates for the given month and year
+            const availableDates = await fetchAvailableDates(year, month);
 
-    // Ensure firstDay is correctly converted to the counselor's timezone (Australia/Adelaide)
-    const firstDay = DateTime.fromObject({ year, month, day: 1 }, { zone: counselorTimeZone });
-    const daysInMonth = firstDay.daysInMonth;
+            // Convert the available dates' first slot times from UTC to counselor's timezone
+            const availableSet = new Set(availableDates.map(d => {
+                const convertedTime = convertFirstSlotTimeToCounselorTZ(d.first_slot_time);
+                return convertedTime.toISODate(); // Get the date part in counselor's timezone
+            }));
 
-    // Calculate the firstDayIndex for rendering the calendar
-    const firstDayIndex = (firstDay.weekday + 6) % 7; // Luxon: 1=Monday, 7=Sunday
+            // Ensure firstDay is correctly converted to the counselor's timezone (Australia/Adelaide)
+            const firstDay = DateTime.fromObject({
+                year,
+                month,
+                day: 1
+            }, {
+                zone: counselorTimeZone
+            });
+            const daysInMonth = firstDay.daysInMonth;
 
-    let html = '';
-    // Create empty divs for days before the first day
-    for (let i = 0; i < firstDayIndex; i++) {
-        html += '<div class="h-10"></div>';
-    }
+            // Calculate the firstDayIndex for rendering the calendar
+            const firstDayIndex = (firstDay.weekday + 6) % 7; // Luxon: 1=Monday, 7=Sunday
 
-    // Loop through the days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = DateTime.fromObject({ year, month, day }, { zone: counselorTimeZone });
-        const formattedDate = date.toISODate(); // Date in the counselor's timezone
-        const isAvailable = availableSet.has(formattedDate);
-        const isFutureOrToday = date >= today.startOf('day');
+            let html = '';
+            // Create empty divs for days before the first day
+            for (let i = 0; i < firstDayIndex; i++) {
+                html += '<div class="h-10"></div>';
+            }
 
-        const isDisabled = !isAvailable || !isFutureOrToday;
-        const isSelected = selectedDate === formattedDate;
-        const classes = [
-            'calendar-day h-10 w-10 mx-auto rounded-full transition-all',
-            isDisabled ? 'disabled opacity-30 cursor-not-allowed' : 'hover:bg-gray-100 bg-blue-100 text-blue-800',
-            isSelected ? 'selected border border-blue-700' : ''
-        ].join(' ');
+            // Loop through the days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = DateTime.fromObject({
+                    year,
+                    month,
+                    day
+                }, {
+                    zone: counselorTimeZone
+                });
+                const formattedDate = date.toISODate(); // Date in the counselor's timezone
+                const isAvailable = availableSet.has(formattedDate);
+                const isFutureOrToday = date >= today.startOf('day');
 
-        // Add the day button to the calendar
-        html += `<button class="${classes}" data-date="${formattedDate}" ${isDisabled ? 'disabled' : ''}>${day}</button>`;
-    }
+                const isDisabled = !isAvailable || !isFutureOrToday;
+                const isSelected = selectedDate === formattedDate;
+                const classes = [
+                    'calendar-day h-10 w-10 mx-auto rounded-full transition-all',
+                    isDisabled ? 'disabled opacity-30 cursor-not-allowed' : 'hover:bg-gray-100 bg-blue-100 text-blue-800',
+                    isSelected ? 'selected border border-blue-700' : ''
+                ].join(' ');
 
-    // Inject the calendar into the DOM
-    document.getElementById('calendarDays').innerHTML = html;
-    document.getElementById('currentMonth').textContent = firstDay.toFormat('LLLL yyyy'); // Month in counselor's timezone
+                // Add the day button to the calendar
+                html += `<button class="${classes}" data-date="${formattedDate}" ${isDisabled ? 'disabled' : ''}>${day}</button>`;
+            }
 
-    // Add event listeners for day buttons
-    document.querySelectorAll('.calendar-day').forEach(day => {
-        day.addEventListener('click', function () {
-            if (this.disabled) return;
-            selectedDate = this.dataset.date;
-            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
-            this.classList.add('selected');
-            showTimeSlots(selectedDate);
-        });
-    });
+            // Inject the calendar into the DOM
+            document.getElementById('calendarDays').innerHTML = html;
+            document.getElementById('currentMonth').textContent = firstDay.toFormat('LLLL yyyy'); // Month in counselor's timezone
 
-    // Enable/disable the previous month button
-    togglePrevButton();
-}
+            // Add event listeners for day buttons
+            document.querySelectorAll('.calendar-day').forEach(day => {
+                day.addEventListener('click', function() {
+                    if (this.disabled) return;
+                    selectedDate = this.dataset.date;
+                    document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+                    this.classList.add('selected');
+                    showTimeSlots(selectedDate);
+                });
+            });
+
+            // Enable/disable the previous month button
+            togglePrevButton();
+        }
+
+        // Helper function to convert first slot time from UTC to counselor's timezone
+        function convertFirstSlotTimeToCounselorTZ(firstSlotTimeUTC) {
+            const slotTime = DateTime.fromISO(firstSlotTimeUTC, {
+                zone: 'utc'
+            }); // Parse UTC time
+            const convertedTime = slotTime.setZone(counselorTimeZone); // Convert to counselor's timezone
+            return convertedTime; // Return the converted date-time in counselor's timezone
+        }
+
 
 
         // Previous month button click handler
         document.getElementById('prevMonth').addEventListener('click', () => {
             if (currentDate.hasSame(today, 'month')) return;
-            currentDate = currentDate.minus({ months: 1 });
+            currentDate = currentDate.minus({
+                months: 1
+            });
             generateCalendar(currentDate.year, currentDate.month);
         });
 
         // Next month button click handler
         document.getElementById('nextMonth').addEventListener('click', () => {
-            currentDate = currentDate.plus({ months: 1 });
+            currentDate = currentDate.plus({
+                months: 1
+            });
             generateCalendar(currentDate.year, currentDate.month);
         });
 
@@ -310,56 +344,60 @@ async function generateCalendar(year, month) {
         }
 
         // Show time slots for a selected date
-       // Show time slots for a selected date
-// Show time slots for a selected date
-async function showTimeSlots(date) {
-    showLoader();
-    try {
-        const response = await fetch(`/api/customer/available-slots?customer_timezone=${counselorTimeZone}&counselor_id=${counselor_id}&date=${date}`, {
-            headers: {
-                'app-auth-token': token
-            }
-        });
-        const data = await response.json();
-        const timeSlotsDiv = document.getElementById('timeSlots');
-        document.getElementById('timeSlotContainer').classList.remove('hidden');
+        // Show time slots for a selected date
+        // Show time slots for a selected date
+        async function showTimeSlots(date) {
+            showLoader();
+            try {
+                const response = await fetch(`/api/customer/available-slots?customer_timezone=${counselorTimeZone}&counselor_id=${counselor_id}&date=${date}`, {
+                    headers: {
+                        'app-auth-token': token
+                    }
+                });
+                const data = await response.json();
+                const timeSlotsDiv = document.getElementById('timeSlots');
+                document.getElementById('timeSlotContainer').classList.remove('hidden');
 
-        // Convert the selected date to the counselor's timezone (Australia/Adelaide)
-        const selectedDateInCounselorTZ = DateTime.fromISO(date, { zone: counselorTimeZone }).startOf('day');  // Start of day in counselor timezone
-        console.log('Selected date in counselor timezone:', selectedDateInCounselorTZ.toString());
+                // Convert the selected date to the counselor's timezone (Australia/Adelaide)
+                const selectedDateInCounselorTZ = DateTime.fromISO(date, {
+                    zone: counselorTimeZone
+                }).startOf('day'); // Start of day in counselor timezone
+                console.log('Selected date in counselor timezone:', selectedDateInCounselorTZ.toString());
 
-        timeSlotsDiv.innerHTML = data
-            .map(slot => {
-                // Convert the slot's start time from UTC to the counselor's timezone
-                const start = DateTime.fromISO(slot.start_time, { zone: 'utc' }).setZone(counselorTimeZone);
-                const slotDateInCounselorTZ = start.startOf('day'); // Only compare date, not time
-                const selectedDateFormatted = selectedDateInCounselorTZ.toISODate(); // Format selected date
+                timeSlotsDiv.innerHTML = data
+                    .map(slot => {
+                        // Convert the slot's start time from UTC to the counselor's timezone
+                        const start = DateTime.fromISO(slot.start_time, {
+                            zone: 'utc'
+                        }).setZone(counselorTimeZone);
+                        const slotDateInCounselorTZ = start.startOf('day'); // Only compare date, not time
+                        const selectedDateFormatted = selectedDateInCounselorTZ.toISODate(); // Format selected date
 
-                // If the slot date in counselor timezone matches the selected date, display it
-                if (slotDateInCounselorTZ.toISODate() === selectedDateFormatted) {
-                    const startFormatted = start.toFormat('hh:mm a');
-                    return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
+                        // If the slot date in counselor timezone matches the selected date, display it
+                        if (slotDateInCounselorTZ.toISODate() === selectedDateFormatted) {
+                            const startFormatted = start.toFormat('hh:mm a');
+                            return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
                             data-time="${slot.start_time}" data-id="${slot.id}">${startFormatted}</button>`;
-                }
-                return '';  // Skip slot if the date doesn't match
-            })
-            .join('');  // Combine the slot buttons
+                        }
+                        return ''; // Skip slot if the date doesn't match
+                    })
+                    .join(''); // Combine the slot buttons
 
-        // Add event listeners to time slots for booking
-        document.querySelectorAll('.time-slot').forEach(slot => {
-            slot.addEventListener('click', function () {
-                selectedTime = this.dataset.time;
-                slot_id = this.dataset.id;
-                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-                this.classList.add('selected');
-                reserveSlot(slot_id);
-            });
-        });
+                // Add event listeners to time slots for booking
+                document.querySelectorAll('.time-slot').forEach(slot => {
+                    slot.addEventListener('click', function() {
+                        selectedTime = this.dataset.time;
+                        slot_id = this.dataset.id;
+                        document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                        this.classList.add('selected');
+                        reserveSlot(slot_id);
+                    });
+                });
 
-    } finally {
-        hideLoader();
-    }
-}
+            } finally {
+                hideLoader();
+            }
+        }
 
 
 
@@ -373,7 +411,10 @@ async function showTimeSlots(date) {
                         'X-CSRF-TOKEN': csrfToken,
                         'app-auth-token': token
                     },
-                    body: JSON.stringify({ customer_id, slot_id: id })
+                    body: JSON.stringify({
+                        customer_id,
+                        slot_id: id
+                    })
                 });
             } catch (e) {
                 console.error(e);
@@ -405,7 +446,7 @@ async function showTimeSlots(date) {
         });
 
         // Form submission
-        document.getElementById('bookSlotForm').addEventListener('submit', async function (e) {
+        document.getElementById('bookSlotForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             showLoader();
 
