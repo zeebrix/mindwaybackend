@@ -19,6 +19,9 @@
         border-top-color: #687EDC;
         animation: spin 1s linear infinite;
     }
+    .transition-opacity {
+    transition: opacity 0.3s ease;
+}
 
     @keyframes spin {
         to {
@@ -60,9 +63,10 @@
                 @endif
             </div>
             @endif
-            <div id="loader" class="hidden fixed top-0 left-0 w-full h-full bg-white bg-opacity-50 flex items-center justify-center z-50">
+            <div id="loader" class="hidden fixed top-0 left-0 w-full h-full bg-white bg-opacity-50 flex items-center justify-center z-[9999]">
                 <div class="loader border-t-4 border-blue-500 border-solid rounded-full w-10 h-10 animate-spin"></div>
             </div>
+
             <!-- Booking Form -->
             <div class="grid md:grid-cols-2 gap-8">
                 <!-- Calendar -->
@@ -398,6 +402,11 @@
 
         // 5. Confirm booking
         document.getElementById('confirmButton').addEventListener('click', function() {
+            if(communication_method ==null || communication_method == 'null')
+            {
+                alert('please select the communication method first.');
+                return;
+            }
             if (!selectedDate || !selectedTime) {
                 alert('Please select both a date and time.');
                 return;
@@ -419,6 +428,10 @@
             document.getElementById('counselor_id').value = "{{$counselor->id}}";
             document.getElementById('slot_id').value = slot_id;
             document.getElementById('communication_type').value = communication_method;
+            
+            document.getElementById('employee_name').value = "{{$customer->name}}";
+            document.getElementById('employee_email').value = "{{$customer->email}}";
+            document.getElementById('phone').value = "{{$customer?->customer?->phone}}";
 
         });
 
