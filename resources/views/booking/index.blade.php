@@ -227,48 +227,60 @@
     }
 
     async function generateCalendar(year, month) {
-        const availableDates = await fetchAvailableDates(year, month);
-        const availableSet = new Set(availableDates.map(d => d.date));
+    const availableDates = await fetchAvailableDates(year, month);
+    const availableSet = new Set(availableDates.map(d => d.date));
 
-        const firstDay = DateTime.fromObject({ year, month, day: 1 }, { zone: counselorTimeZone });
-        const daysInMonth = firstDay.daysInMonth;
-        const firstDayIndex = (firstDay.weekday + 6) % 7; // Luxon: 1=Monday, 7=Sunday
+    // Ensure firstDay is correctly converted to the counselor's timezone (Australia/Adelaide)
+    const firstDay = DateTime.fromObject({ year, month, day: 1 }, { zone: counselorTimeZone });
+    const daysInMonth = firstDay.daysInMonth;
 
-        let html = '';
-        for (let i = 0; i < firstDayIndex; i++) html += '<div class="h-10"></div>';
+    // Calculate the firstDayIndex for rendering calendar
+    const firstDayIndex = (firstDay.weekday + 6) % 7; // Luxon: 1=Monday, 7=Sunday
 
-        for (let day = 1; day <= daysInMonth; day++) {
-            const date = DateTime.fromObject({ year, month, day }, { zone: counselorTimeZone });
-            const formattedDate = date.toISODate();
-            const isAvailable = availableSet.has(formattedDate);
-            const isFutureOrToday = date >= today.startOf('day');
-
-            const isDisabled = !isAvailable || !isFutureOrToday;
-            const isSelected = selectedDate === formattedDate;
-            const classes = [
-                'calendar-day h-10 w-10 mx-auto rounded-full transition-all',
-                isDisabled ? 'disabled opacity-30 cursor-not-allowed' : 'hover:bg-gray-100 bg-blue-100 text-blue-800',
-                isSelected ? 'selected border border-blue-700' : ''
-            ].join(' ');
-
-            html += `<button class="${classes}" data-date="${formattedDate}" ${isDisabled ? 'disabled' : ''}>${day}</button>`;
-        }
-
-        document.getElementById('calendarDays').innerHTML = html;
-        document.getElementById('currentMonth').textContent = firstDay.toFormat('LLLL yyyy');
-
-        document.querySelectorAll('.calendar-day').forEach(day => {
-            day.addEventListener('click', function () {
-                if (this.disabled) return;
-                selectedDate = this.dataset.date;
-                document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
-                this.classList.add('selected');
-                showTimeSlots(selectedDate);
-            });
-        });
-
-        togglePrevButton();
+    let html = '';
+    // Create empty divs for days before the first day
+    for (let i = 0; i < firstDayIndex; i++) {
+        html += '<div class="h-10"></div>';
     }
+
+    // Loop through the days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = DateTime.fromObject({ year, month, day }, { zone: counselorTimeZone });
+        const formattedDate = date.toISODate(); // Date in the counselor's timezone
+        const isAvailable = availableSet.has(formattedDate);
+        const isFutureOrToday = date >= today.startOf('day');
+
+        const isDisabled = !isAvailable || !isFutureOrToday;
+        const isSelected = selectedDate === formattedDate;
+        const classes = [
+            'calendar-day h-10 w-10 mx-auto rounded-full transition-all',
+            isDisabled ? 'disabled opacity-30 cursor-not-allowed' : 'hover:bg-gray-100 bg-blue-100 text-blue-800',
+            isSelected ? 'selected border border-blue-700' : ''
+        ].join(' ');
+
+        // Add the day button to the calendar
+        html += `<button class="${classes}" data-date="${formattedDate}" ${isDisabled ? 'disabled' : ''}>${day}</button>`;
+    }
+
+    // Inject the calendar into the DOM
+    document.getElementById('calendarDays').innerHTML = html;
+    document.getElementById('currentMonth').textContent = firstDay.toFormat('LLLL yyyy'); // Month in counselor's timezone
+
+    // Add event listeners for day buttons
+    document.querySelectorAll('.calendar-day').forEach(day => {
+        day.addEventListener('click', function () {
+            if (this.disabled) return;
+            selectedDate = this.dataset.date;
+            document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+            this.classList.add('selected');
+            showTimeSlots(selectedDate);
+        });
+    });
+
+    // Enable/disable the previous month button
+    togglePrevButton();
+}
+
 
     document.getElementById('prevMonth').addEventListener('click', () => {
         if (currentDate.hasSame(today, 'month')) return;
@@ -301,23 +313,24 @@
         const timeSlotsDiv = document.getElementById('timeSlots');
         document.getElementById('timeSlotContainer').classList.remove('hidden');
 
-        const selectedDateInCounselorTZ = DateTime.fromISO(date, { zone: counselorTimeZone }).toISODate();
+        const selectedDateInCounselorTZ = DateTime.fromISO(date, { zone: counselorTimeZone }).startOf('day');  // Start of day in counselor timezone
 
         timeSlotsDiv.innerHTML = data
-            .filter(slot => {
-                const slotDateInCounselorTZ = DateTime.fromISO(slot.start_time, { zone: 'utc' })
-                    .setZone(counselorTimeZone)
-                    .toISODate();
-                return slotDateInCounselorTZ === selectedDateInCounselorTZ;
-            })
             .map(slot => {
+                // Convert slot start time (UTC) to counselor's timezone
                 const start = DateTime.fromISO(slot.start_time, { zone: 'utc' }).setZone(counselorTimeZone);
-                const startFormatted = start.toFormat('hh:mm a');
+                const slotDateInCounselorTZ = start.startOf('day'); // Only compare date, not time
+                const selectedDateFormatted = selectedDateInCounselorTZ.toISODate(); // Format selected date
 
-                return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
-                        data-time="${slot.start_time}" data-id="${slot.id}">${startFormatted}</button>`;
+                // If slot date matches the selected date in counselor's timezone, show it
+                if (slotDateInCounselorTZ.toISODate() === selectedDateFormatted) {
+                    const startFormatted = start.toFormat('hh:mm a');
+                    return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
+                            data-time="${slot.start_time}" data-id="${slot.id}">${startFormatted}</button>`;
+                }
+                return '';  // Skip slot if the date doesn't match
             })
-            .join('');
+            .join('');  // Combine the slot buttons
 
         document.querySelectorAll('.time-slot').forEach(slot => {
             slot.addEventListener('click', function () {
@@ -333,6 +346,7 @@
         hideLoader();
     }
 }
+
 
     async function reserveSlot(id) {
         try {
