@@ -167,7 +167,7 @@
     </div>
 </div>
 <script>
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const userTimeZone = "{{$counselor->timezone}}";
     document.getElementById('timezoneDisplay').textContent = `Timezone: ${userTimeZone}`;
 </script>
 @section('js')
@@ -259,7 +259,7 @@
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month, day);
-                const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const userTimeZone = "{{$counselor->timezone}}";
                 const formattedDate = date.toLocaleDateString('en-CA', { timeZone: userTimeZone });
                 const isAvailable = availableDateSet.has(formattedDate);
                 const isFutureOrToday = date >= new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -334,14 +334,16 @@
                 timeSlotsDiv.innerHTML = slots.map(slot => {
                     const localStart = new Date(slot.start_time);
                     const localEnd = new Date(slot.end_time);
-
+                    const customer_timezone = "{{$counselor->timezone}}"
                     const startFormatted = localStart.toLocaleTimeString([], {
+                        timeZone: customer_timezone,
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: true
                     });
 
                     const endFormatted = localEnd.toLocaleTimeString([], {
+                        timeZone: customer_timezone,
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: true
@@ -413,7 +415,9 @@
             }
 
             const localDateTime = new Date(selectedTime);
+            const timezone_customer= "{{$counselor->timezone}}";
             const formattedTime = localDateTime.toLocaleTimeString([], {
+                timeZone: timezone_customer,
                 hour: '2-digit',
                 minute: '2-digit'
             });
