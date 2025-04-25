@@ -176,7 +176,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
     const DateTime = luxon.DateTime;
-
+    const counselorTimeZone = "{{ $counselor->timezone ?? 'Asia/Karachi' }}";
     let communication_method = null;
     const token = 'Waseem#2023MobAPP';
     const counselor_id = "{{$counselor->id}}";
@@ -302,7 +302,7 @@
             document.getElementById('timeSlotContainer').classList.remove('hidden');
 
             timeSlotsDiv.innerHTML = data.map(slot => {
-                const start = DateTime.fromISO(slot.start_time, { zone: counselorTimeZone });
+                const start = DateTime.fromISO(slot.start_time, { zone: 'utc' }).setZone(counselorTimeZone);
                 const startFormatted = start.toFormat('hh:mm a');
 
                 return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
