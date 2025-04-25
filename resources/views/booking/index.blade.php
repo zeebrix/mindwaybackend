@@ -315,7 +315,7 @@ async function generateCalendar(year, month) {
 async function showTimeSlots(date) {
     showLoader();
     try {
-        const response = await fetch(`/api/customer/available-slots?counselor_id=${counselor_id}&date=${date}`, {
+        const response = await fetch(`/api/customer/available-slots?customer_timezone=${counselorTimeZone}&counselor_id=${counselor_id}&date=${date}`, {
             headers: {
                 'app-auth-token': token
             }
