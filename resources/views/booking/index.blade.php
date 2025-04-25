@@ -19,10 +19,9 @@
         border-top-color: #687EDC;
         animation: spin 1s linear infinite;
     }
-
     .transition-opacity {
-        transition: opacity 0.3s ease;
-    }
+    transition: opacity 0.3s ease;
+}
 
     @keyframes spin {
         to {
@@ -168,20 +167,13 @@
     </div>
 </div>
 <script>
-    const userTimeZone = "{{$counselor->timezone}}";
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     document.getElementById('timezoneDisplay').textContent = `Timezone: ${userTimeZone}`;
 </script>
 @section('js')
 <script>
+    
     let communication_method = null;
-    let selectedDate = null;
-    let selectedTime = null;
-    let slot_id = null;
-    const token = 'Waseem#2023MobAPP';
-    const counselorTimezone = "{{$counselor->timezone}}";
-    const counselorId = "{{$counselor->id}}";
-    const customerId = "{{$customer->app_customer_id}}";
-    const csrfToken = '{{ csrf_token() }}';
 
     function showLoader() {
         document.getElementById('loader').classList.remove('hidden');
@@ -191,49 +183,46 @@
         document.getElementById('loader').classList.add('hidden');
     }
 
-    function formatInCounselorTimezone(utcDateString, options = { hour: '2-digit', minute: '2-digit', hour12: true }) {
-        const dateUTC = new Date(utcDateString);
-        return dateUTC.toLocaleTimeString([], {
-            timeZone: counselorTimezone,
-            ...options
-        });
-    }
-
-    function formatDateInCounselorTimezone(utcDateString) {
-        const dateUTC = new Date(utcDateString);
-        return dateUTC.toLocaleDateString('en-CA', { timeZone: counselorTimezone });
-    }
-
     function toggleCommunication() {
         const communicationButtons = document.querySelectorAll('.communication-type');
 
         communicationButtons.forEach(button => {
             button.addEventListener('click', () => {
+                // Remove active styles from all buttons
                 communicationButtons.forEach(btn => {
                     btn.classList.remove('text-white', 'bg-[#688EDC]', 'hover:bg-[#688EDC]');
                     btn.classList.add('text-gray-700', 'bg-gray-100', 'hover:bg-gray-200');
                 });
 
+                // Add active style to the clicked button
                 button.classList.remove('text-gray-700', 'bg-gray-100', 'hover:bg-gray-200');
                 button.classList.add('text-white', 'bg-[#688EDC]', 'hover:bg-[#688EDC]');
 
+                // Optional: capture selected type value
                 communication_method = button.getAttribute('data-type');
                 console.log('Selected communication type:', communication_method);
             });
         });
     }
+    document.addEventListener('DOMContentLoaded', function() {
 
-    document.addEventListener('DOMContentLoaded', function () {
+
         toggleCommunication();
         const modal = new bootstrap.Modal(document.getElementById('bookSlot'));
+        let selectedDate = null;
+        let selectedTime = null;
+        let slot_id = null;
+        const token = 'Waseem#2023MobAPP';
 
         const today = new Date();
         let currentDate = new Date(today.getFullYear(), today.getMonth());
 
+        // 1. Fetch available dates (with header)
         async function fetchAvailableDates(year, month) {
             showLoader();
             try {
-                const response = await fetch(`/api/customer/counselor/calendar?counselor_id=${counselorId}&year=${year}&month=${month + 1}`, {
+                const counselor_id = "{{$counselor->id}}";
+                const response = await fetch(`/api/customer/counselor/calendar?counselor_id=${counselor_id}&year=${year}&month=${month + 1}`, {
                     headers: {
                         'Content-Type': 'application/json',
                         'app-auth-token': token
@@ -250,14 +239,16 @@
             }
         }
 
+        // 2. Generate calendar UI
         async function generateCalendar(year, month) {
             const availableDates = await fetchAvailableDates(year, month);
             const availableDateSet = new Set(availableDates.map(d => d.date));
 
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            const jsDay = firstDay.getDay();
-            const firstDayIndex = jsDay === 0 ? 6 : jsDay - 1;
+            const jsDay = firstDay.getDay(); // JS: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+           
+            const firstDayIndex = jsDay === 0 ? 6 : jsDay-1;
             const daysInMonth = lastDay.getDate();
 
             let calendarHTML = '';
@@ -267,16 +258,14 @@
             }
 
             for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(Date.UTC(year, month, day));
-                const formattedDate = date.toLocaleDateString('en-CA', { timeZone: counselorTimezone });
+                const date = new Date(year, month, day);
+                const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const formattedDate = date.toLocaleDateString('en-CA', { timeZone: userTimeZone });
                 const isAvailable = availableDateSet.has(formattedDate);
-                const now = new Date();
-                const todayFormatted = now.toLocaleDateString('en-CA', { timeZone: counselorTimezone });
+                const isFutureOrToday = date >= new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-                const isFutureOrToday = formattedDate >= todayFormatted;
                 const isDisabled = !isAvailable || !isFutureOrToday;
                 const isSelected = selectedDate === formattedDate;
-
                 const classes = [
                     'calendar-day',
                     'h-10 w-10 mx-auto rounded-full transition-all',
@@ -288,28 +277,33 @@
             }
 
             document.getElementById('calendarDays').innerHTML = calendarHTML;
-            document.getElementById('currentMonth').textContent = new Date(year, month).toLocaleString('default', { month: 'long', year: 'numeric' });
+            document.getElementById('currentMonth').textContent = new Date(year, month).toLocaleString('default', {
+                month: 'long',
+                year: 'numeric'
+            });
 
             document.querySelectorAll('.calendar-day').forEach(day => {
-                day.addEventListener('click', function () {
+                day.addEventListener('click', function() {
                     if (this.disabled) return;
                     selectedDate = this.dataset.date;
                     document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
                     this.classList.add('selected');
                     showTimeSlots(selectedDate);
+
                 });
             });
 
             togglePrevButton();
         }
 
-        document.getElementById('prevMonth').addEventListener('click', function () {
+        // 3. Previous / Next Month
+        document.getElementById('prevMonth').addEventListener('click', function() {
             if (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth()) return;
             currentDate.setMonth(currentDate.getMonth() - 1);
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
         });
 
-        document.getElementById('nextMonth').addEventListener('click', function () {
+        document.getElementById('nextMonth').addEventListener('click', function() {
             currentDate.setMonth(currentDate.getMonth() + 1);
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
         });
@@ -322,11 +316,15 @@
             prevBtn.style.cursor = isCurrentMonth ? 'not-allowed' : 'pointer';
         }
 
+        // 4. Show time slots
         async function showTimeSlots(date) {
             showLoader();
             try {
-                const response = await fetch(`/api/customer/available-slots?counselor_id=${counselorId}&date=${date}`, {
-                    headers: { 'app-auth-token': token }
+                const counselor_id = "{{$counselor->id}}";
+                const response = await fetch(`/api/customer/available-slots?counselor_id=${counselor_id}&date=${date}`, {
+                    headers: {
+                        'app-auth-token': token
+                    }
                 });
                 const data = await response.json();
                 const slots = data || [];
@@ -334,13 +332,31 @@
                 document.getElementById('timeSlotContainer').classList.remove('hidden');
 
                 timeSlotsDiv.innerHTML = slots.map(slot => {
-                    const startFormatted = formatInCounselorTimezone(slot.start_time);
-                    return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
-                                data-time="${slot.start_time}" data-id="${slot.id}">${startFormatted}</button>`;
+                    const localStart = new Date(slot.start_time);
+                    const localEnd = new Date(slot.end_time);
+
+                    const startFormatted = localStart.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+
+                    const endFormatted = localEnd.toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+
+                    return `
+            <button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
+                data-time="${slot.start_time}"
+                data-id="${slot.id}">
+                ${startFormatted}
+            </button>`;
                 }).join('');
 
                 document.querySelectorAll('.time-slot').forEach(slot => {
-                    slot.addEventListener('click', function () {
+                    slot.addEventListener('click', function() {
                         selectedTime = this.dataset.time;
                         slot_id = this.dataset.id;
                         document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
@@ -352,8 +368,9 @@
                 hideLoader();
             }
         }
-
         async function reserveSlot(slot_id) {
+            const customer_id = "{{ $customer->app_customer_id }}";
+            const csrfToken = '{{ csrf_token() }}';
             try {
                 const response = await fetch(`/api/customer/reserved-slot`, {
                     method: 'POST',
@@ -362,19 +379,32 @@
                         'X-CSRF-TOKEN': csrfToken,
                         'app-auth-token': token
                     },
-                    body: JSON.stringify({ customer_id: customerId, slot_id: slot_id })
+                    body: JSON.stringify({
+                        customer_id: customer_id,
+                        slot_id: slot_id
+                    })
                 });
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
                 const data = await response.json();
                 console.log('Reservation response:', data);
+
+                
+
             } catch (error) {
                 console.error('Error reserving slot:', error);
             }
         }
 
-        document.getElementById('confirmButton').addEventListener('click', function () {
-            if (!communication_method) {
-                alert('Please select the communication method first.');
+
+        // 5. Confirm booking
+        document.getElementById('confirmButton').addEventListener('click', function() {
+            if(communication_method ==null || communication_method == 'null')
+            {
+                alert('please select the communication method first.');
                 return;
             }
             if (!selectedDate || !selectedTime) {
@@ -382,64 +412,84 @@
                 return;
             }
 
-            const personName = "{{$customer->name}}";
-            document.getElementById('bookSlotLabel').textContent = `Book New Session for ${personName}`;
+            const localDateTime = new Date(selectedTime);
+            const formattedTime = localDateTime.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            const localDate = new Date(selectedTime);
+            const formattedDate = localDate.toISOString().split('T')[0]; // yyyy-mm-dd
+            // Optional: update person name dynamically
+            const personName = "{{$customer->name}}"; // Replace this with dynamic name if available
+            document.getElementById('bookSlotLabel').textContent = `Book New Session in for ${personName}`;
             document.querySelector('button[type="submit"]').textContent = `Confirm and Send`;
             modal.show();
-            document.getElementById('customer_id').value = customerId;
-            document.getElementById('counselor_id').value = counselorId;
+            document.getElementById('customer_id').value = "{{$customer->app_customer_id}}";
+            document.getElementById('counselor_id').value = "{{$counselor->id}}";
             document.getElementById('slot_id').value = slot_id;
             document.getElementById('communication_type').value = communication_method;
-            document.getElementById('employee_name').value = personName;
+            
+            document.getElementById('employee_name').value = "{{$customer->name}}";
             document.getElementById('employee_email').value = "{{$customer->email}}";
             document.getElementById('phone').value = "{{$customer?->customer?->phone}}";
+
         });
 
-        document.getElementById('bookSlotForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            showLoader();
-
-            const formData = new FormData(this);
-            const payload = {};
-            formData.forEach((value, key) => { payload[key] = value; });
-
-            if (!payload.communication_method) {
-                hideLoader();
-                alert('Please select communication type before proceeding.');
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/customer/book-slot`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'app-auth-token': token
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                hideLoader();
-                if (result.status === "confirmed") {
-                    alert('Session booked successfully!');
-                    $('#bookSlot').modal('hide');
-                    window.location.href = "/counseller/dashboard";
-                } else {
-                    alert(result.message || 'Booking failed.');
-                }
-            } catch (error) {
-                hideLoader();
-                console.error('Error booking slot:', error);
-                alert(error);
-            }
-        });
-
+        // Initialize calendar
         generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
     });
-</script>
 
+
+    document.getElementById('bookSlotForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    showLoader();
+    const csrfToken = '{{ csrf_token() }}';
+    const token = 'Waseem#2023MobAPP';
+
+    const form = this; // 'this' is the form element now
+    const formData = new FormData(form);
+
+    const payload = {};
+    formData.forEach((value, key) => {
+        payload[key] = value;
+    });
+    if(payload.communication_method == '')
+    {
+        hideLoader();
+        alert('Please select communication type first before Proceed.');
+        return;
+    }
+    try {
+        const response = await fetch(`/api/customer/book-slot`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'app-auth-token': token
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        hideLoader();
+        console.log('Booking response:', result);
+        if (result.status=="confirmed")
+        {
+            alert('Session booked successfully!');
+            $('#bookSlot').modal('hide');
+            window.location.href = "/counseller/dashboard";
+        } else {
+            alert(result.message || 'Booking failed.');
+        }
+    } catch (error) {
+        hideLoader();
+        console.error('Error booking slot:', error);
+        alert(error);
+    }
+});
+
+
+</script>
 
 
 @endsection
