@@ -290,47 +290,49 @@
     }
 
     async function showTimeSlots(date) {
-        showLoader();
-        try {
-            const response = await fetch(`/api/customer/available-slots?counselor_id=${counselor_id}&date=${date}`, {
-                headers: {
-                    'app-auth-token': token
-                }
+    showLoader();
+    try {
+        const response = await fetch(`/api/customer/available-slots?counselor_id=${counselor_id}&date=${date}`, {
+            headers: {
+                'app-auth-token': token
+            }
+        });
+        const data = await response.json();
+        const timeSlotsDiv = document.getElementById('timeSlots');
+        document.getElementById('timeSlotContainer').classList.remove('hidden');
+
+        const selectedDateInCounselorTZ = DateTime.fromISO(date, { zone: counselorTimeZone }).toISODate();
+
+        timeSlotsDiv.innerHTML = data
+            .filter(slot => {
+                const slotDateInCounselorTZ = DateTime.fromISO(slot.start_time, { zone: 'utc' })
+                    .setZone(counselorTimeZone)
+                    .toISODate();
+                return slotDateInCounselorTZ === selectedDateInCounselorTZ;
+            })
+            .map(slot => {
+                const start = DateTime.fromISO(slot.start_time, { zone: 'utc' }).setZone(counselorTimeZone);
+                const startFormatted = start.toFormat('hh:mm a');
+
+                return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
+                        data-time="${slot.start_time}" data-id="${slot.id}">${startFormatted}</button>`;
+            })
+            .join('');
+
+        document.querySelectorAll('.time-slot').forEach(slot => {
+            slot.addEventListener('click', function () {
+                selectedTime = this.dataset.time;
+                slot_id = this.dataset.id;
+                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                this.classList.add('selected');
+                reserveSlot(slot_id);
             });
-            const data = await response.json();
-            const timeSlotsDiv = document.getElementById('timeSlots');
-            document.getElementById('timeSlotContainer').classList.remove('hidden');
+        });
 
-            timeSlotsDiv.innerHTML = data
-    .filter(slot => {
-        const slotDateInCounselorTz = DateTime.fromISO(slot.start_time, { zone: 'utc' })
-            .setZone(counselorTimeZone)
-            .toISODate();
-        return slotDateInCounselorTz === date;  // Only keep slots for selected date in counselor timezone
-    })
-    .map(slot => {
-        const start = DateTime.fromISO(slot.start_time, { zone: 'utc' }).setZone(counselorTimeZone);
-        const startFormatted = start.toFormat('hh:mm a');
-
-        return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
-                data-time="${slot.start_time}" data-id="${slot.id}">${startFormatted}</button>`;
-    })
-    .join('');
-
-
-            document.querySelectorAll('.time-slot').forEach(slot => {
-                slot.addEventListener('click', function () {
-                    selectedTime = this.dataset.time;
-                    slot_id = this.dataset.id;
-                    document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-                    this.classList.add('selected');
-                    reserveSlot(slot_id);
-                });
-            });
-        } finally {
-            hideLoader();
-        }
+    } finally {
+        hideLoader();
     }
+}
 
     async function reserveSlot(id) {
         try {
