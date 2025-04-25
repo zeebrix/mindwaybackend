@@ -19,9 +19,10 @@
         border-top-color: #687EDC;
         animation: spin 1s linear infinite;
     }
+
     .transition-opacity {
-    transition: opacity 0.3s ease;
-}
+        transition: opacity 0.3s ease;
+    }
 
     @keyframes spin {
         to {
@@ -172,7 +173,6 @@
 </script>
 @section('js')
 <script>
-    
     let communication_method = null;
 
     function showLoader() {
@@ -247,8 +247,8 @@
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const jsDay = firstDay.getDay(); // JS: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-           
-            const firstDayIndex = jsDay === 0 ? 6 : jsDay-1;
+
+            const firstDayIndex = jsDay === 0 ? 6 : jsDay - 1;
             const daysInMonth = lastDay.getDate();
 
             let calendarHTML = '';
@@ -260,9 +260,13 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(Date.UTC(year, month, day));
                 const userTimeZone = "{{$counselor->timezone}}";
-                const formattedDate = date.toLocaleDateString('en-CA', { timeZone: userTimeZone });
+                const formattedDate = date.toLocaleDateString('en-CA', {
+                    timeZone: userTimeZone
+                });
                 const isAvailable = availableDateSet.has(formattedDate);
-                const todayFormatted = new Date().toLocaleDateString('en-CA', { timeZone: userTimeZone });
+                const now = new Date();
+                const todayFormatted = now.toLocaleDateString('en-CA', { timeZone: userTimeZone });
+                
                 const isFutureOrToday = formattedDate >= todayFormatted;
                 const isDisabled = !isAvailable || !isFutureOrToday;
                 const isSelected = selectedDate === formattedDate;
@@ -332,17 +336,15 @@
                 document.getElementById('timeSlotContainer').classList.remove('hidden');
 
                 timeSlotsDiv.innerHTML = slots.map(slot => {
-                    const localStart = new Date(slot.start_time);
-                    const localEnd = new Date(slot.end_time);
                     const customer_timezone = "{{$counselor->timezone}}"
-                    const startFormatted = localStart.toLocaleTimeString([], {
+                    const startFormatted = new Date(slot.start_time).toLocaleTimeString([], {
                         timeZone: customer_timezone,
                         hour: '2-digit',
                         minute: '2-digit',
                         hour12: true
                     });
 
-                    const endFormatted = localEnd.toLocaleTimeString([], {
+                    const endFormatted = new Date(slot.end_time).toLocaleTimeString([], {
                         timeZone: customer_timezone,
                         hour: '2-digit',
                         minute: '2-digit',
@@ -394,7 +396,7 @@
                 const data = await response.json();
                 console.log('Reservation response:', data);
 
-                
+
 
             } catch (error) {
                 console.error('Error reserving slot:', error);
@@ -404,8 +406,7 @@
 
         // 5. Confirm booking
         document.getElementById('confirmButton').addEventListener('click', function() {
-            if(communication_method ==null || communication_method == 'null')
-            {
+            if (communication_method == null || communication_method == 'null') {
                 alert('please select the communication method first.');
                 return;
             }
@@ -415,7 +416,7 @@
             }
 
             const localDateTime = new Date(selectedTime);
-            const timezone_customer= "{{$counselor->timezone}}";
+            const timezone_customer = "{{$counselor->timezone}}";
             const formattedTime = localDateTime.toLocaleTimeString([], {
                 timeZone: timezone_customer,
                 hour: '2-digit',
@@ -432,7 +433,7 @@
             document.getElementById('counselor_id').value = "{{$counselor->id}}";
             document.getElementById('slot_id').value = slot_id;
             document.getElementById('communication_type').value = communication_method;
-            
+
             document.getElementById('employee_name').value = "{{$customer->name}}";
             document.getElementById('employee_email').value = "{{$customer->email}}";
             document.getElementById('phone').value = "{{$customer?->customer?->phone}}";
@@ -444,55 +445,51 @@
     });
 
 
-    document.getElementById('bookSlotForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    showLoader();
-    const csrfToken = '{{ csrf_token() }}';
-    const token = 'Waseem#2023MobAPP';
+    document.getElementById('bookSlotForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        showLoader();
+        const csrfToken = '{{ csrf_token() }}';
+        const token = 'Waseem#2023MobAPP';
 
-    const form = this; // 'this' is the form element now
-    const formData = new FormData(form);
+        const form = this; // 'this' is the form element now
+        const formData = new FormData(form);
 
-    const payload = {};
-    formData.forEach((value, key) => {
-        payload[key] = value;
-    });
-    if(payload.communication_method == '')
-    {
-        hideLoader();
-        alert('Please select communication type first before Proceed.');
-        return;
-    }
-    try {
-        const response = await fetch(`/api/customer/book-slot`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'app-auth-token': token
-            },
-            body: JSON.stringify(payload)
+        const payload = {};
+        formData.forEach((value, key) => {
+            payload[key] = value;
         });
-
-        const result = await response.json();
-        hideLoader();
-        console.log('Booking response:', result);
-        if (result.status=="confirmed")
-        {
-            alert('Session booked successfully!');
-            $('#bookSlot').modal('hide');
-            window.location.href = "/counseller/dashboard";
-        } else {
-            alert(result.message || 'Booking failed.');
+        if (payload.communication_method == '') {
+            hideLoader();
+            alert('Please select communication type first before Proceed.');
+            return;
         }
-    } catch (error) {
-        hideLoader();
-        console.error('Error booking slot:', error);
-        alert(error);
-    }
-});
+        try {
+            const response = await fetch(`/api/customer/book-slot`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'app-auth-token': token
+                },
+                body: JSON.stringify(payload)
+            });
 
-
+            const result = await response.json();
+            hideLoader();
+            console.log('Booking response:', result);
+            if (result.status == "confirmed") {
+                alert('Session booked successfully!');
+                $('#bookSlot').modal('hide');
+                window.location.href = "/counseller/dashboard";
+            } else {
+                alert(result.message || 'Booking failed.');
+            }
+        } catch (error) {
+            hideLoader();
+            console.error('Error booking slot:', error);
+            alert(error);
+        }
+    });
 </script>
 
 
