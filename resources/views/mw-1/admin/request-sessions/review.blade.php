@@ -1,3 +1,12 @@
+<!-- Loader -->
+<div id="requestSessionLoader" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.7); z-index:9999;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);">
+        <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="requestedModal" tabindex="-1" aria-labelledby="requestedModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">

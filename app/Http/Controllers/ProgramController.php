@@ -1038,6 +1038,8 @@ class ProgramController extends Controller
 
         $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
 
+        $AdminProgram = Auth::guard('programs')->user();
+
         $program = Program::where('id', $reqSession->program_id)->first();
         $existProgramSession = $program->max_session;
         $program->max_session = $existProgramSession + $req->request_session_count;
@@ -1048,12 +1050,12 @@ class ProgramController extends Controller
                 $existSessions = $custBrevoData->max_session;
                 $custBrevoData->max_session = $existSessions +  $req->request_session_count;
                 $custBrevoData->save();
-                $recipient = $custBrevoData->email; // customer brevo data
+                $recipient = $AdminProgram->email;
                 if($recipient){
                     $subject = 'Employer Notification – Sessions Approved ' . '(Request #'. $reqId .')';
             $template = 'emails.request-sessions.employer-notification-approve';
             $data = [
-                'admin_name' => $custBrevoData->name,
+                'admin_name' => $AdminProgram->company_name,
                 'approval_date' => $accepted_date,
                 'approved_quantity' => $req->request_session_count,
                 'approved_status' => 'Yes',
@@ -1079,15 +1081,16 @@ class ProgramController extends Controller
         $reqSession->save();
         
         $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+        $AdminProgram = Auth::guard('programs')->user();
 
         try{
             if($custBrevoData){
-                $recipient = $custBrevoData->email; // customer brevo data
+                $recipient = $AdminProgram->email; // customer brevo data
                 if($recipient){
         $subject = 'Session Denial Confirmation ' . '(Request #'. $reqId .')';
         $template = 'emails.request-sessions.employer-notification-denied';
         $data = [
-            'admin_name' => $custBrevoData->name ?? '',
+            'admin_name' => $AdminProgram->company_name ?? '',
             'denial_date' => $denied_date,
             'approved_quantity' => 0,
             'approved_status' => 'No',

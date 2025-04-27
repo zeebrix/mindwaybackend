@@ -106,6 +106,9 @@
 @include('mw-1.admin.request-sessions.datatable')
     
 <script>$(document).ready(function() {
+    $('#requestedModal form').on('submit', function() {
+        $('#requestSessionLoader').fadeIn();
+    });
     const requestedModal = new bootstrap.Modal(document.getElementById('requestedModal'));
     
     const status = "{{ request()->get('status') }}";
