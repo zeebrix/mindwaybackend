@@ -392,9 +392,9 @@ Route::group(['prefix' => 'manage-program', 'middleware' => ['program_auth']], f
     
     Route::post('/denysession', [ProgramController::class, 'denySession'])->name('denysession');
     
+    Route::get('/review-request/{id}',[ProgramController::class,'reviewRequest'])->name('reviewRequest');
     
     
   });
-  Route::get('/review-request/{id}',[ProgramController::class,'reviewRequest'])->name('reviewRequest');
   
 
