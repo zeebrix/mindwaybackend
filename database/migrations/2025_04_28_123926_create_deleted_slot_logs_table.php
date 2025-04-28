@@ -18,8 +18,9 @@ class CreateDeletedSlotLogsTable extends Migration
             $table->unsignedBigInteger('slot_id')->nullable();
             $table->string('google_event_id');
             $table->unsignedBigInteger('counselor_id');
-            $table->timestamp('start_time');
-            $table->timestamp('end_time');
+            $table->datetime('start_time');
+            $table->datetime('end_time');
+            $table->date('date');
             $table->timestamp('deleted_at')->nullable();
 
 
