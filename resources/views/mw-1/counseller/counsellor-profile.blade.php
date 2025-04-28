@@ -350,8 +350,7 @@
                         <div style="height: 150" class="card-body d-flex flex-column justify-content-center p-4">
                             <h5>My Other Calendars</h5>
                             <p class="mb-1">Link existing calendars to prevent double booking</p>
-                            <a href="{{ route('auth.google.redirect', ['id' => $Counselor->id]) }}">Link to my google
-                                calendar</a>
+                            <a href="{{ route('auth.google.redirect', ['id' => $Counselor->id]) }}">Link Mindway Calendar</a>
                             <span>{{ $Counselor->google_id }}</span>
                             <span>{{ $Counselor->google_name }}</span>
                         </div>

@@ -40,7 +40,7 @@
                                         </div>
                                         <!-- Actions -->
                                         <div class="col-md-3" style="border-right: 4px solid #D4D4D4;">
-                                            <a class="btn btn-primary mindway-btn" href="{{ route('counselor.session.cancel', ['booking_id' => $booking->id, 'customer_id' => $booking->user_id]) }}">
+                                            <a class="btn btn-primary mindway-btn" href="{{ route('counselor.session.cancel', ['booking_id' => $booking->id, 'customer_id' => $booking->user_id,'customer_timezone' => $booking->user->timezone]) }}">
                                                 Cancel
                                             </a>
                                             <a data-bs-toggle="modal" data-bs-target="#rebookSessionModal" class="btn btn-primary mindway-btn" href="{{ route('counselor.session.rebook', ['booking_id' => $booking->id]) }}">
