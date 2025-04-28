@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\Counselor;
+use App\Models\DeletedSlotLog;
 use App\Models\Slot;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class SlotGenerationService
 {
@@ -144,6 +146,27 @@ class SlotGenerationService
                 }
             }
             unset($event);
+            $eventIds = collect($events)->pluck('event_id')->toArray();
+            $deletedLogs = DeletedSlotLog::where('counselor_id', $counselor->id)->get();
+
+            foreach ($deletedLogs as $log) {
+                if (!in_array($log->google_event_id, $eventIds)) {
+                    // Event no longer exists — restore slot
+                    Slot::create([
+                        'counselor_id' => $log->counselor_id,
+                        'date'         => $log->date,
+                        'start_time'   => $log->start_time,
+                        'end_time'     => $log->end_time,
+                        'is_booked'    => false,
+                    ]);
+    
+                    Log::info("Restored slot for counselor ID {$log->counselor_id} [{$log->start_time} - {$log->end_time}] as Google event {$log->google_event_id} no longer exists.");
+    
+                    // Delete log after restoring
+                    $log->delete();
+                }
+            }
+
             // Fetch all slots for the counselor in the given range
             $slots = Slot::where('counselor_id', $counselor->id)->where('is_booked', false)
                 ->whereBetween('start_time', [$startOfMonth->setTimezone('UTC'), $endOfMonth->setTimezone('UTC')])
@@ -155,9 +178,20 @@ class SlotGenerationService
                     if ($event['summary'] === "50min Mindway EAP Session") {
                         continue;
                     }
-                    \Log::info("Checking slot ID: {$slot->id} [{$slot->start_time} - {$slot->end_time}] against event ID: {$event['event_id']} [{$event['start_time']} - {$event['end_time']}]");
+                    Log::info("Checking slot ID: {$slot->id} [{$slot->start_time} - {$slot->end_time}] against event ID: {$event['event_id']} [{$event['start_time']} - {$event['end_time']}]");
                     if ($slot->start_time < $event['end_time'] && $slot->end_time > $event['start_time']) {
-                        \Log::info("Deleting slot ID: {$slot->id} as it conflicts with event ID: {$event['event_id']}");
+                        Log::info("Deleting slot ID: {$slot->id} as it conflicts with event ID: {$event['event_id']}");
+                        DeletedSlotLog::create([
+                            'slot_id'       => $slot->id,
+                            'google_event_id' => $event['event_id'],
+                            'counselor_id'  => $counselor->id,
+                            'start_time'    => $slot->start_time,
+                            'end_time'      => $slot->end_time,
+                            'date'          => $slot->date,
+                            'deleted_at'    => now(),
+                        ]);
+
+
                         $slot->delete();
                         break; // No need to check further, slot is already deleted
                     }
