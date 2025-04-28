@@ -1815,7 +1815,7 @@ class AdminController extends Controller
                     ? $program->request_date 
                     : \Carbon\Carbon::parse($program->request_date);
                 
-                return $date->format('m/d/Y');
+                return $date->format('d/m/Y');
             } catch (\Exception $e) {
                 return "-";
             }
