@@ -387,13 +387,13 @@ Route::group(['prefix' => 'manage-program', 'middleware' => ['program_auth']], f
     Route::post('/deny-session', [ProgramController::class, 'denySession'])->name('deny.session');
     Route::get('/request-session/data', [ProgramController::class, 'getSessionRequest'])->name('request-session-data');
 
-    Route::get('/review-request/{id}',[ProgramController::class,'reviewRequest'])->name('reviewRequest');
-
+    
     Route::post('/approvesession', [ProgramController::class, 'approveSession'])->name('approvedsession');
-  
+    
     Route::post('/denysession', [ProgramController::class, 'denySession'])->name('denysession');
-
-
+    
+    Route::get('/review-request/{id}',[ProgramController::class,'reviewRequest'])->name('reviewRequest');
+    
     
   });
   

@@ -379,7 +379,6 @@ class CounsellerController extends Controller
 // }
 
     public function requestSession(Request $req) {
-  
     $validatedData = $req->validate([
         'request_session_count' => 'required|integer|min:1' // assuming request_days is positive integer
     ]);

@@ -1896,7 +1896,8 @@ class AdminController extends Controller
 
         $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
 
-        
+        $authuser = auth()->user();
+
         $program = Program::where('id', $reqSession->program_id)->first();
         $existProgramSession = $program->max_session;
         $program->max_session = $existProgramSession + $req->request_session_count;
@@ -1909,12 +1910,12 @@ class AdminController extends Controller
                 $custBrevoData->max_session = $existSessions +  $req->request_session_count;
                 $custBrevoData->save();
 
-                $recipient = $custBrevoData->email; // customer brevo data
+                $recipient = $authuser->email;
                 if($recipient){
                     $subject = 'Employer Notification – Sessions Approved ' . '(Request #'. $reqId .')';
                     $template = 'emails.request-sessions.employer-notification-approve';
                     $data = [
-                        'admin_name' => $custBrevoData->name,
+                        'admin_name' => $authuser->name,
                         'approval_date' => $accepted_date,
                         'approved_quantity' => $req->request_session_count,
                         'approved_status' => 'Yes',
@@ -1940,16 +1941,17 @@ class AdminController extends Controller
         $reqSession->save();
 
         $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
+        $authuser = auth()->user();
 
         try{
             if($custBrevoData){
-                $recipient = $custBrevoData->email; // customer brevo data
+                $recipient = $authuser->email;
                 if($recipient){
                 
             $subject = 'Session Denial Confirmation ' . '(Request #'. $reqId .')';
             $template = 'emails.request-sessions.employer-notification-denied';
             $data = [
-                'admin_name' =>  $custBrevoData->name,
+                'admin_name' =>  $authuser->name,
                 'denial_date' => $denied_date,
                 'approved_quantity' => 0,
                 'approved_status' => 'No',
@@ -2952,7 +2954,8 @@ class AdminController extends Controller
         $program = Program::where('id', $userId)->first();
         $customer = new CustomreBrevoData();
         $customer->name = $request->name;
-        $customer->email = $request->email;
+        $reqEmail = strtolower($request->email);
+        $customer->email = $reqEmail;
         $customer->program_id =  $userId;
         $customer->company_name = $program->company_name;
         $customer->max_session = $program->max_session;
@@ -2972,9 +2975,9 @@ class AdminController extends Controller
 
         // Prepare the data for creating the contact
         $createContact = new CreateContact([
-            'email' => $request->email,
+            'email' => $reqEmail,
             'attributes' => (object) [
-                'EMAIL' => $request->email,
+                'EMAIL' => $reqEmail,
                 'FIRSTNAME' => $request->name,
                 'CODEACCESS' => $program->code,
                 'COMPANY' => $program->company_name,
@@ -3020,7 +3023,7 @@ class AdminController extends Controller
                     if (!$customer)
                     {
                         $customer = new CustomreBrevoData();
-                        $customer->email = $employee['email'];
+                        $customer->email = strtolower($employee['email']);
                         $customer->name = $employee['name'];
                         $customer->company_name = $Program->company_name;
                         $customer->max_session = $Program->max_session;
