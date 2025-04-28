@@ -13,6 +13,7 @@ use App\Models\Customer;
 use App\Models\RequestSession;
 use App\Models\CustomreBrevoData;
 use App\Notifications\BookingCancellation;
+use App\Services\GoogleProvider;
 use App\Services\SlotGenerationService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,12 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Str;
 class CounsellerController extends Controller
 {
+    protected $googleProvider;
+
+    public function __construct(GoogleProvider $googleProvider)
+    {
+        $this->googleProvider = $googleProvider;
+    }
     public function findRecommendedCounselor(Request $request)
     {
         $customer = Customer::find($request->customer_id);
@@ -796,6 +803,36 @@ class CounsellerController extends Controller
 
         $booking->update(['status' => 'cancelled']);
         $booking->slot->update(['is_booked' => false]);
+        try {
+            $this->googleProvider->deleteEvent($booking->event_id, $booking->counselor->googleToken->access_token);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+        $customer_timezone = isset($request->customer_timezone) ? $request->customer_timezone : 'UTC';
+        $recipient = $booking->user->email;
+        $subject = 'Cancelled Session Notification';
+        $template = 'emails.cancel-session-employee';
+        $data = [
+            'full_name' => $booking->user->name,
+            'counselor_name' => $booking->counselor->name,
+            'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($customer_timezone),
+            'timezone' => $customer_timezone,
+        ];
+        sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+
+        // couselor 
+        $recipient = $booking->counselor->email;
+        $subject = 'Cancelled Session Notification';
+        $template = 'emails.cancel-session-counselor';
+        $data = [
+            'full_name' => $booking->counselor->name,
+            'customer_name' => $booking->user->name,
+            'max_session' => $booking->user->max_session,
+            'timezone' => $booking->counselor->timezone,
+            'start_time' => Carbon::parse($booking->slot->start_time)->setTimezone($booking->counselor->timezone),
+            'company_name' => $booking->brevoUser->program->company_name,
+        ];
+        sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
         return redirect()->back()->with('success', 'Booking cancelled successfully');
     }
     public function counsellerSettingSave(Request $request)

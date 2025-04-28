@@ -90,13 +90,13 @@
                    
                     <div class="me-3">
                         <label class="form-label" for="location">Select Location:</label>
-                        <select id="location" class="form-control select2" style="width: 300px;">
+                        <select id="location" name="location" class="form-control select2" style="width: 300px;">
                             <option value="">Select a location</option>
                         </select>
                     </div>
                     <div class="me-3">
                         <label class="form-label" for="language">Select Language:</label>
-                        <select id="language" class="form-control select2" multiple="multiple" style="width: 300px;">
+                        <select id="language" name="language[]" class="form-control select2" multiple="multiple" style="width: 300px;">
                             <option value="">Select a language</option>
                         </select>
                     </div>

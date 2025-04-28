@@ -20,6 +20,10 @@
         animation: spin 1s linear infinite;
     }
 
+    .transition-opacity {
+        transition: opacity 0.3s ease;
+    }
+
     @keyframes spin {
         to {
             transform: rotate(360deg);
@@ -60,9 +64,10 @@
                 @endif
             </div>
             @endif
-            <div id="loader" class="hidden fixed top-0 left-0 w-full h-full bg-white bg-opacity-50 flex items-center justify-center z-50">
+            <div id="loader" class="hidden fixed top-0 left-0 w-full h-full bg-white bg-opacity-50 flex items-center justify-center z-[9999]">
                 <div class="loader border-t-4 border-blue-500 border-solid rounded-full w-10 h-10 animate-spin"></div>
             </div>
+
             <!-- Booking Form -->
             <div class="grid md:grid-cols-2 gap-8">
                 <!-- Calendar -->
@@ -162,71 +167,63 @@
         </div>
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+
 <script>
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    document.getElementById('timezoneDisplay').textContent = `Timezone: ${userTimeZone}`;
+    const counselorTimeZone = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}";
+    document.getElementById('timezoneDisplay').textContent = `Timezone: ${counselorTimeZone}`;
 </script>
 @section('js')
 <script>
-    
-    let communication_method = null;
-
-    function showLoader() {
-        document.getElementById('loader').classList.remove('hidden');
-    }
-
-    function hideLoader() {
-        document.getElementById('loader').classList.add('hidden');
-    }
-
-    function toggleCommunication() {
-        const communicationButtons = document.querySelectorAll('.communication-type');
-
-        communicationButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Remove active styles from all buttons
-                communicationButtons.forEach(btn => {
-                    btn.classList.remove('text-white', 'bg-[#688EDC]', 'hover:bg-[#688EDC]');
-                    btn.classList.add('text-gray-700', 'bg-gray-100', 'hover:bg-gray-200');
-                });
-
-                // Add active style to the clicked button
-                button.classList.remove('text-gray-700', 'bg-gray-100', 'hover:bg-gray-200');
-                button.classList.add('text-white', 'bg-[#688EDC]', 'hover:bg-[#688EDC]');
-
-                // Optional: capture selected type value
-                communication_method = button.getAttribute('data-type');
-                console.log('Selected communication type:', communication_method);
-            });
-        });
-    }
     document.addEventListener('DOMContentLoaded', function() {
+        const DateTime = luxon.DateTime;
+        const counselorTimeZone = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}"; // Counselor's time zone
+        let communication_method = null;
+        const token = 'Waseem#2023MobAPP';
+        const counselor_id = "{{$counselor->id}}";
+        const customer_id = "{{ $customer->app_customer_id }}";
+        const csrfToken = '{{ csrf_token() }}';
 
+        const modal = new bootstrap.Modal(document.getElementById('bookSlot'));
+
+        // Show loader
+        function showLoader() {
+            document.getElementById('loader').classList.remove('hidden');
+        }
+
+        function hideLoader() {
+            document.getElementById('loader').classList.add('hidden');
+        }
+
+        // Toggle communication method
+        function toggleCommunication() {
+            const buttons = document.querySelectorAll('.communication-type');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    buttons.forEach(btn => btn.classList.remove('text-white', 'bg-[#688EDC]', 'hover:bg-[#688EDC]'));
+                    button.classList.add('text-white', 'bg-[#688EDC]', 'hover:bg-[#688EDC]');
+                    communication_method = button.getAttribute('data-type');
+                });
+            });
+        }
 
         toggleCommunication();
-        const modal = new bootstrap.Modal(document.getElementById('bookSlot'));
+
+        const today = DateTime.now().setZone(counselorTimeZone);
+        let currentDate = today.startOf('month');
         let selectedDate = null;
         let selectedTime = null;
         let slot_id = null;
-        const token = 'Waseem#2023MobAPP';
 
-        const today = new Date();
-        let currentDate = new Date(today.getFullYear(), today.getMonth());
-
-        // 1. Fetch available dates (with header)
+        // Fetch available dates for the month
         async function fetchAvailableDates(year, month) {
             showLoader();
             try {
-                const response = await fetch(`/api/customer/counselor/calendar?counselor_id=6&year=${year}&month=${month + 1}`, {
+                const response = await fetch(`/api/customer/counselor/calendar?counselor_id=${counselor_id}&year=${year}&month=${month}`, {
                     headers: {
-                        'Content-Type': 'application/json',
                         'app-auth-token': token
                     }
                 });
-                if (!response.ok) {
-                    console.error("Failed to fetch available dates");
-                    return [];
-                }
                 const data = await response.json();
                 return data.dates || [];
             } finally {
@@ -234,49 +231,67 @@
             }
         }
 
-        // 2. Generate calendar UI
+        // Generate the calendar for the selected month
+        // Generate the calendar for the selected month
         async function generateCalendar(year, month) {
+            // Fetch available dates for the given month and year
             const availableDates = await fetchAvailableDates(year, month);
-            const availableDateSet = new Set(availableDates.map(d => d.date));
 
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const jsDay = firstDay.getDay(); // JS: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-           
-            const firstDayIndex = jsDay === 0 ? 6 : jsDay-1;
-            const daysInMonth = lastDay.getDate();
+            // Convert the available dates' first slot times from UTC to counselor's timezone
+            const availableSet = new Set(availableDates.map(d => {
+                const convertedTime = convertFirstSlotTimeToCounselorTZ(d.first_slot_time);
+                return convertedTime.toISODate(); // Get the date part in counselor's timezone
+            }));
 
-            let calendarHTML = '';
+            // Ensure firstDay is correctly converted to the counselor's timezone (Australia/Adelaide)
+            const firstDay = DateTime.fromObject({
+                year,
+                month,
+                day: 1
+            }, {
+                zone: counselorTimeZone
+            });
+            const daysInMonth = firstDay.daysInMonth;
 
+            // Calculate the firstDayIndex for rendering the calendar
+            const firstDayIndex = (firstDay.weekday + 6) % 7; // Luxon: 1=Monday, 7=Sunday
+
+            let html = '';
+            // Create empty divs for days before the first day
             for (let i = 0; i < firstDayIndex; i++) {
-                calendarHTML += '<div class="h-10"></div>';
+                html += '<div class="h-10"></div>';
             }
 
+            // Loop through the days of the month
             for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(year, month, day);
-                const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                const formattedDate = date.toLocaleDateString('en-CA', { timeZone: userTimeZone });
-                const isAvailable = availableDateSet.has(formattedDate);
-                const isFutureOrToday = date >= new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                const date = DateTime.fromObject({
+                    year,
+                    month,
+                    day
+                }, {
+                    zone: counselorTimeZone
+                });
+                const formattedDate = date.toISODate(); // Date in the counselor's timezone
+                const isAvailable = availableSet.has(formattedDate);
+                const isFutureOrToday = date >= today.startOf('day');
 
                 const isDisabled = !isAvailable || !isFutureOrToday;
                 const isSelected = selectedDate === formattedDate;
                 const classes = [
-                    'calendar-day',
-                    'h-10 w-10 mx-auto rounded-full transition-all',
+                    'calendar-day h-10 w-10 mx-auto rounded-full transition-all',
                     isDisabled ? 'disabled opacity-30 cursor-not-allowed' : 'hover:bg-gray-100 bg-blue-100 text-blue-800',
                     isSelected ? 'selected border border-blue-700' : ''
                 ].join(' ');
 
-                calendarHTML += `<button class="${classes}" data-date="${formattedDate}" ${isDisabled ? 'disabled' : ''}>${day}</button>`;
+                // Add the day button to the calendar
+                html += `<button class="${classes}" data-date="${formattedDate}" ${isDisabled ? 'disabled' : ''}>${day}</button>`;
             }
 
-            document.getElementById('calendarDays').innerHTML = calendarHTML;
-            document.getElementById('currentMonth').textContent = new Date(year, month).toLocaleString('default', {
-                month: 'long',
-                year: 'numeric'
-            });
+            // Inject the calendar into the DOM
+            document.getElementById('calendarDays').innerHTML = html;
+            document.getElementById('currentMonth').textContent = firstDay.toFormat('LLLL yyyy'); // Month in counselor's timezone
 
+            // Add event listeners for day buttons
             document.querySelectorAll('.calendar-day').forEach(day => {
                 day.addEventListener('click', function() {
                     if (this.disabled) return;
@@ -284,71 +299,91 @@
                     document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
                     this.classList.add('selected');
                     showTimeSlots(selectedDate);
-
                 });
             });
 
+            // Enable/disable the previous month button
             togglePrevButton();
         }
 
-        // 3. Previous / Next Month
-        document.getElementById('prevMonth').addEventListener('click', function() {
-            if (currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth()) return;
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-        });
-
-        document.getElementById('nextMonth').addEventListener('click', function() {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-        });
-
-        function togglePrevButton() {
-            const prevBtn = document.getElementById('prevMonth');
-            const isCurrentMonth = currentDate.getFullYear() === today.getFullYear() && currentDate.getMonth() === today.getMonth();
-            prevBtn.disabled = isCurrentMonth;
-            prevBtn.style.opacity = isCurrentMonth ? 0.4 : 1;
-            prevBtn.style.cursor = isCurrentMonth ? 'not-allowed' : 'pointer';
+        // Helper function to convert first slot time from UTC to counselor's timezone
+        function convertFirstSlotTimeToCounselorTZ(firstSlotTimeUTC) {
+            const slotTime = DateTime.fromISO(firstSlotTimeUTC, {
+                zone: 'utc'
+            }); // Parse UTC time
+            const convertedTime = slotTime.setZone(counselorTimeZone); // Convert to counselor's timezone
+            return convertedTime; // Return the converted date-time in counselor's timezone
         }
 
-        // 4. Show time slots
+
+
+        // Previous month button click handler
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            if (currentDate.hasSame(today, 'month')) return;
+            currentDate = currentDate.minus({
+                months: 1
+            });
+            generateCalendar(currentDate.year, currentDate.month);
+        });
+
+        // Next month button click handler
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentDate = currentDate.plus({
+                months: 1
+            });
+            generateCalendar(currentDate.year, currentDate.month);
+        });
+
+        // Toggle previous button state
+        function togglePrevButton() {
+            const prevBtn = document.getElementById('prevMonth');
+            const isCurrent = currentDate.hasSame(today, 'month');
+            prevBtn.disabled = isCurrent;
+            prevBtn.style.opacity = isCurrent ? 0.4 : 1;
+            prevBtn.style.cursor = isCurrent ? 'not-allowed' : 'pointer';
+        }
+
+        // Show time slots for a selected date
+        // Show time slots for a selected date
+        // Show time slots for a selected date
         async function showTimeSlots(date) {
             showLoader();
             try {
-                const response = await fetch(`/api/customer/available-slots?counselor_id=6&date=${date}`, {
+                const response = await fetch(`/api/customer/available-slots?customer_timezone=${counselorTimeZone}&counselor_id=${counselor_id}&date=${date}`, {
                     headers: {
                         'app-auth-token': token
                     }
                 });
                 const data = await response.json();
-                const slots = data || [];
                 const timeSlotsDiv = document.getElementById('timeSlots');
                 document.getElementById('timeSlotContainer').classList.remove('hidden');
 
-                timeSlotsDiv.innerHTML = slots.map(slot => {
-                    const localStart = new Date(slot.start_time);
-                    const localEnd = new Date(slot.end_time);
+                // Convert the selected date to the counselor's timezone (Australia/Adelaide)
+                const selectedDateInCounselorTZ = DateTime.fromISO(date, {
+                    zone: counselorTimeZone
+                }).startOf('day'); // Start of day in counselor timezone
+                console.log('Selected date in counselor timezone:', selectedDateInCounselorTZ.toString());
 
-                    const startFormatted = localStart.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    });
+                timeSlotsDiv.innerHTML = data
+                    .map(slot => {
+                        // Convert the slot's start time from UTC to the counselor's timezone
+                        const start = DateTime.fromISO(slot.start_time, {
+                            zone: 'utc'
+                        }).setZone(counselorTimeZone);
+                        const slotDateInCounselorTZ = start.startOf('day'); // Only compare date, not time
+                        const selectedDateFormatted = selectedDateInCounselorTZ.toISODate(); // Format selected date
 
-                    const endFormatted = localEnd.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true
-                    });
+                        // If the slot date in counselor timezone matches the selected date, display it
+                        if (slotDateInCounselorTZ.toISODate() === selectedDateFormatted) {
+                            const startFormatted = start.toFormat('hh:mm a');
+                            return `<button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
+                            data-time="${slot.start_time}" data-id="${slot.id}">${startFormatted}</button>`;
+                        }
+                        return ''; // Skip slot if the date doesn't match
+                    })
+                    .join(''); // Combine the slot buttons
 
-                    return `
-            <button class="time-slot px-6 py-3 rounded-full bg-blue-50 hover:bg-blue-100 transition-all text-gray-900"
-                data-time="${slot.start_time}"
-                data-id="${slot.id}">
-                ${startFormatted}
-            </button>`;
-                }).join('');
-
+                // Add event listeners to time slots for booking
                 document.querySelectorAll('.time-slot').forEach(slot => {
                     slot.addEventListener('click', function() {
                         selectedTime = this.dataset.time;
@@ -358,15 +393,18 @@
                         reserveSlot(slot_id);
                     });
                 });
+
             } finally {
                 hideLoader();
             }
         }
-        async function reserveSlot(slot_id) {
-            const customer_id = "{{ $customer->app_customer_id }}";
-            const csrfToken = '{{ csrf_token() }}';
+
+
+
+        // Reserve the selected slot
+        async function reserveSlot(id) {
             try {
-                const response = await fetch(`/api/customer/reserved-slot`, {
+                await fetch(`/api/customer/reserved-slot`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -374,106 +412,83 @@
                         'app-auth-token': token
                     },
                     body: JSON.stringify({
-                        customer_id: customer_id,
-                        slot_id: slot_id
+                        customer_id,
+                        slot_id: id
                     })
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                console.log('Reservation response:', data);
-
-                
-
-            } catch (error) {
-                console.error('Error reserving slot:', error);
+            } catch (e) {
+                console.error(e);
             }
         }
 
-
-        // 5. Confirm booking
-        document.getElementById('confirmButton').addEventListener('click', function() {
+        // Confirm the selected booking
+        document.getElementById('confirmButton').addEventListener('click', () => {
+            if (!communication_method) {
+                alert('Please select communication type first.');
+                return;
+            }
             if (!selectedDate || !selectedTime) {
                 alert('Please select both a date and time.');
                 return;
             }
 
-            const localDateTime = new Date(selectedTime);
-            const formattedTime = localDateTime.toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            const localDate = new Date(selectedTime);
-            const formattedDate = localDate.toISOString().split('T')[0]; // yyyy-mm-dd
-            // Optional: update person name dynamically
-            const personName = "{{$customer->name}}"; // Replace this with dynamic name if available
-            document.getElementById('bookSlotLabel').textContent = `Book New Session in for ${personName}`;
+            document.getElementById('bookSlotLabel').textContent = `Book New Session for {{$customer->name}}`;
             document.querySelector('button[type="submit"]').textContent = `Confirm and Send`;
+
             modal.show();
-            document.getElementById('customer_id').value = "{{$customer->app_customer_id}}";
-            document.getElementById('counselor_id').value = "{{$counselor->id}}";
+            document.getElementById('customer_id').value = customer_id;
+            document.getElementById('counselor_id').value = counselor_id;
             document.getElementById('slot_id').value = slot_id;
             document.getElementById('communication_type').value = communication_method;
-
+            document.getElementById('employee_name').value = "{{$customer->name}}";
+            document.getElementById('employee_email').value = "{{$customer->email}}";
+            document.getElementById('phone').value = "{{$customer?->customer?->phone}}";
         });
 
-        // Initialize calendar
-        generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
-    });
+        // Form submission
+        document.getElementById('bookSlotForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            showLoader();
 
+            const formData = new FormData(this);
+            const payload = Object.fromEntries(formData.entries());
 
-    document.getElementById('bookSlotForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
-    showLoader();
-    const csrfToken = '{{ csrf_token() }}';
-    const token = 'Waseem#2023MobAPP';
+            if (!payload.communication_type) {
+                hideLoader();
+                alert('Please select communication type first.');
+                return;
+            }
 
-    const form = this; // 'this' is the form element now
-    const formData = new FormData(form);
+            try {
+                const response = await fetch(`/api/customer/book-slot`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'app-auth-token': token
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-    const payload = {};
-    formData.forEach((value, key) => {
-        payload[key] = value;
-    });
-    if(payload.communication_method == '')
-    {
-        hideLoader();
-        alert('Please select communication type first before Proceed.');
-        return;
-    }
-    try {
-        const response = await fetch(`/api/customer/book-slot`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'app-auth-token': token
-            },
-            body: JSON.stringify(payload)
+                const result = await response.json();
+                hideLoader();
+                if (result.status === "confirmed") {
+                    alert('Session booked successfully!');
+                    $('#bookSlot').modal('hide');
+                    window.location.href = "/counseller/dashboard";
+                } else {
+                    alert(result.message || 'Booking failed.');
+                }
+            } catch (err) {
+                hideLoader();
+                console.error(err);
+                alert(err);
+            }
         });
 
-        const result = await response.json();
-        hideLoader();
-        console.log('Booking response:', result);
-        if (result.status=="confirmed")
-        {
-            alert('Session booked successfully!');
-            $('#bookSlot').modal('hide');
-            window.location.href = "/counseller/dashboard";
-        } else {
-            alert(result.message || 'Booking failed.');
-        }
-    } catch (error) {
-        hideLoader();
-        console.error('Error booking slot:', error);
-        alert(error);
-    }
-});
-
-
+        // Generate the calendar for the current month
+        generateCalendar(currentDate.year, currentDate.month);
+    });
 </script>
 
 

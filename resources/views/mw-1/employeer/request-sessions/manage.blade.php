@@ -181,7 +181,7 @@
                     @foreach($requests as $request)
                     <tr>
                         <td class="request-id">#{{ $request->id }}</td>
-                        <td>{{ \Carbon\Carbon::parse($request->request_date)->format('m/d/Y') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($request->request_date)->format('d/m/Y') }}</td>
 
                         <?php
                             $stat = request()->get('status');
