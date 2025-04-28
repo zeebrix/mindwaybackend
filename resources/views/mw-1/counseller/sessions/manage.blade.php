@@ -293,6 +293,9 @@
 
 <script>
     $(document).ready(function() {
+        $('#requestSessionModal form').on('submit', function() {
+        $('#requestSessionLoader').fadeIn();
+            });
         $('#searchInput').on('input', function() {
             var searchText = $(this).val().toLowerCase();
             $('#customersTable .customer-row').filter(function() {
