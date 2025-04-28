@@ -1898,6 +1898,10 @@ class AdminController extends Controller
 
         $authuser = auth()->user();
 
+        if($reqSession->program_id){
+            $this->makeZeroInBrevo($reqSession->program_id);
+        }
+
         $program = Program::where('id', $reqSession->program_id)->first();
         $existProgramSession = $program->max_session;
         $program->max_session = $existProgramSession + $req->request_session_count;
@@ -1932,6 +1936,13 @@ class AdminController extends Controller
 
     }
 
+    public function makeZeroInBrevo($programId){
+        $brevoData = CustomreBrevoData::where(['program_id'=> $programId, 'level' => 'admin'])->get();
+        foreach($brevoData as $custData){
+            $custData->is_email_sent = 0;
+            $custData->save();
+        }
+    }
     public function denySession(Request $req){
         $reqId = $req->requestedId;
         $reqSession = RequestSession::where('id', $reqId)->first();
@@ -1940,6 +1951,9 @@ class AdminController extends Controller
         $reqSession->denied_date = $denied_date; 
         $reqSession->save();
 
+        if($reqSession->program_id){
+            $this->makeZeroInBrevo($reqSession->program_id);
+        }
         $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
         $authuser = auth()->user();
 
@@ -2409,10 +2423,16 @@ class AdminController extends Controller
                 </a>';
         })
         ->addColumn('name_email', function ($customer) {
-            return '
-                <span class="fw-semibold">' . htmlspecialchars($customer->name) . '</span><br>
-                <span class="fw-normal">' . htmlspecialchars($customer->email) . '</span>';
-        })
+            $iconHtml = '';
+            if ($customer->level == 'admin') {
+                $icon = $customer->is_email_sent == 1 
+                    ? asset('images/icons/blue-key.png') 
+                    : asset('images/icons/black-key.png');
+                $iconHtml = '<img src="' . $icon . '" alt="key" style="width: 16px; height: 16px; margin-left: 5px;">';
+            }
+            return '<span class="fw-semibold">' . htmlspecialchars($customer->name) . '
+                    ' . $iconHtml . '</span><br> <span class="fw-normal">' . htmlspecialchars($customer->email) . '</span>';
+        })                
         ->addColumn('level', function ($customer) {
             $badgeClass = ($customer->level == 'member') ? 'member-style' : 'admin-style';
             return '
@@ -2420,7 +2440,7 @@ class AdminController extends Controller
                     data-id="' . $customer->id . '"
                     data-level="' . $customer->level . '"
                     onclick="openLevelModal(' . $customer->id . ', \'' . $customer->level . '\')">
-                    ' . htmlspecialchars($customer->level) . '
+                    ' . $customer->level . '
                 </span>';
         })
         ->addColumn('action', function ($customer) use ($programId) {
@@ -2959,6 +2979,7 @@ class AdminController extends Controller
         $customer->program_id =  $userId;
         $customer->company_name = $program->company_name;
         $customer->max_session = $program->max_session;
+        $customer->level = $request->level;
         $customer->save();
         // Retrieve the newly created customer's ID
         $customerId = $customer->id;

@@ -402,20 +402,45 @@ class CounsellerController extends Controller
     $reqSession->save();
 
     try{
-        $program = Program::where('id', $req->programId)->first();
-            $recipient = $program->email;
-            $admin_name = $program->company_name;
-            $subject = 'Counseling Session Extension Request';
-            $template = 'emails.request-sessions.to-admin-notification';
-            $data = [
-                'admin_name' => $admin_name,
-                'review_link' => route('reviewRequest', encrypt($reqSession->id) ),
-                'request_id' => $reqSession->id,
-                'additional_sessions' => $req->request_session_count,
-                'reason' => $reasonStrings,
-            ];
-            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+            $brevoData = CustomreBrevoData::where(['program_id'=> $req->programId, 'level' => 'admin'])->get();
+            foreach($brevoData as $custData){
+            try{
+                $recipient = $custData->email;
+                if($recipient){
+                    $custData->is_email_sent = 1;
+                    $custData->save();
+                    $admin_name = $custData->name;
+                    $subject = 'Counseling Session Extension Request';
+                    $template = 'emails.request-sessions.to-admin-notification';
+                    $data = [
+                        'admin_name' => $admin_name,
+                        'review_link' => route('reviewRequest', encrypt($reqSession->id) ),
+                        'request_id' => $reqSession->id,
+                        'additional_sessions' => $req->request_session_count,
+                        'reason' => $reasonStrings,
+                    ];
+                    sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);    
+                }
+              }catch(\Exception $ex){
+                $custData->is_email_sent = 0;
+                $custData->save();
+            }
+            }
 
+
+        // $program = Program::where('id', $req->programId)->first();
+        //     $recipient = $program->email;
+        //     $admin_name = $program->company_name;
+        //     $subject = 'Counseling Session Extension Request';
+        //     $template = 'emails.request-sessions.to-admin-notification';
+        //     $data = [
+        //         'admin_name' => $admin_name,
+        //         'review_link' => route('reviewRequest', encrypt($reqSession->id) ),
+        //         'request_id' => $reqSession->id,
+        //         'additional_sessions' => $req->request_session_count,
+        //         'reason' => $reasonStrings,
+        //     ];
+        //     sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
     }catch(\Exception $ex){
 
     }
