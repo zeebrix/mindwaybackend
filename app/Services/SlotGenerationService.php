@@ -6,6 +6,7 @@ use App\Models\Counselor;
 use App\Models\DeletedSlotLog;
 use App\Models\Slot;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class SlotGenerationService
@@ -210,21 +211,31 @@ class SlotGenerationService
                         'google_email'=>null,
                         'google_picture'=>null,    
                     ]);
-                  \Log::error("Exception Recorded Before Email");
+                  Log::error("Exception Recorded Before Email");
+                  $cacheKey = "calendar_disconnect_email_sent_{$counselor->id}";
+                  if (!Cache::has($cacheKey)) {
                     $recipient = $counselor->email;
                     $subject = 'Urgent: Connect Calendar';
                     $template = 'emails.reconnect-calendar';
                     $data = [
                         'full_name' => $counselor->name,
                     ];
+    
                     sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
                     sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
-                  \Log::error("Exception Recorded.");
+    
+                    // Mark email as sent for the day (expires in 24 hours)
+                    Cache::put($cacheKey, true, now()->addDay());
+    
+                    Log::error("Calendar disconnect email sent.");
+                } else {
+                    Log::info("Calendar disconnect email already sent today for counselor ID: {$counselor->id}");
+                }
                 }
             } catch (\Throwable $th) {
                 //throw $th;
             }
-            \Log::error("Error in removeConflictingSlots for counselor ID: {$counselor->id}, range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}. Exception: " . $e->getMessage());
+            Log::error("Error in removeConflictingSlots for counselor ID: {$counselor->id}, range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}. Exception: " . $e->getMessage());
         }
     }
     

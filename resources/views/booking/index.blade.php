@@ -52,13 +52,13 @@
 
             <div class="flex gap-2 mb-8">
                 @if(in_array('Phone Call',Json_decode($counselor->communication_method)))
-                <button type="button" class="communication-type px-6 py-2.5 rounded-full text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all" data-type="Phone Call">
+                <button type="button" class="communication-type px-6 py-2.5 rounded-full transition-all" data-type="Phone Call">
                     Phone Call
                 </button>
                 @endif
                 @if(in_array('Video Call',Json_decode($counselor->communication_method)))
 
-                <button type="button" class="communication-type px-6 py-2.5 rounded-full text-gray-700 bg-gray-100 hover:bg-gray-200 transition-all" data-type="Video Call">
+                <button type="button" class="communication-type px-6 py-2.5 rounded-full transition-all" data-type="Video Call">
                     Video Call
                 </button>
                 @endif
@@ -157,6 +157,15 @@
                                 value="" placeholder="Enter employee Phone">
                         </div>
                     </div>
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center">
+                            <span class="fw-semibold me-2">Time Zone:</span>
+                            <span class="fw-normal me-2">
+                                <span id="customer-timezone-div"></span> -
+                                <a href="#" class="timezone-link" data-bs-toggle="modal" data-bs-target="#timezoneModal">change</a>
+                            </span>
+                        </div>
+                    </div>
                     <div class="row mt-4">
                         <div class="col-sm-12">
                             <button type="submit" class="btn btn-primary w-100"></button>
@@ -173,12 +182,83 @@
     const counselorTimeZone = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}";
     document.getElementById('timezoneDisplay').textContent = `Timezone: ${counselorTimeZone}`;
 </script>
+
+
+<div class="modal fade" id="timezoneModal" tabindex="-1" aria-labelledby="timezoneModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="timezoneModalLabel">Select Timezone</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <select id="timezoneSelect" class="form-select" style="width: 100%;"></select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="saveTimezone">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section('js')
 <script>
+    let timeZones = [];
+    $('#timezoneModal').on('show.bs.modal', function() {
+        loadTimeZones();
+    });
+
+    function loadTimeZones() {
+        const select = $('#timezoneSelect');
+        const currentSelected = $('#customer-timezone-div').text().trim();
+        if (timeZones.length === 0) {
+            fetch('/mw-1/timezones.json')
+                .then(response => response.json())
+                .then(data => {
+                    timeZones = data.timezones;
+
+                    // Populate Select2 options
+                    let options = timeZones.map(tz => `<option value="${tz.name}">${tz.name}</option>`);
+                    select.html(options);
+
+                    // Initialize Select2 if not already
+                    select.select2({
+                        dropdownParent: $('#timezoneModal'),
+                        width: '100%'
+                    });
+                    select.val(currentSelected).trigger('change');
+                })
+                .catch(error => {
+                    toastr.error("Error fetching timezones");
+                });
+        } else {
+            // Already loaded, just populate Select2
+            let options = timeZones.map(tz => `<option value="${tz.name}">${tz.name}</option>`);
+            select.html(options);
+
+            select.select2({
+                dropdownParent: $('#timezoneModal'),
+                width: '100%'
+            });
+            select.val(currentSelected).trigger('change');
+        }
+    }
+
+
+    $('#saveTimezone').on('click', function() {
+        let selectedTimezone = $('#timezoneSelect').val();
+        $('#selected-timezone').text(selectedTimezone);
+        $('#customer-timezone').val(selectedTimezone);
+        $('#customer-timezone-div').text(selectedTimezone);
+        $('#timezoneModal').modal('hide');
+        $('#bookSlot').modal('show');
+    });
+</script>
+<script>
+    let communication_method = null;
     document.addEventListener('DOMContentLoaded', function() {
         const DateTime = luxon.DateTime;
         const counselorTimeZone = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}"; // Counselor's time zone
-        let communication_method = null;
         const token = 'Waseem#2023MobAPP';
         const counselor_id = "{{$counselor->id}}";
         const customer_id = "{{ $customer->app_customer_id }}";
@@ -440,6 +520,9 @@
             document.getElementById('counselor_id').value = counselor_id;
             document.getElementById('slot_id').value = slot_id;
             document.getElementById('communication_type').value = communication_method;
+            document.getElementById('customer-timezone').value = "{{$customer->timezone}}";
+            document.getElementById('customer-timezone-div').text = "{{$customer->timezone}}";
+
             document.getElementById('employee_name').value = "{{$customer->name}}";
             document.getElementById('employee_email').value = "{{$customer->email}}";
             document.getElementById('phone').value = "{{$customer?->customer?->phone}}";
@@ -453,9 +536,14 @@
             const formData = new FormData(this);
             const payload = Object.fromEntries(formData.entries());
 
-            if (!payload.communication_type) {
+            if (!payload.communication_method) {
                 hideLoader();
                 alert('Please select communication type first.');
+                return;
+            }
+            if (!payload.customer_timezone) {
+                hideLoader();
+                alert('Please select customer timezone to proceed.');
                 return;
             }
 
