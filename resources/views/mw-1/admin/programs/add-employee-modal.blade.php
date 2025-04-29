@@ -21,6 +21,13 @@
                             <input type="email" class="form-control" style="border-radius: 20px;background-color: #FAFAFA;" id="email" name="email"
                                 placeholder="Employee Email Address" required>
                         </div>
+                        <div class="mb-3">
+                            <label for="employeeSelect" class="form-label">Employee Level</label>
+                            <select id="employeeSelect" class="form-select" name="level">
+                                <option value="member">Member</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
                         <button type="submit" class="btn btn-primary mindway-btn">Add Individual</button>
                     </form>
                 </div>
