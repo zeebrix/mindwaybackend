@@ -2136,7 +2136,7 @@ class AdminController extends Controller
                     }
                     $programPlans->save();
                     
-                     if ($program) {
+                     if ($program && $request->departments) {
                         foreach (json_decode($request->departments) as $key => $department) {
                             $departs = new ProgramDepartment();
                             $departs->name = $department;
