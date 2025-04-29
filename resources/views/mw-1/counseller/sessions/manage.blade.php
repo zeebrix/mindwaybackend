@@ -94,9 +94,9 @@
             <table class="table text-nowrap mb-0 align-middle" id="Yajra-dataTable">
                 <thead class="text-dark fs-4">
                     <tr>
-                        <!-- <th class="col-number">
+                        <th class="col-number">
                     <h6 class="fw-semibold mb-0">#</h6>
-                </th> -->
+                </th>
                         <th class="col-employee">
                             <h6 class="fw-semibold mb-0">Employee Details</h6>
                         </th>
