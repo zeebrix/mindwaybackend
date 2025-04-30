@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Providers;
-
+use Illuminate\Support\Facades\URL;
 use App\Models\Customer;
 use App\Models\CustomreBrevoData;
 use App\Observers\CustomerObserver;
@@ -38,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        URL::forceScheme('https');
         Customer::observe(CustomerObserver::class);
         CustomreBrevoData::observe(CustomerBrevoDataObserver::class);
     }

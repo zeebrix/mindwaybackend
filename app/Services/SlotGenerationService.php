@@ -133,7 +133,7 @@ class SlotGenerationService
                 \Log::info("No events found for counselor ID: {$counselor->id} in range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}");
                 return;
             }
-    
+          
             // Convert event times to UTC
             foreach ($events as &$event) {
                 try {
@@ -144,14 +144,14 @@ class SlotGenerationService
                     continue;
                 }
             }
-    
+            unset($event);
             // Fetch all slots for the counselor in the given range
             $slots = Slot::where('counselor_id', $counselor->id)->where('is_booked', false)
                 ->whereBetween('start_time', [$startOfMonth->setTimezone('UTC'), $endOfMonth->setTimezone('UTC')])
                 ->get();
-    
             // Remove slots that overlap with events
             foreach ($slots as $slot) {
+                
                 foreach ($events as $event) {
                     if ($event['summary'] === "50min Mindway EAP Session") {
                         continue;
@@ -170,6 +170,12 @@ class SlotGenerationService
                 $status = $json['error']['status'] ?? 'unknown';
                 if($status == 'UNAUTHENTICATED')
                 {
+                    $counselor->update([
+                        'google_id'=>null,
+                        'google_name'=>null,
+                        'google_email'=>null,
+                        'google_picture'=>null,    
+                    ]);
                   \Log::error("Exception Recorded Before Email");
                     $recipient = $counselor->email;
                     $subject = 'Urgent: Connect Calendar';
@@ -177,8 +183,8 @@ class SlotGenerationService
                     $data = [
                         'full_name' => $counselor->name,
                     ];
-                    sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
-                    sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
+//                   sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+                  // sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
                   \Log::error("Exception Recorded.");
                 }
             } catch (\Throwable $th) {
@@ -212,6 +218,7 @@ class SlotGenerationService
                 \Log::info("No events found for counselor ID: {$counselor->id} in month: {$month}");
                 return;
             }
+            \Log::info("All events for counselor ID {$counselor->id}: " . json_encode($events));
 
             // Convert event times to UTC
             foreach ($events as &$event) {
@@ -222,6 +229,7 @@ class SlotGenerationService
                     \Log::error("Error parsing event times for event ID: {$event['event_id']}");
                     continue;
                 }
+                
             }
 
             // Fetch all slots for the counselor in the given month
