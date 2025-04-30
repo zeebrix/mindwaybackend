@@ -161,11 +161,17 @@
                         <div class="d-flex align-items-center">
                             <span class="fw-semibold me-2">Time Zone:</span>
                             <span class="fw-normal me-2">
-                                <span id="customer-timezone-div"></span> -
+                                <span id="customer-timezone-div">Set Timezone</span> -
                                 <a href="#" class="timezone-link" data-bs-toggle="modal" data-bs-target="#timezoneModal">change</a>
                             </span>
                         </div>
                     </div>
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center">
+                          <span id="instruction"></span>
+                        </div>
+                    </div>
+
                     <div class="row mt-4">
                         <div class="col-sm-12">
                             <button type="submit" class="btn btn-primary w-100"></button>
@@ -179,8 +185,9 @@
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 
 <script>
-    const counselorTimeZone = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}";
-    document.getElementById('timezoneDisplay').textContent = `Timezone: ${counselorTimeZone}`;
+    const counselorTimezone  = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}";
+    const customerTimezone = "{{ $customer->timezone ?? 'null' }}";
+    document.getElementById('timezoneDisplay').textContent = `Timezone: ${counselorTimezone}`;
 </script>
 
 
@@ -204,6 +211,7 @@
 @section('js')
 <script>
     let timeZones = [];
+    let selectedTime = null;
     $('#timezoneModal').on('show.bs.modal', function() {
         loadTimeZones();
     });
@@ -212,7 +220,7 @@
         const select = $('#timezoneSelect');
         const currentSelected = $('#customer-timezone-div').text().trim();
         if (timeZones.length === 0) {
-            fetch('/mw-1/timezones.json')
+            fetch('/public/mw-1/timezones.json')
                 .then(response => response.json())
                 .then(data => {
                     timeZones = data.timezones;
@@ -247,9 +255,19 @@
 
     $('#saveTimezone').on('click', function() {
         let selectedTimezone = $('#timezoneSelect').val();
+        alert(selectedTimezone);
         $('#selected-timezone').text(selectedTimezone);
         $('#customer-timezone').val(selectedTimezone);
         $('#customer-timezone-div').text(selectedTimezone);
+
+
+        const bookingDateTime = luxon.DateTime.fromISO(selectedTime, { zone: 'utc' }).setZone(counselorTimezone);
+        const customerDateTime = bookingDateTime.setZone(selectedTimezone);
+        const instructionText = `This session will be booked for ${bookingDateTime .toFormat('h:mma')} your time (${counselorTimezone}) and sent to the employee at ${customerDateTime.toFormat('h:mma')} their time (${selectedTimezone})`;
+        document.getElementById('instruction').innerText = instructionText;
+    
+
+
         $('#timezoneModal').modal('hide');
         $('#bookSlot').modal('show');
     });
@@ -292,7 +310,6 @@
         const today = DateTime.now().setZone(counselorTimeZone);
         let currentDate = today.startOf('month');
         let selectedDate = null;
-        let selectedTime = null;
         let slot_id = null;
 
         // Fetch available dates for the month
@@ -522,7 +539,13 @@
             document.getElementById('communication_type').value = communication_method;
             document.getElementById('customer-timezone').value = "{{$customer->timezone}}";
             document.getElementById('customer-timezone-div').text = "{{$customer->timezone}}";
-
+            if(customerTimezone && customerTimezone !='null')
+            {
+                const bookingDateTime = luxon.DateTime.fromISO(selectedTime, { zone: 'utc' }).setZone(counselorTimezone);
+                const customerDateTime = bookingDateTime.setZone(customerTimezone);
+                const instructionText = `This session will be booked for ${bookingDateTime .toFormat('h:mma')} your time (${counselorTimezone}) and sent to the employee at ${customerDateTime.toFormat('h:mma')} their time (${customerTimezone})`;
+                document.getElementById('instruction').innerText = instructionText;
+            }
             document.getElementById('employee_name').value = "{{$customer->name}}";
             document.getElementById('employee_email').value = "{{$customer->email}}";
             document.getElementById('phone').value = "{{$customer?->customer?->phone}}";
