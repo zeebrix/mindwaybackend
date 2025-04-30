@@ -186,7 +186,8 @@
 
 <script>
     const counselorTimezone  = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}";
-    const customerTimezone = "{{ $customer->timezone ?? 'null' }}";
+    const customerTimezone = "{{ $customer?->customer?->timezone ?? 'null' }}";
+    console.log(customerTimezone);
     document.getElementById('timezoneDisplay').textContent = `Timezone: ${counselorTimezone}`;
 </script>
 
@@ -220,7 +221,7 @@
         const select = $('#timezoneSelect');
         const currentSelected = $('#customer-timezone-div').text().trim();
         if (timeZones.length === 0) {
-            fetch('/public/mw-1/timezones.json')
+            fetch('/mw-1/timezones.json')
                 .then(response => response.json())
                 .then(data => {
                     timeZones = data.timezones;
@@ -255,7 +256,6 @@
 
     $('#saveTimezone').on('click', function() {
         let selectedTimezone = $('#timezoneSelect').val();
-        alert(selectedTimezone);
         $('#selected-timezone').text(selectedTimezone);
         $('#customer-timezone').val(selectedTimezone);
         $('#customer-timezone-div').text(selectedTimezone);
@@ -537,8 +537,8 @@
             document.getElementById('counselor_id').value = counselor_id;
             document.getElementById('slot_id').value = slot_id;
             document.getElementById('communication_type').value = communication_method;
-            document.getElementById('customer-timezone').value = "{{$customer->timezone}}";
-            document.getElementById('customer-timezone-div').text = "{{$customer->timezone}}";
+            document.getElementById('customer-timezone').value = customerTimezone;
+            document.getElementById('customer-timezone-div').innerText = customerTimezone;
             if(customerTimezone && customerTimezone !='null')
             {
                 const bookingDateTime = luxon.DateTime.fromISO(selectedTime, { zone: 'utc' }).setZone(counselorTimezone);
