@@ -8,7 +8,7 @@
                 url: '{{ route("admin.counsellersesions-data") }}',
             },
             columns: [
-                { data: 'id', name: 'id', orderable: true, searchable: true }, // Row number
+                { data: 'id', name: 'id', orderable: false, searchable: false }, // Row number
                 { data: 'name_email', name: 'name_email', orderable: false, searchable: false }, // Name and Email
                 { data: 'company_name', name: 'company_name', orderable: false, searchable: false }, // Company Name
                 { data: 'max_session', name: 'max_session', orderable: false, searchable: false }, // Max Session
@@ -22,7 +22,7 @@
 
         // Custom search input handling
         $('#searchInput').on('input', function() {
-            var searchText = $(this).val().toLowerCase();
+            var searchText = $(this).val();
             table.search(searchText).draw(); // Trigger DataTable search
         });
     });

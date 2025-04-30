@@ -221,7 +221,7 @@
         const select = $('#timezoneSelect');
         const currentSelected = $('#customer-timezone-div').text().trim();
         if (timeZones.length === 0) {
-            fetch('/mw-1/timezones.json')
+            fetch('/public/mw-1/timezones.json')
                 .then(response => response.json())
                 .then(data => {
                     timeZones = data.timezones;
@@ -255,7 +255,7 @@
 
 
     $('#saveTimezone').on('click', function() {
-        let selectedTimezone = $('#timezoneSelect').val();
+        let selectedTimezone  = $('#timezoneSelect').val();
         $('#selected-timezone').text(selectedTimezone);
         $('#customer-timezone').val(selectedTimezone);
         $('#customer-timezone-div').text(selectedTimezone);
@@ -538,7 +538,7 @@
             document.getElementById('slot_id').value = slot_id;
             document.getElementById('communication_type').value = communication_method;
             document.getElementById('customer-timezone').value = customerTimezone;
-            document.getElementById('customer-timezone-div').innerText = customerTimezone;
+            document.getElementById('customer-timezone-div').innerText = (customerTimezone && customerTimezone != 'null') ? customerTimezone :'Set Timezone';
             if(customerTimezone && customerTimezone !='null')
             {
                 const bookingDateTime = luxon.DateTime.fromISO(selectedTime, { zone: 'utc' }).setZone(counselorTimezone);

@@ -254,11 +254,11 @@ class CounsellerController extends Controller
         // Apply search filter if a search term is provided
         if (!empty($searchText)) {
             $customers->where(function ($query) use ($searchText) {
-                $query->where('name', 'like', '%' . $searchText . '%') // Search by name
-                      ->orWhere('email', 'like', '%' . $searchText . '%') // Search by email
-                      ->orWhere('company_name', 'like', '%' . $searchText . '%') // Search by company name
-                      ->orWhere('id', 'like', '%' . $searchText . '%'); // Search by ID name
-            });
+                $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($searchText) . '%'])
+              ->orWhereRaw('LOWER(email) LIKE ?', ['%' . strtolower($searchText) . '%'])
+              ->orWhereRaw('LOWER(company_name) LIKE ?', ['%' . strtolower($searchText) . '%'])
+              ->orWhere('id', 'like', '%' . $searchText . '%');
+    });
         }
 
         return DataTables::of($customers)
