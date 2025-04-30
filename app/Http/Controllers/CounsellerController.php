@@ -256,7 +256,8 @@ class CounsellerController extends Controller
             $customers->where(function ($query) use ($searchText) {
                 $query->where('name', 'like', '%' . $searchText . '%') // Search by name
                       ->orWhere('email', 'like', '%' . $searchText . '%') // Search by email
-                      ->orWhere('company_name', 'like', '%' . $searchText . '%'); // Search by company name
+                      ->orWhere('company_name', 'like', '%' . $searchText . '%') // Search by company name
+                      ->orWhere('id', 'like', '%' . $searchText . '%'); // Search by ID name
             });
         }
 

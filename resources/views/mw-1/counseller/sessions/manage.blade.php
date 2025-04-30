@@ -69,7 +69,7 @@
             <div class="search-input">
                 <i class="ti ti-search" style="font-size: 30px;"></i>
                 <input style="height: 50px;border-radius:20px;background-color:#F7F7F7" type="text" id="searchInput" class="form-control"
-                    placeholder="Search by name, email, or company">
+                    placeholder="Search by Id , name, email, or company">
             </div>
         </div>
         @if (session()->has('error'))
