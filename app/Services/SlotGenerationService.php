@@ -3,11 +3,8 @@
 namespace App\Services;
 
 use App\Models\Counselor;
-use App\Models\DeletedSlotLog;
 use App\Models\Slot;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class SlotGenerationService
 {
@@ -113,9 +110,9 @@ class SlotGenerationService
                 \Log::warning("Google Token missing for counselor ID: {$counselor->id}");
                 return;
             }
-
+    
             $timezone = $counselor->timezone ?? 'UTC';
-
+    
             if ($month) {
                 $startOfMonth = Carbon::now($timezone)->setDay(1)->setMonth($month)->startOfMonth();
                 $endOfMonth = $startOfMonth->copy()->endOfMonth();
@@ -124,18 +121,19 @@ class SlotGenerationService
                 $startOfMonth = Carbon::now($timezone)->startOfYear();
                 $endOfMonth = Carbon::now($timezone)->endOfYear();
             }
-
+    
             // Fetch all events for the given range
             $events = $this->googleProvider->getAllEvents(
                 $counselor->googleToken->access_token,
                 $startOfMonth->toRfc3339String(),
                 $endOfMonth->toRfc3339String()
             );
+    
             if (empty($events)) {
                 \Log::info("No events found for counselor ID: {$counselor->id} in range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}");
                 return;
             }
-
+          
             // Convert event times to UTC
             foreach ($events as &$event) {
                 try {
@@ -147,66 +145,20 @@ class SlotGenerationService
                 }
             }
             unset($event);
-            $eventIds = collect($events)->pluck('event_id')->toArray();
-            $deletedLogs = DeletedSlotLog::where('counselor_id', $counselor->id)->get();
-
-            foreach ($deletedLogs as $log) {
-                if (!in_array($log->google_event_id, $eventIds)) {
-                    $existingSlot = Slot::where('counselor_id', $log->counselor_id)
-                        ->where('start_time', $log->start_time)
-                        ->where('end_time', $log->end_time)
-                        ->where('date', $log->date)
-                        ->first();
-                    if (!$existingSlot) {
-                        Slot::create([
-                            'counselor_id' => $log->counselor_id,
-                            'date'         => $log->date,
-                            'start_time'   => $log->start_time,
-                            'end_time'     => $log->end_time,
-                            'is_booked'    => false,
-                        ]);
-                    }
-                    // Event no longer exists — restore slot
-
-
-                    Log::info("Restored slot for counselor ID {$log->counselor_id} [{$log->start_time} - {$log->end_time}] as Google event {$log->google_event_id} no longer exists.");
-
-                    // Delete log after restoring
-                    $log->delete();
-                }
-            }
-
             // Fetch all slots for the counselor in the given range
             $slots = Slot::where('counselor_id', $counselor->id)->where('is_booked', false)
                 ->whereBetween('start_time', [$startOfMonth->setTimezone('UTC'), $endOfMonth->setTimezone('UTC')])
                 ->get();
-
             // Remove slots that overlap with events
-            $deletedSlotIds = [];
             foreach ($slots as $slot) {
+                
                 foreach ($events as $event) {
                     if ($event['summary'] === "50min Mindway EAP Session") {
                         continue;
                     }
-                    if (in_array($slot->id, $deletedSlotIds)) {
-                        break;
-                    }
-                    Log::info("Checking slot ID: {$slot->id} [{$slot->start_time} - {$slot->end_time}] against event ID: {$event['event_id']} [{$event['start_time']} - {$event['end_time']}]");
                     if ($slot->start_time < $event['end_time'] && $slot->end_time > $event['start_time']) {
-                        Log::info("Deleting slot ID: {$slot->id} as it conflicts with event ID: {$event['event_id']}");
-                        DeletedSlotLog::create([
-                            'slot_id'       => $slot->id,
-                            'google_event_id' => $event['event_id'],
-                            'counselor_id'  => $counselor->id,
-                            'start_time'    => $slot->start_time,
-                            'end_time'      => $slot->end_time,
-                            'date'          => $slot->date,
-                            'deleted_at'    => now(),
-                        ]);
-
-
+                        \Log::info("Deleting slot ID: {$slot->id} as it conflicts with event ID: {$event['event_id']}");
                         $slot->delete();
-                        $deletedSlotIds[] = $slot->id;
                         break; // No need to check further, slot is already deleted
                     }
                 }
@@ -216,42 +168,33 @@ class SlotGenerationService
                 $json = json_decode($e->getMessage(), true);
 
                 $status = $json['error']['status'] ?? 'unknown';
-                if ($status == 'UNAUTHENTICATED') {
+                if($status == 'UNAUTHENTICATED')
+                {
                     $counselor->update([
-                        'google_id' => null,
-                        'google_name' => null,
-                        'google_email' => null,
-                        'google_picture' => null,
+                        'google_id'=>null,
+                        'google_name'=>null,
+                        'google_email'=>null,
+                        'google_picture'=>null,    
                     ]);
-                    Log::error("Exception Recorded Before Email");
-                    $cacheKey = "calendar_disconnect_email_sent_{$counselor->id}";
-                    if (!Cache::has($cacheKey)) {
-                        $recipient = $counselor->email;
-                        $subject = 'Urgent: Connect Calendar';
-                        $template = 'emails.reconnect-calendar';
-                        $data = [
-                            'full_name' => $counselor->name,
-                        ];
-
-                        sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
-                        sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
-
-                        // Mark email as sent for the day (expires in 24 hours)
-                        Cache::put($cacheKey, true, now()->addDay());
-
-                        Log::error("Calendar disconnect email sent.");
-                    } else {
-                        Log::info("Calendar disconnect email already sent today for counselor ID: {$counselor->id}");
-                    }
+                  \Log::error("Exception Recorded Before Email");
+                    $recipient = $counselor->email;
+                    $subject = 'Urgent: Connect Calendar';
+                    $template = 'emails.reconnect-calendar';
+                    $data = [
+                        'full_name' => $counselor->name,
+                    ];
+//                   sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+                  // sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
+                  \Log::error("Exception Recorded.");
                 }
             } catch (\Throwable $th) {
                 //throw $th;
             }
-            Log::error("Error in removeConflictingSlots for counselor ID: {$counselor->id}, range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}. Exception: " . $e->getMessage());
+            \Log::error("Error in removeConflictingSlots for counselor ID: {$counselor->id}, range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}. Exception: " . $e->getMessage());
         }
     }
-
-    public function removeConflictingSlots1(Counselor $counselor, string $month = null)
+    
+    public function removeConflictingSlots1(Counselor $counselor, string $month=null)
     {
         try {
             // Ensure the counselor has a Google token
@@ -275,6 +218,7 @@ class SlotGenerationService
                 \Log::info("No events found for counselor ID: {$counselor->id} in month: {$month}");
                 return;
             }
+            \Log::info("All events for counselor ID {$counselor->id}: " . json_encode($events));
 
             // Convert event times to UTC
             foreach ($events as &$event) {
@@ -285,6 +229,7 @@ class SlotGenerationService
                     \Log::error("Error parsing event times for event ID: {$event['event_id']}");
                     continue;
                 }
+                
             }
 
             // Fetch all slots for the counselor in the given month
