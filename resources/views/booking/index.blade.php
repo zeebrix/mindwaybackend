@@ -240,7 +240,7 @@
         const select = $('#timezoneSelect');
         const currentSelected = $('#customer-timezone-div').text().trim();
         if (timeZones.length === 0) {
-            fetch('/mw-1/timezones.json')
+            fetch('/public/mw-1/timezones.json')
                 .then(response => response.json())
                 .then(data => {
                     timeZones = data.timezones;
