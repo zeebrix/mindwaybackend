@@ -168,7 +168,7 @@
                     </div>
                     <div class="mb-4">
                         <div class="d-flex align-items-center">
-                          <span id="instruction"></span>
+                            <span id="instruction"></span>
                         </div>
                     </div>
 
@@ -185,8 +185,27 @@
 <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
 
 <script>
-    const counselorTimezone  = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}";
-    const customerTimezone = "{{ $customer?->customer?->timezone ?? 'null' }}";
+    function getValidTimezone(tz) {
+        const timezoneMap = {
+            'PKT': 'Asia/Karachi',
+            'NZST': 'Pacific/Auckland',
+            'GMT': 'Etc/GMT',
+            'AWST': 'Australia/Perth',
+            'AEDT': 'Australia/Sydney',
+            'AEST': 'Australia/Sydney'
+        };
+
+        // If it's a valid IANA timezone, return it
+        if (luxon.DateTime.local().setZone(tz).isValid) {
+            return tz;
+        }
+
+        // Otherwise, check the mapping
+        return timezoneMap[tz] || null;
+    }
+    const counselorTimezone = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}";
+    let customerTimezone = "{{ $customer?->customer?->timezone ?? 'null' }}";
+    customerTimezone = getValidTimezone(customerTimezone);
     console.log(customerTimezone);
     document.getElementById('timezoneDisplay').textContent = `Timezone: ${counselorTimezone}`;
 </script>
@@ -255,17 +274,19 @@
 
 
     $('#saveTimezone').on('click', function() {
-        let selectedTimezone  = $('#timezoneSelect').val();
+        let selectedTimezone = $('#timezoneSelect').val();
         $('#selected-timezone').text(selectedTimezone);
         $('#customer-timezone').val(selectedTimezone);
         $('#customer-timezone-div').text(selectedTimezone);
 
 
-        const bookingDateTime = luxon.DateTime.fromISO(selectedTime, { zone: 'utc' }).setZone(counselorTimezone);
+        const bookingDateTime = luxon.DateTime.fromISO(selectedTime, {
+            zone: 'utc'
+        }).setZone(counselorTimezone);
         const customerDateTime = bookingDateTime.setZone(selectedTimezone);
         const instructionText = `This session will be booked for ${bookingDateTime .toFormat('h:mma')} your time (${counselorTimezone}) and sent to the employee at ${customerDateTime.toFormat('h:mma')} their time (${selectedTimezone})`;
         document.getElementById('instruction').innerText = instructionText;
-    
+
 
 
         $('#timezoneModal').modal('hide');
@@ -279,7 +300,7 @@
         const counselorTimeZone = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}"; // Counselor's time zone
         const token = 'Waseem#2023MobAPP';
         const counselor_id = "{{$counselor->id}}";
-        const customer_id = "{{ $customer->app_customer_id }}";
+        const customer_id = "{{ $customer->app_customer_id ?? $customer->id }}";
         const csrfToken = '{{ csrf_token() }}';
 
         const modal = new bootstrap.Modal(document.getElementById('bookSlot'));
@@ -538,10 +559,11 @@
             document.getElementById('slot_id').value = slot_id;
             document.getElementById('communication_type').value = communication_method;
             document.getElementById('customer-timezone').value = customerTimezone;
-            document.getElementById('customer-timezone-div').innerText = (customerTimezone && customerTimezone != 'null') ? customerTimezone :'Set Timezone';
-            if(customerTimezone && customerTimezone !='null')
-            {
-                const bookingDateTime = luxon.DateTime.fromISO(selectedTime, { zone: 'utc' }).setZone(counselorTimezone);
+            document.getElementById('customer-timezone-div').innerText = (customerTimezone && customerTimezone != 'null') ? customerTimezone : 'Set Timezone';
+            if (customerTimezone && customerTimezone != 'null') {
+                const bookingDateTime = luxon.DateTime.fromISO(selectedTime, {
+                    zone: 'utc'
+                }).setZone(counselorTimezone);
                 const customerDateTime = bookingDateTime.setZone(customerTimezone);
                 const instructionText = `This session will be booked for ${bookingDateTime .toFormat('h:mma')} your time (${counselorTimezone}) and sent to the employee at ${customerDateTime.toFormat('h:mma')} their time (${customerTimezone})`;
                 document.getElementById('instruction').innerText = instructionText;
