@@ -12,6 +12,7 @@ use App\Models\Counselor;
 use App\Models\Customer;
 use App\Models\RequestSession;
 use App\Models\CustomreBrevoData;
+use App\Models\Slot;
 use App\Notifications\BookingCancellation;
 use App\Services\GoogleProvider;
 use App\Services\SlotGenerationService;
@@ -873,6 +874,12 @@ class CounsellerController extends Controller
     {
         $customer = CustomreBrevoData::where('id',$id)->first();
         $counselor = Auth::guard('counselor')->user();
+
+        try {
+            Slot::where('is_booked',false)->where('customer_id',$customer->app_customer_id)->update(['customer_id'=>null]);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
         return view('booking.index')->with(['customer'=>$customer,'counselor'=>$counselor]);
     }
 }

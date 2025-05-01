@@ -1050,6 +1050,18 @@ class ProgramController extends Controller
                 $existSessions = $custBrevoData->max_session;
                 $custBrevoData->max_session = $existSessions +  $req->request_session_count;
                 $custBrevoData->save();
+
+                try {
+                    $app_customer = Customer::where('id',$custBrevoData->app_customer_id)->first();
+                    if($app_customer )
+                    {
+                        $app_customer->max_session = $app_customer->max_session +  $req->request_session_count;
+                        $app_customer->save();
+                    }
+                } catch (\Throwable $th) {
+                    //throw $th;
+                }
+
                 $recipient = $AdminProgram->email;
                 if($recipient){
                     $subject = 'Employer Notification – Sessions Approved ' . '(Request #'. $reqId .')';
