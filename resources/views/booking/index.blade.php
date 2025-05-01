@@ -300,7 +300,7 @@
         const counselorTimeZone = "{{ $counselor->timezone ?? 'Australia/Adelaide' }}"; // Counselor's time zone
         const token = 'Waseem#2023MobAPP';
         const counselor_id = "{{$counselor->id}}";
-        const customer_id = "{{ $customer->app_customer_id ?? $customer->id }}";
+        const customer_id = "{{ $customer->app_customer_id}}";
         const csrfToken = '{{ csrf_token() }}';
 
         const modal = new bootstrap.Modal(document.getElementById('bookSlot'));
@@ -541,6 +541,11 @@
 
         // Confirm the selected booking
         document.getElementById('confirmButton').addEventListener('click', () => {
+            if(!customer_id)
+            {
+                alert('User not signed up to app, developers solving please book manually.');
+                return ;
+            }
             if (!communication_method) {
                 alert('Please select communication type first.');
                 return;
