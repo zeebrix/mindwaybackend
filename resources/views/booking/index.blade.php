@@ -543,7 +543,7 @@
         document.getElementById('confirmButton').addEventListener('click', () => {
             if(!customer_id)
             {
-                alert('User hasn’t signed up on the app yet.please book manually for now.');
+                alert('User not signed up to app, developers solving please book manually.');
                 return ;
             }
             if (!communication_method) {
