@@ -166,6 +166,7 @@ class SlotGenerationService
                             'date'         => $slot->date,
                             'start_time'   => $slot->start_time,
                             'end_time'     => $slot->end_time,
+                            'google_event_id'  => $event['event_id'],
                         ]);
 
                         \Log::info("Deleting slot ID: {$slot->id} as it conflicts with event ID: {$event['event_id']}");
@@ -187,8 +188,7 @@ class SlotGenerationService
                         'google_picture' => null,
                     ]);
                     $cacheKey = "calendar_reconnect_email_sent_{$counselor->id}";
-                    if (!Cache::has($cacheKey)) 
-                    {
+                    if (!Cache::has($cacheKey)) {
                         Log::error("Exception Recorded Before Email");
                         $recipient = $counselor->email;
                         $subject = 'Urgent: Connect Calendar';
@@ -200,12 +200,10 @@ class SlotGenerationService
                         sendDynamicEmailFromTemplate('farahanjdfunnel@gmail.com', $subject, $template, $data);
                         Cache::put($cacheKey, true, now()->addHours(24));
                         Log::error("Exception Recorded.");
-                    }
-                    else
-                    {
+                    } else {
                         Log::info("Reconnect calendar email already sent within 24 hours to counselor ID: {$counselor->id}");
                     }
-                   }
+                }
             } catch (\Throwable $th) {
                 //throw $th;
             }
@@ -249,13 +247,17 @@ class SlotGenerationService
                 }
             }
             unset($event);
-
+            $currentEventIds = collect($events)->pluck('event_id')->toArray();
             // Fetch previously deleted slots from logs for this counselor within the date range
             $logs = DeletedSlotLog::where('counselor_id', $counselor->id)
                 ->whereBetween('start_time', [$startOfMonth->setTimezone('UTC'), $endOfMonth->setTimezone('UTC')])
                 ->get();
 
             foreach ($logs as $log) {
+                if (in_array($log->google_event_id, $currentEventIds)) {
+                    // Event still exists, skip restoring
+                    continue;
+                }
                 // Check if slot already exists (might have been manually created or restored)
                 $existingSlot = Slot::where('counselor_id', $log->counselor_id)
                     ->where('start_time', $log->start_time)
@@ -264,32 +266,15 @@ class SlotGenerationService
                     ->first();
 
                 if (!$existingSlot) {
-                    // Check for current conflicts
-                    $conflict = false;
-
-                    foreach ($events as $event) {
-                        if ($event['summary'] === "50min Mindway EAP Session") {
-                            continue;
-                        }
-
-                        if ($log->start_time < $event['end_time'] && $log->end_time > $event['start_time']) {
-                            $conflict = true;
-                            break;
-                        }
-                    }
-
-                    if (!$conflict) {
-                        Slot::create([
-                            'counselor_id' => $log->counselor_id,
-                            'date'         => $log->date,
-                            'start_time'   => $log->start_time,
-                            'end_time'     => $log->end_time,
-                            'is_booked'    => false,
-                        ]);
-
-                        \Log::info("Restored available slot for counselor ID: {$log->counselor_id} at {$log->start_time}");
-                    }
+                    Slot::create([
+                        'counselor_id' => $log->counselor_id,
+                        'date'         => $log->date,
+                        'start_time'   => $log->start_time,
+                        'end_time'     => $log->end_time,
+                        'is_booked'    => false,
+                    ]);
                 }
+                $log->delete();
             }
         } catch (\Exception $e) {
             \Log::error("Error in restoreAvailableSlots for counselor ID: {$counselor->id}, range: {$startOfMonth->format('Y-m-d')} - {$endOfMonth->format('Y-m-d')}. Exception: " . $e->getMessage());
