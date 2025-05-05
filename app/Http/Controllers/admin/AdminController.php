@@ -1913,7 +1913,16 @@ class AdminController extends Controller
                 $existSessions = $custBrevoData->max_session;
                 $custBrevoData->max_session = $existSessions +  $req->request_session_count;
                 $custBrevoData->save();
-
+                try {
+                    $app_customer = Customer::where('id',$custBrevoData->app_customer_id)->first();
+                    if($app_customer )
+                    {
+                        $app_customer->max_session = $app_customer->max_session +  $req->request_session_count;
+                        $app_customer->save();
+                    }
+                } catch (\Throwable $th) {
+                    //throw $th;
+                }
                 $recipient = $authuser->email;
                 if($recipient){
                     $subject = 'Employer Notification – Sessions Approved ' . '(Request #'. $reqId .')';
@@ -3008,7 +3017,20 @@ class AdminController extends Controller
             'listIds' => [9], // Assuming you want to add the contact to list ID 1
         ]);
 
-
+        try {
+            if ( $request->level == 'admin') {
+                $recipient = strtolower($request->email);
+                $subject = 'You’ve Been Made an Admin for Mindway EAP';
+                $template = 'emails.become-admin-member';
+                $data = [
+                    'full_name' => $request->name ?? '',
+                    'company_name' => $program->company_name ?? '',
+                    'access_code' => $program->code ?? ''
+                ];
+                sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+            }
+        } catch (\Throwable $th) {
+        }
         try {
             // Make the request to create the contact
             $result = $apiInstance->createContact($createContact);

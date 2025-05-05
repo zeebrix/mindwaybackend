@@ -290,9 +290,8 @@ class GoogleProvider extends AbstractProvider
         // Fetch all calendars
         $calendarList = $calendarService->calendarList->listCalendarList()->getItems();
         $allEvents = [];
-
         foreach ($calendarList as $calendar) {
-            if ($calendar->accessRole != 'reader') {
+            if ($calendar->accessRole != 'reader' || true) {
                 $calendarId = $calendar->getId();
                 $calendarTimeZone = $calendar->getTimeZone() ?? 'UTC';
                 // Get events for the current calendar
