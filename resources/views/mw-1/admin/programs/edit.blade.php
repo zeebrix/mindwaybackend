@@ -608,6 +608,29 @@
 @section('js')
 
 @include('mw-1.admin.programs.session-datatable')
+<script>
+    function toggleEmailPrivilege(customerId) {
+    $.ajax({
+        url: '/customers/' + customerId + '/toggle-email-privilege',
+        type: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}'
+        },
+        success: function(response) {
+            if (response.status === 'success') {
+                // Reload DataTable without resetting pagination
+                $('#Yajra-dataTable').DataTable().ajax.reload(null, false);
+            } else {
+                alert('Failed to toggle privilege.');
+            }
+        },
+        error: function() {
+            alert('Something went wrong while toggling privilege.');
+        }
+    });
+}
+
+</script>
     <script>
         const renewalDateInput = document.getElementById('renewal_date');
 

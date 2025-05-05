@@ -60,6 +60,18 @@ use Yajra\DataTables\Facades\DataTables;
 
 class AdminController extends Controller
 {
+    public function toggleEmailSent(Request $req , $id)
+    {
+        $custBrevoData = CustomreBrevoData::where('id',$id)->first();
+        $custBrevoData->is_email_sent = !$custBrevoData->is_email_sent;
+        $custBrevoData->save();
+        return response()->json([
+            'status' => 'success',
+            'is_email_sent' => $custBrevoData->is_email_sent,
+            'message' => 'Email sent status updated successfully.',
+        ]);
+    }
+
     public function setting()
     {
         $user = auth()->user();
@@ -85,14 +97,13 @@ class AdminController extends Controller
         $google2fa = new Google2FA();
 
         if ($request->has('enable_2fa')) {
-            if(!$user->uses_two_factor_auth)
-            {
+            if (!$user->uses_two_factor_auth) {
                 $secret = $google2fa->generateSecretKey();
                 $user->google2fa_secret = $secret;
                 $user->uses_two_factor_auth = true;
-                $user->save();    
+                $user->save();
             }
-            
+
             $qrCodeUrl = $google2fa->getQRCodeUrl(
                 config('app.name'),
                 $user->email,
@@ -257,17 +268,17 @@ class AdminController extends Controller
         if ($request->ajax()) {
             $users = Customer::query(); // Fetches all columns
             return DataTables::of($users)
-            ->editColumn('improve', function ($user) {
-                return $user->improve ??'Not selected';
-            })
-            ->editColumn('goal_id', function ($user) {
-                return $user->improve ??'Not Added';
-            })
-            ->addColumn('action', function ($user) {
-                    return '<a href="'. url('/manage-admin/delete-customer', ['id' => $user->id]).'" class="btn btn-sm btn-danger">Delete</a>';
+                ->editColumn('improve', function ($user) {
+                    return $user->improve ?? 'Not selected';
                 })
-            ->rawColumns(['action'])
-            ->make(true);
+                ->editColumn('goal_id', function ($user) {
+                    return $user->improve ?? 'Not Added';
+                })
+                ->addColumn('action', function ($user) {
+                    return '<a href="' . url('/manage-admin/delete-customer', ['id' => $user->id]) . '" class="btn btn-sm btn-danger">Delete</a>';
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
     }
 
@@ -293,19 +304,19 @@ class AdminController extends Controller
     }
 
     public function getViewCourse(Request $request)
-{
-    if ($request->ajax()) {
-        $courses = SessionUpload::query(); // Fetches all columns
+    {
+        if ($request->ajax()) {
+            $courses = SessionUpload::query(); // Fetches all columns
 
-        return DataTables::of($courses)
-            ->editColumn('course_thumbnail', function ($course) {
-                return '<img height="50px" width="50px" src="' . asset('storage/course/' . $course->course_thumbnail) . '" alt="">';
-            })
-            ->editColumn('course_description', function ($course) {
-                return \Illuminate\Support\Str::words($course->course_description, 5, '...');
-            })
-            ->addColumn('action', function ($course) {
-                return '
+            return DataTables::of($courses)
+                ->editColumn('course_thumbnail', function ($course) {
+                    return '<img height="50px" width="50px" src="' . asset('storage/course/' . $course->course_thumbnail) . '" alt="">';
+                })
+                ->editColumn('course_description', function ($course) {
+                    return \Illuminate\Support\Str::words($course->course_description, 5, '...');
+                })
+                ->addColumn('action', function ($course) {
+                    return '
                     <a href="' . url('/manage-admin/edit-course', ['id' => $course->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
                         Edit
                         <i class="typcn typcn-edit btn-icon-append"></i>
@@ -314,11 +325,11 @@ class AdminController extends Controller
                         Delete
                         <i class="typcn typcn-delete-outline btn-icon-append"></i>
                     </a>';
-            })
-            ->rawColumns(['course_thumbnail', 'action'])
-            ->make(true);
+                })
+                ->rawColumns(['course_thumbnail', 'action'])
+                ->make(true);
+        }
     }
-}
 
     public function viewAudio()
     {
@@ -327,16 +338,16 @@ class AdminController extends Controller
     }
 
     public function getViewAudio(Request $request)
-{
-    if ($request->ajax()) {
-        $audios = SessionAudio::query(); // Fetches all columns
+    {
+        if ($request->ajax()) {
+            $audios = SessionAudio::query(); // Fetches all columns
 
-        return DataTables::of($audios)
-            ->editColumn('audio', function ($audio) {
-                return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $audio->audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
-            })
-            ->addColumn('action', function ($audio) {
-                return '
+            return DataTables::of($audios)
+                ->editColumn('audio', function ($audio) {
+                    return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $audio->audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
+                })
+                ->addColumn('action', function ($audio) {
+                    return '
                     <a href="' . url('/manage-admin/edit-audio', ['id' => $audio->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
                         Edit
                         <i class="typcn typcn-edit btn-icon-append"></i>
@@ -345,11 +356,11 @@ class AdminController extends Controller
                         Delete
                         <i class="typcn typcn-delete-outline btn-icon-append"></i>
                     </a>';
-            })
-            ->rawColumns(['audio', 'action'])
-            ->make(true);
+                })
+                ->rawColumns(['audio', 'action'])
+                ->make(true);
+        }
     }
-}
 
 
     public function courseAdd(Request $request)
@@ -554,20 +565,20 @@ class AdminController extends Controller
     }
 
     public function getViewSleepCourse(Request $request)
-{
-    if ($request->ajax()) {
-        $sleepCourses = CategoryCourse::query(); // Fetches all columns
+    {
+        if ($request->ajax()) {
+            $sleepCourses = CategoryCourse::query(); // Fetches all columns
 
-        return DataTables::of($sleepCourses)
-            ->editColumn('thumbnail', function ($sleepCourse) {
-                return '<img height="50px" width="50px" src="' . asset('storage/course/' . $sleepCourse->thumbnail) . '" alt="">';
-            })
-            ->editColumn('description', function ($sleepCourse) {
-                // Truncate description to 50 characters and append '...' if longer
-                return \Illuminate\Support\Str::limit($sleepCourse->description, 50, '...');
-            })
-            ->addColumn('action', function ($sleepCourse) {
-                return '
+            return DataTables::of($sleepCourses)
+                ->editColumn('thumbnail', function ($sleepCourse) {
+                    return '<img height="50px" width="50px" src="' . asset('storage/course/' . $sleepCourse->thumbnail) . '" alt="">';
+                })
+                ->editColumn('description', function ($sleepCourse) {
+                    // Truncate description to 50 characters and append '...' if longer
+                    return \Illuminate\Support\Str::limit($sleepCourse->description, 50, '...');
+                })
+                ->addColumn('action', function ($sleepCourse) {
+                    return '
                     <a href="' . url('/manage-admin/edit-sleep-course', ['id' => $sleepCourse->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
                         Edit
                         <i class="typcn typcn-edit btn-icon-append"></i>
@@ -576,11 +587,11 @@ class AdminController extends Controller
                         Delete
                         <i class="typcn typcn-delete-outline btn-icon-append"></i>
                     </a>';
-            })
-            ->rawColumns(['thumbnail', 'description', 'action'])
-            ->make(true);
+                })
+                ->rawColumns(['thumbnail', 'description', 'action'])
+                ->make(true);
+        }
     }
-}
 
 
 
@@ -691,7 +702,7 @@ class AdminController extends Controller
     {
         if ($request->ajax()) {
             $sleepAudios = SleepAudio::query(); // Fetches all columns
-    
+
             return DataTables::of($sleepAudios)
                 ->editColumn('audio', function ($sleepAudio) {
                     return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $sleepAudio->audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
@@ -795,7 +806,7 @@ class AdminController extends Controller
     {
         if ($request->ajax()) {
             $categories = Category::query(); // Fetches all columns
-    
+
             return DataTables::of($categories)
                 ->addColumn('action', function ($category) {
                     return '
@@ -865,7 +876,7 @@ class AdminController extends Controller
     {
         if ($request->ajax()) {
             $links = Link::query(); // Fetches all columns
-    
+
             return DataTables::of($links)
                 ->editColumn('icon', function ($link) {
                     return '<img height="50px" width="50px" src="' . asset('storage/links/' . $link->icon) . '" alt="No image upload">';
@@ -959,18 +970,18 @@ class AdminController extends Controller
 
     public function getViewHome(Request $request)
     {
-    if ($request->ajax()) {
-        $homes = HomeScreen::query(); // Fetches all columns
+        if ($request->ajax()) {
+            $homes = HomeScreen::query(); // Fetches all columns
 
-        return DataTables::of($homes)
-            ->editColumn('image', function ($home) {
-                return '<img height="50px" width="50px" src="' . asset('storage/homescreen/' . $home->image) . '" alt="">';
-            })
-            ->editColumn('home_audio', function ($home) {
-                return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $home->home_audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
-            })
-            ->addColumn('action', function ($home) {
-                return '
+            return DataTables::of($homes)
+                ->editColumn('image', function ($home) {
+                    return '<img height="50px" width="50px" src="' . asset('storage/homescreen/' . $home->image) . '" alt="">';
+                })
+                ->editColumn('home_audio', function ($home) {
+                    return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $home->home_audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
+                })
+                ->addColumn('action', function ($home) {
+                    return '
                     <a href="' . url('/manage-admin/edit-home', ['id' => $home->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
                         Edit
                         <i class="typcn typcn-edit btn-icon-append"></i>
@@ -979,11 +990,11 @@ class AdminController extends Controller
                         Delete
                         <i class="typcn typcn-delete-outline btn-icon-append"></i>
                     </a>';
-            })
-            ->rawColumns(['image', 'home_audio', 'action'])
-            ->make(true);
+                })
+                ->rawColumns(['image', 'home_audio', 'action'])
+                ->make(true);
+        }
     }
-}
     public function addHome()
     {
         return view('mw-1.admin.home-screen.add');
@@ -1080,7 +1091,7 @@ class AdminController extends Controller
     {
         if ($request->ajax()) {
             $emojis = EmojiAdd::query(); // Fetches all columns
-    
+
             return DataTables::of($emojis)
                 ->editColumn('emoji', function ($emoji) {
                     return '<img height="50px" width="50px" src="' . asset('storage/emoji/' . $emoji->emoji) . '" alt="emoji image">';
@@ -1299,13 +1310,13 @@ class AdminController extends Controller
         return view('mw-1.admin.sos-audio.manage', get_defined_vars());
         return view('admin.view-sos-audio', compact('getAudio'));
     }
-    
+
 
     public function getViewSosAudio(Request $request)
     {
         if ($request->ajax()) {
             $sosAudios = SosAudio::query(); // Fetches all columns
-    
+
             return DataTables::of($sosAudios)
                 ->editColumn('sos_audio', function ($sosAudio) {
                     return '<audio controls style="vertical-align: middle" src="' . asset('storage/' . $sosAudio->sos_audio) . '" type="audio/mp3" controlslist="nodownload"></audio>';
@@ -1370,7 +1381,7 @@ class AdminController extends Controller
     {
         if ($request->ajax()) {
             $homeEmojis = HomeEmoji::query(); // Fetches all columns
-    
+
             return DataTables::of($homeEmojis)
                 ->editColumn('home_emoji', function ($homeEmoji) {
                     return '<img height="50px" width="50px" src="' . asset('storage/homeEmoji/' . $homeEmoji->home_emoji) . '" alt="emoji image">';
@@ -1467,7 +1478,7 @@ class AdminController extends Controller
     {
         if ($request->ajax()) {
             $singleCourses = SingleCourse::query(); // Fetches all columns
-    
+
             return DataTables::of($singleCourses)
                 ->editColumn('image', function ($singleCourse) {
                     return '<img height="50px" width="50px" src="' . asset('storage/SingleCourse/' . $singleCourse->image) . '" alt="">';
@@ -1593,11 +1604,12 @@ class AdminController extends Controller
         return view('mw-1.admin.sleep-screen.manage', get_defined_vars());
 
         return view('admin.view-sleep-screen', compact('getSleepScreen'));
-    }public function getViewSleepScreen(Request $request)
+    }
+    public function getViewSleepScreen(Request $request)
     {
         if ($request->ajax()) {
             $sleepScreens = SleepScreen::query(); // Fetches all columns
-    
+
             return DataTables::of($sleepScreens)
                 ->editColumn('image', function ($sleepScreen) {
                     return '<img height="50px" width="50px" src="' . asset('storage/SleepScreen/' . $sleepScreen->image) . '" alt="no image">';
@@ -1670,13 +1682,13 @@ class AdminController extends Controller
     }
 
     public function getViewQuote(Request $request)
-{
-    if ($request->ajax()) {
-        $quotes = Quote::query(); // Fetches all columns
+    {
+        if ($request->ajax()) {
+            $quotes = Quote::query(); // Fetches all columns
 
-        return DataTables::of($quotes)
-            ->addColumn('action', function ($quote) {
-                return '
+            return DataTables::of($quotes)
+                ->addColumn('action', function ($quote) {
+                    return '
                     <a href="' . url('/manage-admin/edit-quote', ['id' => $quote->id]) . '" class="btn btn-success btn-sm btn-icon-text mr-3">
                         Edit
                         <i class="typcn typcn-edit btn-icon-append"></i>
@@ -1685,11 +1697,11 @@ class AdminController extends Controller
                         Delete
                         <i class="typcn typcn-delete-outline btn-icon-append"></i>
                     </a>';
-            })
-            ->rawColumns(['action'])
-            ->make(true);
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
     }
-}
 
 
     public function editQuote($id)
@@ -1752,24 +1764,24 @@ class AdminController extends Controller
 
         return view('admin.view-programs', compact('Programs'));
     }
-    
+
     public function getPrograms(Request $request)
     {
         $status = 1;
         if ($request->has('status') && $request->status !== 'all' && in_array($request->status, [0, 1, 2])) {
             $status = $request->status;
         }
-    
+
         $programs = Program::with('programPlan'); // Ensure relation is loaded
-    
+
         if ($status !== null) {
             $programs->where('program_type', $status);
         }
-    
+
         return DataTables::of($programs)
             ->editColumn('renewal_date', function ($program) {
-                return optional($program->programPlan)->renewal_date 
-                    ? $program->programPlan->renewal_date->format('m/d') 
+                return optional($program->programPlan)->renewal_date
+                    ? $program->programPlan->renewal_date->format('m/d')
                     : '-';
             })
             ->addColumn('action', function ($program) {
@@ -1781,68 +1793,66 @@ class AdminController extends Controller
             ->filterColumn('renewal_date', function ($query, $keyword) {
                 // Apply search filter correctly to programPlan relationship
                 $query->whereHas('programPlan', function ($q) use ($keyword) {
-                    $q->whereRaw('LOWER(renewal_date) LIKE ?', ["%".strtolower($keyword)."%"]);
+                    $q->whereRaw('LOWER(renewal_date) LIKE ?', ["%" . strtolower($keyword) . "%"]);
                 });
             })
             ->make(true);
     }
-    
+
     public function viewSessionRequest(Request $request)
     {
         $status = 'pending';
         return view('mw-1.admin.request-sessions.manage', get_defined_vars());
-
     }
-    
+
     public function getSessionRequest(Request $request)
     {
         $status = 'pending';
         if ($request->has('status') && in_array($request->status, ['pending', 'denied', 'accepted'])) {
             $status = $request->status;
         }
-    
+
         $programs = RequestSession::query();
-    
+
         if ($status !== null) {
             $programs->where('status', $status);
         }
-    
+
         return DataTables::of($programs)
-        ->editColumn('requested_date', function ($program) {
-            // First try to parse as Carbon object if it's not already
-            try {
-                $date = $program->request_date instanceof \Carbon\Carbon 
-                    ? $program->request_date 
-                    : \Carbon\Carbon::parse($program->request_date);
-                
-                return $date->format('d/m/Y');
-            } catch (\Exception $e) {
-                return "-";
-            }
-        })
+            ->editColumn('requested_date', function ($program) {
+                // First try to parse as Carbon object if it's not already
+                try {
+                    $date = $program->request_date instanceof \Carbon\Carbon
+                        ? $program->request_date
+                        : \Carbon\Carbon::parse($program->request_date);
+
+                    return $date->format('d/m/Y');
+                } catch (\Exception $e) {
+                    return "-";
+                }
+            })
             ->editColumn('requested', function ($program) {
 
-                if($program->status == 'pending'){
-                    return $program->request_days ." further"; // You might want to make this dynamic
+                if ($program->status == 'pending') {
+                    return $program->request_days . " further"; // You might want to make this dynamic
 
-                }elseif($program->status == 'accepted'){
-                    return $program->request_days ." approved"; // You might want to make this dynamic
+                } elseif ($program->status == 'accepted') {
+                    return $program->request_days . " approved"; // You might want to make this dynamic
 
-                }else{
-                    return $program->request_days ." denied"; // You might want to make this dynamic
+                } else {
+                    return $program->request_days . " denied"; // You might want to make this dynamic
 
                 }
-
             })
-            
+
             ->addColumn('action', function ($program) use ($status) {  // Note the use($status) here
-                $html = '<a href="'.route('admin.reviewSessionRequest', [
-                        'id' => $program->id, 
-                        'status' => $status  // Now using the filtered $status
-                    ]).'" 
+                $html = '<a href="' . route('admin.reviewSessionRequest', [
+                    'id' => $program->id,
+                    'status' => $status  // Now using the filtered $status
+                ]) . '" 
                     class="btn btn-sm btn-primary review-btn mindway-btn" 
-                    data-id="'.$program->id.'"
-                    data-status="'.$status.'"
+                    data-id="' . $program->id . '"
+                    data-status="' . $status . '"
                     >
                     Review Request
                 </a>';
@@ -1853,7 +1863,8 @@ class AdminController extends Controller
             ->make(true);
     }
 
-    public function reviewSessionRequest($id, $status) {
+    public function reviewSessionRequest($id, $status)
+    {
         $reqSession = RequestSession::where('id', $id)->first();
         $custBrev = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
         $counselor = Counselor::where('id', $reqSession->counselor_id)->first();
@@ -1863,7 +1874,7 @@ class AdminController extends Controller
                 'success' => false,
                 'message' => 'Request not found'
             ]);
-        }      
+        }
 
         return response()->json([
             'success' => true,
@@ -1879,10 +1890,10 @@ class AdminController extends Controller
             'request_id' => $reqSession->id,
             'status' => $status
         ]);
-
     }
 
-    public function approveSession(Request $req){
+    public function approveSession(Request $req)
+    {
         $reqId = $req->requestedId;
 
         $reqSession = RequestSession::where('id', $reqId)->first();
@@ -1890,7 +1901,7 @@ class AdminController extends Controller
         $reqSession->request_days = $req->request_session_count;
         $reqSession->status = 'accepted';
         $accepted_date = now()->format('Y-m-d');
-        $reqSession->accepted_date = $accepted_date; 
+        $reqSession->accepted_date = $accepted_date;
 
         $reqSession->save();
 
@@ -1898,25 +1909,20 @@ class AdminController extends Controller
 
         $authuser = auth()->user();
 
-        if($reqSession->program_id){
-            $this->makeZeroInBrevo($reqSession->program_id);
-        }
-
         $program = Program::where('id', $reqSession->program_id)->first();
         $existProgramSession = $program->max_session;
         $program->max_session = $existProgramSession + $req->request_session_count;
         $program->save();
 
-        try{
-            if($custBrevoData){
+        try {
+            if ($custBrevoData) {
 
                 $existSessions = $custBrevoData->max_session;
                 $custBrevoData->max_session = $existSessions +  $req->request_session_count;
                 $custBrevoData->save();
                 try {
-                    $app_customer = Customer::where('id',$custBrevoData->app_customer_id)->first();
-                    if($app_customer )
-                    {
+                    $app_customer = Customer::where('id', $custBrevoData->app_customer_id)->first();
+                    if ($app_customer) {
                         $app_customer->max_session = $app_customer->max_session +  $req->request_session_count;
                         $app_customer->save();
                     }
@@ -1924,8 +1930,8 @@ class AdminController extends Controller
                     //throw $th;
                 }
                 $recipient = $authuser->email;
-                if($recipient){
-                    $subject = 'Employer Notification – Sessions Approved ' . '(Request #'. $reqId .')';
+                if ($recipient) {
+                    $subject = 'Employer Notification – Sessions Approved ' . '(Request #' . $reqId . ')';
                     $template = 'emails.request-sessions.employer-notification-approve';
                     $data = [
                         'admin_name' => $authuser->name,
@@ -1937,55 +1943,42 @@ class AdminController extends Controller
                     sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
                 }
             }
-        }catch(Exception $ex){
+        } catch (Exception $ex) {
         }
         $this->sendEmailToCounselor($reqSession, 'accepted');
 
         return back()->with('message', 'Request Approved Successfully!');
-
     }
 
-    public function makeZeroInBrevo($programId){
-        $brevoData = CustomreBrevoData::where(['program_id'=> $programId, 'level' => 'admin'])->get();
-        foreach($brevoData as $custData){
-            $custData->is_email_sent = 0;
-            $custData->save();
-        }
-    }
-    public function denySession(Request $req){
+    public function denySession(Request $req)
+    {
         $reqId = $req->requestedId;
         $reqSession = RequestSession::where('id', $reqId)->first();
         $reqSession->status = 'denied';
         $denied_date = now()->format('Y-m-d');
-        $reqSession->denied_date = $denied_date; 
+        $reqSession->denied_date = $denied_date;
         $reqSession->save();
-
-        if($reqSession->program_id){
-            $this->makeZeroInBrevo($reqSession->program_id);
-        }
         $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
         $authuser = auth()->user();
 
-        try{
-            if($custBrevoData){
+        try {
+            if ($custBrevoData) {
                 $recipient = $authuser->email;
-                if($recipient){
-                
-            $subject = 'Session Denial Confirmation ' . '(Request #'. $reqId .')';
-            $template = 'emails.request-sessions.employer-notification-denied';
-            $data = [
-                'admin_name' =>  $authuser->name,
-                'denial_date' => $denied_date,
-                'approved_quantity' => 0,
-                'approved_status' => 'No',
-                'request_id' => $reqId,
-            ];
-            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+                if ($recipient) {
+
+                    $subject = 'Session Denial Confirmation ' . '(Request #' . $reqId . ')';
+                    $template = 'emails.request-sessions.employer-notification-denied';
+                    $data = [
+                        'admin_name' =>  $authuser->name,
+                        'denial_date' => $denied_date,
+                        'approved_quantity' => 0,
+                        'approved_status' => 'No',
+                        'request_id' => $reqId,
+                    ];
+                    sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
                 }
             }
-
-        }catch(Exception $ex){
-
+        } catch (Exception $ex) {
         }
 
 
@@ -1994,35 +1987,35 @@ class AdminController extends Controller
         return back()->with('message', 'Request Denied!');
     }
 
-    public function sendEmailToCounselor($reqSession, $status){
+    public function sendEmailToCounselor($reqSession, $status)
+    {
 
-        try{
+        try {
             $counselorId = $reqSession->counselor_id;
-        
+
             $counselor = Counselor::where('id', $counselorId)->first();
             $counsellor_name = $counselor->name ?? '';
-            
+
             $emp = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
             $employee_email = $emp->email ?? '';
             $employee_name = $emp->name ?? '';
-    
+
             $reqId = $reqSession->id;
-            if($status == 'denied'){
+            if ($status == 'denied') {
                 $finalStatus = 'No';
                 $approved_quantity = 0;
                 $template = 'emails.request-sessions.counsellor-notification-denied';
-                $subject = 'Session Denial Notification ' . '(Request #'. $reqId .')';
-    
-            }else{
+                $subject = 'Session Denial Notification ' . '(Request #' . $reqId . ')';
+            } else {
                 $finalStatus = 'Yes';
                 $approved_quantity = $reqSession->request_days;
                 $template = 'emails.request-sessions.counsellor-notification-approve';
-                $subject = 'New Session Approval ' . '(Request #'. $reqId .')';
+                $subject = 'New Session Approval ' . '(Request #' . $reqId . ')';
             }
             $date = now()->format('Y-m-d');
-    
+
             $recipient = $counselor->email;
-            if($recipient){
+            if ($recipient) {
                 $data = [
                     'employee_name' => $employee_name,
                     'employee_email' => $employee_email,
@@ -2033,13 +2026,11 @@ class AdminController extends Controller
                     'request_id' => $reqId,
                 ];
             }
-    
-            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
-        
-        }catch(Exception $ex){
 
+            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+        } catch (Exception $ex) {
         }
-       }
+    }
 
     public function viewsession()
     {
@@ -2078,7 +2069,7 @@ class AdminController extends Controller
 
                 $brevoService = new BrevoService();
                 $brevoService->addUserToList($request->admin_email, $request->full_name, $program->code, $request->company_name, $request->max_session, 11);
-                if($program && $admin_level_employee){
+                if ($program && $admin_level_employee) {
                     $multiLogin = new ProgramMultiLogin();
                     $multiLogin->customre_brevo_data_id = $admin_level_employee->id;
                     $multiLogin->program_id = $program->id;
@@ -2119,11 +2110,11 @@ class AdminController extends Controller
                 $program->email = $request->admin_email;
                 $program->program_type = $request->program_type ?? 0;
 
-                if($request->input('allow_employees') == 'yes'){
+                if ($request->input('allow_employees') == 'yes') {
                     $program->allow_employees = 1;
-                    }else{
+                } else {
                     $program->allow_employees = 0;
-                    }
+                }
 
                 if ($request->program_type == 2) {
                     $program->trial_expire = Carbon::parse($request->trial_expire)->format('Y-m-d H:i:s');
@@ -2138,14 +2129,14 @@ class AdminController extends Controller
                     $programPlans->cost_per_session = $request->cost_per_session;
                     $formattedDate = Carbon::createFromFormat('d/m/Y', $request->renewal_date . '/' . date('Y'))->startOfDay();
                     $programPlans->renewal_date =  $formattedDate;
-                    if($request->input('gst_registered') == 'yes'){
-                    $programPlans->gst_registered = 1;
-                    }else{
-                    $programPlans->gst_registered = 0;
+                    if ($request->input('gst_registered') == 'yes') {
+                        $programPlans->gst_registered = 1;
+                    } else {
+                        $programPlans->gst_registered = 0;
                     }
                     $programPlans->save();
-                    
-                     if ($program && $request->departments) {
+
+                    if ($program && $request->departments) {
                         foreach (json_decode($request->departments) as $key => $department) {
                             $departs = new ProgramDepartment();
                             $departs->name = $department;
@@ -2153,66 +2144,65 @@ class AdminController extends Controller
                             $departs->save();
                         }
                     }
-                    
                 }
-                return redirect()->to('/manage-admin/program/'.$program->id)->with('message', 'Program added successfully!');
+                return redirect()->to('/manage-admin/program/' . $program->id)->with('message', 'Program added successfully!');
             }
         } catch (\Throwable $th) {
             //throw $th;
         }
-            return back()->with('message', 'Something went wrong while adding program!');
+        return back()->with('message', 'Something went wrong while adding program!');
     }
 
     public function updateProgram(Request $request, $id)
     {
         // dd($request->all());
         try {
-        $Program = Program::find($id);
-        $imageName = '';
+            $Program = Program::find($id);
+            $imageName = '';
 
-        if ($request->hasFile('logo')) {
-            $image = $request->logo;
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            $request->logo->storeAs('logo', $imageName);
-            $Program->logo = $imageName;
-        }
+            if ($request->hasFile('logo')) {
+                $image = $request->logo;
+                $imageName = time() . '.' . $image->getClientOriginalExtension();
+                $request->logo->storeAs('logo', $imageName);
+                $Program->logo = $imageName;
+            }
 
-        $Program->company_name = $request->company_name;
-        $Program->email = $request->email;
-        $Program->max_lic = $request->max_lic;
-        $Program->code = $request->code;
-        $Program->link = $request->link ?? 'https://mindwayeap.com.au/booking';
-        $Program->max_session = $request->max_session;
-        $Program->allow_employees = $request->allow_employees;
+            $Program->company_name = $request->company_name;
+            $Program->email = $request->email;
+            $Program->max_lic = $request->max_lic;
+            $Program->code = $request->code;
+            $Program->link = $request->link ?? 'https://mindwayeap.com.au/booking';
+            $Program->max_session = $request->max_session;
+            $Program->allow_employees = $request->allow_employees;
 
-        if ($request->program_type == 2) {
-            $Program->trial_expire = Carbon::parse($request->trial_expire)->format('Y-m-d H:i:s');
-        }
+            if ($request->program_type == 2) {
+                $Program->trial_expire = Carbon::parse($request->trial_expire)->format('Y-m-d H:i:s');
+            }
 
-        // Check if password field is present in the request
-        if ($request->filled('password')) {
-            // Hash the password before saving
-            //             $random_password = $request->password; // Set a default password
-            // $hashed_password = \Hash::make($random_password);
-            $random_password = 'Test123';
-            $Program->password = $request->password;
-        }
-        $Program->program_type = $request->program_type;
-        // $Program->save();
+            // Check if password field is present in the request
+            if ($request->filled('password')) {
+                // Hash the password before saving
+                //             $random_password = $request->password; // Set a default password
+                // $hashed_password = \Hash::make($random_password);
+                $random_password = 'Test123';
+                $Program->password = $request->password;
+            }
+            $Program->program_type = $request->program_type;
+            // $Program->save();
 
-        // $employee = User::where(['email' => $request->admin_email, 'user_type' => 'employee'])->first();
-        // if (!$employee) {
-        //     $employee = new User();
-        //     $employee->password = \Hash::make($request->full_name);
-        // }
-        // $employee->name = $request->full_name;
-        // $employee->email = $request->admin_email;
-        // $employee->user_type = 'employee';
-        // $employee->save();
-        // $Program->admin_id = $employee->id;
+            // $employee = User::where(['email' => $request->admin_email, 'user_type' => 'employee'])->first();
+            // if (!$employee) {
+            //     $employee = new User();
+            //     $employee->password = \Hash::make($request->full_name);
+            // }
+            // $employee->name = $request->full_name;
+            // $employee->email = $request->admin_email;
+            // $employee->user_type = 'employee';
+            // $employee->save();
+            // $Program->admin_id = $employee->id;
 
-        $Program->save();
-        
+            $Program->save();
+
             $alreadyPrograms = ProgramDepartment::where('program_id', $id)->pluck('name')->toArray();
             $newPrograms = json_decode($request->departments);
             $departmentsToDelete = array_diff($alreadyPrograms, $newPrograms);
@@ -2226,30 +2216,29 @@ class AdminController extends Controller
                     $departs->save();
                 }
             }
-        $progPlans = ProgramPlan::where('program_id', $id)->first();
-        if ($request->program_type == 1) {
-            if (!$progPlans) {
-                $progPlans = new ProgramPlan();
+            $progPlans = ProgramPlan::where('program_id', $id)->first();
+            if ($request->program_type == 1) {
+                if (!$progPlans) {
+                    $progPlans = new ProgramPlan();
+                }
+                $progPlans->program_id = $id;
+                $progPlans->plan_type = $request->plan_type;
+                $progPlans->annual_fee = $request->annual_fee;
+                $progPlans->cost_per_session = $request->cost_per_session;
+                $formattedDate = Carbon::createFromFormat('d/m/Y', $request->renewal_date . '/' . date('Y'))->startOfDay();
+                $progPlans->renewal_date = $formattedDate;
+                $progPlans->gst_registered = $request->gst_registered;
+                // $progPlans->gst_registered = $request->has('gst_registered') ? 1 : 0;
+                $progPlans->save();
+            } else {
+                if ($progPlans) {
+                    $progPlans->delete();
+                }
             }
-            $progPlans->program_id = $id;
-            $progPlans->plan_type = $request->plan_type;
-            $progPlans->annual_fee = $request->annual_fee;
-            $progPlans->cost_per_session = $request->cost_per_session;
-            $formattedDate = Carbon::createFromFormat('d/m/Y', $request->renewal_date . '/' . date('Y'))->startOfDay();
-            $progPlans->renewal_date = $formattedDate;
-            $progPlans->gst_registered = $request->gst_registered;
-            // $progPlans->gst_registered = $request->has('gst_registered') ? 1 : 0;
-            $progPlans->save();
-        } else {
-            if ($progPlans) {
-                $progPlans->delete();
-            }
-        }
-        return back()->with('message', 'Program updated successfully!');
+            return back()->with('message', 'Program updated successfully!');
         } catch (\Throwable $th) {
-
         }
-            return back()->with('message', 'Something went wrong!');
+        return back()->with('message', 'Something went wrong!');
     }
     public function updateCustomerLevel(Request $request)
     {
@@ -2259,19 +2248,20 @@ class AdminController extends Controller
             $customer->level = $request->admin_level;
             $customer->save();
         }
-            if($customer){
-                $programId = $customer->program_id;
-                $customerId = $customer->id;
-                $multiLogin = ProgramMultiLogin::where(['program_id' => $programId, 'customre_brevo_data_id' => $customerId]
+        if ($customer) {
+            $programId = $customer->program_id;
+            $customerId = $customer->id;
+            $multiLogin = ProgramMultiLogin::where(
+                ['program_id' => $programId, 'customre_brevo_data_id' => $customerId]
             )->first();
 
-                if(!$multiLogin){
-                    $multiLogin = new ProgramMultiLogin();
-                    $multiLogin->program_id =$programId;
-                    $multiLogin->customre_brevo_data_id = $customerId;
-                    $multiLogin->save();
-                }
+            if (!$multiLogin) {
+                $multiLogin = new ProgramMultiLogin();
+                $multiLogin->program_id = $programId;
+                $multiLogin->customre_brevo_data_id = $customerId;
+                $multiLogin->save();
             }
+        }
         if ($oldLevel == 'member' && $request->admin_level == 'admin') {
             $recipient = $customer->email;
             $subject = 'You’ve Been Made an Admin for Mindway EAP';
@@ -2297,9 +2287,8 @@ class AdminController extends Controller
             $Program->program_type = '1';
             $Program->trial_expire = null;
             $message = 'Program Activated';
-            $allAdminUser = CustomreBrevoData::where('program_id',$Program->id)->where('level','admin')->get();
-            foreach($allAdminUser as $user)
-            {
+            $allAdminUser = CustomreBrevoData::where('program_id', $Program->id)->where('level', 'admin')->get();
+            foreach ($allAdminUser as $user) {
                 $recipient = $user->email;
                 $subject = 'Welcome to Mindway EAP';
                 $template = 'emails.active-program';
@@ -2309,9 +2298,8 @@ class AdminController extends Controller
                     'access_code' => $Program->code,
                 ];
                 sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
-          
             }
-            }
+        }
         if ($convertTo == 'delete') {
             $Program->delete();
             $message = 'Program Deleted';
@@ -2321,19 +2309,18 @@ class AdminController extends Controller
             $Program->trial_expire = Carbon::now()->addDays(14)->format('Y-m-d H:i:s');
             $Program->program_type = '2';
             $message = 'Program Trial Extended by 14 days';
-            $allAdminUser = CustomreBrevoData::where('program_id',$Program->id)->where('level','admin')->get();
-            foreach($allAdminUser as $user)
-            {
-            $recipient = $user->email;
-            $subject = 'Start Your 14-Day Mindway EAP Trial';
-            $template = 'emails.trial-program';
-            $data = [
-                'full_name' => $user->name,
-                'company_name' => $Program->company_name,
-                'access_code' => $Program->code,
-            ];
-            sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
-        }
+            $allAdminUser = CustomreBrevoData::where('program_id', $Program->id)->where('level', 'admin')->get();
+            foreach ($allAdminUser as $user) {
+                $recipient = $user->email;
+                $subject = 'Start Your 14-Day Mindway EAP Trial';
+                $template = 'emails.trial-program';
+                $data = [
+                    'full_name' => $user->name,
+                    'company_name' => $Program->company_name,
+                    'access_code' => $Program->code,
+                ];
+                sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);
+            }
         }
         if ($convertTo !== 'delete') {
             $Program->save();
@@ -2373,7 +2360,7 @@ class AdminController extends Controller
     // {
     //     $programId = $request->programId;
     //     $customers = CustomreBrevoData::where('program_id', $programId)->get();
-    
+
     //     return DataTables::of($customers)
     //         ->editColumn('max_session', function ($customer) use ($programId) {
     //             return intval($customer->max_session) . '
@@ -2388,18 +2375,18 @@ class AdminController extends Controller
     //                     Low
     //                 </a>';
     //         })
-    
+
     //         ->addColumn('name_email', function ($customer) {
     //             return '
     //                 <span class="fw-semibold">' . htmlspecialchars($customer->name) . '</span><br>
     //                 <span class="fw-normal">' . htmlspecialchars($customer->email) . '</span>';
     //         })
-    
+
     //         ->addColumn('level', function ($customer) {
     //             $badgeClass = ($customer->level == 'member') ? 'member-style' : 'admin-style';
     //             return '<span class="badge btn btn-primary theme-btn ' . $badgeClass . '">' . htmlspecialchars($customer->level) . '</span>';
     //         })
-            
+
     //         ->addColumn('action', function ($customer) use ($programId) {
     //             return '<a href="' . route('remove-cusomer-program', ['customerId' => $customer->id, 'programId' => $programId]) . '"
     //                     class="mindway-btn btn btn-success btn-sm remove-btn"
@@ -2411,15 +2398,15 @@ class AdminController extends Controller
     //         ->rawColumns(['max_session', 'name_email', 'level', 'action']) // Ensure raw HTML columns are processed
     //         ->make(true);
     // }
-    
-    public function programEmployees(Request $request)
-{
-    $programId = $request->programId;
-    $customers = CustomreBrevoData::where('program_id', $programId)->get();
 
-    return DataTables::of($customers)
-        ->editColumn('max_session', function ($customer) use ($programId) {
-            return intval($customer->max_session) . '
+    public function programEmployees(Request $request)
+    {
+        $programId = $request->programId;
+        $customers = CustomreBrevoData::where('program_id', $programId)->get();
+
+        return DataTables::of($customers)
+            ->editColumn('max_session', function ($customer) use ($programId) {
+                return intval($customer->max_session) . '
                 <a href="' . route('plus-session', ['customerId' => $customer->id, 'programId' => $programId]) . '"
                     class="mindway-btn btn btn-success btn-sm remove-btn"
                     style="background-color: #E4E4E4 !important;color:#7C7C7C !important;margin-left: 10px;">
@@ -2430,40 +2417,50 @@ class AdminController extends Controller
                     style="background-color: #E4E4E4 !important;color:#7C7C7C !important;margin-left: 10px;">
                     Low
                 </a>';
-        })
-        ->addColumn('name_email', function ($customer) {
-            $iconHtml = '';
-            if ($customer->level == 'admin') {
-                $icon = $customer->is_email_sent == 1 
-                    ? asset('images/icons/blue-key.png') 
-                    : asset('images/icons/black-key.png');
-                $iconHtml = '<img src="' . $icon . '" alt="key" style="width: 16px; height: 16px; margin-left: 5px;">';
-            }
-            return '<span class="fw-semibold">' . htmlspecialchars($customer->name) . '
-                    ' . $iconHtml . '</span><br> <span class="fw-normal">' . htmlspecialchars($customer->email) . '</span>';
-        })                
-        ->addColumn('level', function ($customer) {
-            $badgeClass = ($customer->level == 'member') ? 'member-style' : 'admin-style';
-            return '
+            })
+            ->addColumn('name_email', function ($customer) {
+                $iconHtml = '';
+
+                if ($customer->level == 'admin') {
+                    $icon = $customer->is_email_sent == 1
+                        ? asset('images/icons/blue-key.png')
+                        : asset('images/icons/black-key.png');
+
+                    $iconHtml = '<a href="' . route('customers.toggleEmailPrivilege', $customer->id) . '" 
+                                title="Toggle Email Send Privilege"
+                                onclick="event.preventDefault(); toggleEmailPrivilege(' . $customer->id . ')">
+                                <img src="' . $icon . '" alt="key" 
+                                     style="width: 16px; height: 16px; margin-left: 5px; cursor: pointer;">
+                            </a>';
+                }
+
+                return '<span class="fw-semibold">' . htmlspecialchars($customer->name) . '
+                    ' . $iconHtml . '</span><br>
+                    <span class="fw-normal">' . htmlspecialchars($customer->email) . '</span>';
+            })
+
+            ->addColumn('level', function ($customer) {
+                $badgeClass = ($customer->level == 'member') ? 'member-style' : 'admin-style';
+                return '
                 <span class="badge btn btn-primary theme-btn ' . $badgeClass . '"
                     data-id="' . $customer->id . '"
                     data-level="' . $customer->level . '"
                     onclick="openLevelModal(' . $customer->id . ', \'' . $customer->level . '\')">
                     ' . $customer->level . '
                 </span>';
-        })
-        ->addColumn('action', function ($customer) use ($programId) {
-            return '
+            })
+            ->addColumn('action', function ($customer) use ($programId) {
+                return '
                 <a href="' . route('remove-cusomer-program', ['customerId' => $customer->id, 'programId' => $programId]) . '"
                     class="mindway-btn btn btn-success btn-sm remove-btn"
                     style="background-color: #E4E4E4 !important;color:#7C7C7C !important">
                     Remove
                     <i class="typcn typcn-view btn-icon-append"></i>
                 </a>';
-        })
-        ->rawColumns(['max_session', 'name_email', 'level', 'action']) // Ensure raw HTML columns are processed
-        ->make(true);
-}
+            })
+            ->rawColumns(['max_session', 'name_email', 'level', 'action']) // Ensure raw HTML columns are processed
+            ->make(true);
+    }
 
 
     public function RemoveReddemCode($customerId, $programId)
@@ -2474,13 +2471,11 @@ class AdminController extends Controller
             $brevo->removeUserFromList($customer->email);
             $customer->delete();
             $customer3 = CustomerRelatedProgram::where('customer_id', $customerId)->first();
-            if($customer3)
-            {
+            if ($customer3) {
                 $customer3->delete();
             }
-            if($customer->app_customer_id)
-            {
-                $data = Customer::where('id',$customer->app_customer_id)->first();
+            if ($customer->app_customer_id) {
+                $data = Customer::where('id', $customer->app_customer_id)->first();
                 $brevo = new BrevoService();
                 $brevo->removeUserFromList($data->email);
                 $data->delete();
@@ -2497,10 +2492,9 @@ class AdminController extends Controller
         if ($customer) {
             $customer->max_session = $customer->max_session - 1;
             $customer->save();
-            if($customer->app_customer_id){
-                $customer3 = Customer::where('id',$customer->app_customer_id)->first();
-                if($customer3)
-                {
+            if ($customer->app_customer_id) {
+                $customer3 = Customer::where('id', $customer->app_customer_id)->first();
+                if ($customer3) {
                     $customer3->max_session = $customer3->max_session - 1;
                     $customer3->save();
                 }
@@ -2516,11 +2510,10 @@ class AdminController extends Controller
             // Detach the program from the customer
             $customer->max_session = (int)$customer->max_session + 1;
             $customer->save();
-            if(isset($customer->app_customer_id))
-            {
-                $customer3 = Customer::where('id',$customer->app_customer_id)->first();
-                if($customer3){
-                     $customer3->max_session = (int)$customer->max_session;
+            if (isset($customer->app_customer_id)) {
+                $customer3 = Customer::where('id', $customer->app_customer_id)->first();
+                if ($customer3) {
+                    $customer3->max_session = (int)$customer->max_session;
                     $customer3->save();
                 }
             }
@@ -2564,7 +2557,7 @@ class AdminController extends Controller
 
     public function store(Request $request)
     {
-       
+
         // Initialize the reason array
         $reasons = [];
 
@@ -2587,47 +2580,40 @@ class AdminController extends Controller
 
         // Get new_user value
         $newUser = $request->input('new_user', 'No');
-        try
-        {
-             $upcomingBookings = Booking::where('counselor_id', $request->counselor_id )
-            ->where('slot_id', $request->slot_id)
-            ->first();
-           
-            if($upcomingBookings)
-            {
+        try {
+            $upcomingBookings = Booking::where('counselor_id', $request->counselor_id)
+                ->where('slot_id', $request->slot_id)
+                ->first();
+
+            if ($upcomingBookings) {
                 $upcomingBookings->status = 'completed';
                 $upcomingBookings->save();
             }
-        }
-        catch (\Throwable $th) {
-            
+        } catch (\Throwable $th) {
         }
         // Fetch data from Session model using program_id
-        try
-        {
-            $customer3 = Customer::where('id',$request->customerId)->first();
+        try {
+            $customer3 = Customer::where('id', $request->customerId)->first();
             $customer3->max_session = $customer3->max_session - 1;
             $customer3->save();
-        }
-        catch (\Throwable $th) {
+        } catch (\Throwable $th) {
             //throw $th;
         }
         if ($request->type == 'upcomingSession') {
             $sessionData = CustomreBrevoData::where('app_customer_id', $request->customerId)->first();
-            
         } else {
             $sessionData = CustomreBrevoData::where('id', $request->customerId)->first();
         }
         if ($sessionData) {
             Session::create([
-            'session_date' => $request->sessionDate,
-            'session_type' => $request->sessionType,
-            'reason' => $reasonStrings,
-            'new_user' => $newUser,
-            'program_id' => $request->programId??$sessionData->program_id,
-            'department_id' => $sessionData?->department_id??null,
-            'counselor_id' => $request->counselor_id ?? null
-        ]);
+                'session_date' => $request->sessionDate,
+                'session_type' => $request->sessionType,
+                'reason' => $reasonStrings,
+                'new_user' => $newUser,
+                'program_id' => $request->programId ?? $sessionData->program_id,
+                'department_id' => $sessionData?->department_id ?? null,
+                'counselor_id' => $request->counselor_id ?? null
+            ]);
             $sessionData->max_session = $sessionData->max_session - 1;
             $sessionData->is_counselling_user = true;
             $sessionData->save();
@@ -2636,12 +2622,12 @@ class AdminController extends Controller
                 'session_type' => $request->sessionType,
                 'reason' => $reasonStrings,
                 ' ' => $newUser,
-                'program_id' => $request->programId??$sessionData->program_id,
+                'program_id' => $request->programId ?? $sessionData->program_id,
                 'company_name' => $sessionData->company_name,
                 'name' => $sessionData->name,
                 'email' => $sessionData->email,
                 'counselor_id' => $request->counselor_id ?? null,
-                'department_id' => $sessionData?->department_id??null,
+                'department_id' => $sessionData?->department_id ?? null,
                 'max_session' => $sessionData->max_session, // Assuming you want to store this as well
             ]);
             return redirect()->back()->with('success', 'Session data saved successfully.');
@@ -2665,7 +2651,7 @@ class AdminController extends Controller
         if ($request->ajax()) {
             $counsellors = Counselor::query(); // Fetches all columns
             return DataTables::of($counsellors)
-                
+
                 ->addColumn('action', function ($counsellor) {
                     return '<a href="' . url('/manage-admin/counsellor-manage', ['id' => $counsellor->id]) . '" class="btn btn-success btn-sm mindway-btn-blue">Manage</a>
                             <a href="' . url('/manage-admin/counsellor-availability', ['id' => $counsellor->id]) . '" class="btn btn-secondary btn-sm mindway-btn-blue">Availability</a>
@@ -2675,12 +2661,12 @@ class AdminController extends Controller
                 ->make(true);
         }
     }
-    
+
     public function counsellorManage(Request $request, $id)
     {
-           $Counselor = Counselor::where('id', $id)->first();
-           $user_id = $Counselor->id;
-           $customers = CustomreBrevoData::all();
+        $Counselor = Counselor::where('id', $id)->first();
+        $user_id = $Counselor->id;
+        $customers = CustomreBrevoData::all();
         //    $upcomingBookings = Booking::with(['user', 'counselor', 'slot'])
         //        ->where('counselor_id', $Counselor?->id)
         //        ->where('status', 'confirmed')
@@ -2699,30 +2685,30 @@ class AdminController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(10); // Change 10 to your desired items per page
 
-               $sortOrder = $request->query('sort', 'asc'); // Default to ascending
-               $CounselorSession = CounsellingSession::with('counselor')->orderBy('session_date', $sortOrder) // Sorting by session_date
-                   ->get();
+        $sortOrder = $request->query('sort', 'asc'); // Default to ascending
+        $CounselorSession = CounsellingSession::with('counselor')->orderBy('session_date', $sortOrder) // Sorting by session_date
+            ->get();
         //    $CounselorSession = CounsellingSession::with('counselor')->get();
-           $timezone = $Counselor->timezone??'UTC';
+        $timezone = $Counselor->timezone ?? 'UTC';
         //    $timezone = 'Europe/London';
-           return view('mw-1.admin.counsellor.counsellor-manage', get_defined_vars());
-       }
+        return view('mw-1.admin.counsellor.counsellor-manage', get_defined_vars());
+    }
 
-       public function counsellorSession(Request $request)
-       {
-           if ($request->ajax()) {
-               // Fetch Counselling Sessions with the related counselor
-               $sessions = CounsellingSession::with('counselor') // Load the counselor relationship
-                   ->orderBy('session_date', 'asc') // Sorting by session_date (default to ascending)
-                   ->get();
-    
-               return DataTables::of($sessions)
-                   ->addColumn('counselor_name', function ($session) {
-                       return $session->counselor ? $session->counselor->name : 'No Counselor Assigned';
-                   })
-                   ->make(true);
-           }
-       }
+    public function counsellorSession(Request $request)
+    {
+        if ($request->ajax()) {
+            // Fetch Counselling Sessions with the related counselor
+            $sessions = CounsellingSession::with('counselor') // Load the counselor relationship
+                ->orderBy('session_date', 'asc') // Sorting by session_date (default to ascending)
+                ->get();
+
+            return DataTables::of($sessions)
+                ->addColumn('counselor_name', function ($session) {
+                    return $session->counselor ? $session->counselor->name : 'No Counselor Assigned';
+                })
+                ->make(true);
+        }
+    }
 
 
     public function counsellerCancelSession(Request $request)
@@ -2765,7 +2751,7 @@ class AdminController extends Controller
         $availability = $Counselor->availabilities()->get();
         $availabilityData = [];
         $timezones = $this->timezones();
-        
+
         foreach ($availability as $schedule) {
             $startTimeInCounselorTimezone = Carbon::parse($schedule->start_time)->setTimezone($currentTimezone);
             $endTimeInCounselorTimezone = Carbon::parse($schedule->end_time)->setTimezone($currentTimezone);
@@ -2776,7 +2762,7 @@ class AdminController extends Controller
                 'end_time' =>   $endTimeInCounselorTimezone->format('H:i'),
             ];
         }
-       
+
         return view('mw-1.admin.counsellor.counsellor-availability', get_defined_vars());
     }
 
@@ -2789,10 +2775,10 @@ class AdminController extends Controller
             'counselorId' => 'required'
         ]);
 
-        
+
         $availabilityData = $validated['availability_data'];
 
-      
+
         $user_id = $request->counselorId;
         $counselor = Counselor::findOrFail($user_id);
         // if ($validated['timezone']) {
@@ -2806,9 +2792,9 @@ class AdminController extends Controller
             // Clear existing availability
             $counselor->availabilities()->delete();
 
-          
+
             foreach ($availabilityData as $dayAvailability) {
-                
+
                 $startTime = Carbon::parse($dayAvailability['start_time'], $counselor->timezone);
                 $endTime = Carbon::parse($dayAvailability['end_time'], $counselor->timezone);
 
@@ -2837,7 +2823,7 @@ class AdminController extends Controller
             // }
 
             // Generate slots based on new availability
-             $counselor->slots()->where('is_booked', false)->delete();
+            $counselor->slots()->where('is_booked', false)->delete();
             app(SlotGenerationService::class)->generateSlotsForCounselor($counselor);
 
             return back()->with('message', 'Data saved successfully.');
@@ -2855,8 +2841,8 @@ class AdminController extends Controller
     {
         $request->validate([
             'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'location' => 'required|string', 
-            'language' => 'required|array', 
+            'location' => 'required|string',
+            'language' => 'required|array',
             'language.*' => 'string',
         ]);
 
@@ -2864,8 +2850,7 @@ class AdminController extends Controller
         $Counselor = Counselor::where('id', $counsellorId)->first();
 
         $specilization = [];
-        if(isset($request->tags) && $request->tags != '')
-        {
+        if (isset($request->tags) && $request->tags != '') {
             $specilization = array_map('trim', explode(',', $request->tags));
         }
         $Counselor->description = $request->description;
@@ -2884,13 +2869,11 @@ class AdminController extends Controller
         $Counselor->communication_method = json_encode($request->communication_methods);
         $Counselor->specialization = json_encode($specilization);
         $Counselor->save();
-        if(isset($request->notice_period))
-        {
+        if (isset($request->notice_period)) {
             $Counselor->slots()->where('is_booked', false)->delete();
             $month = now()->addMonth()->month;
             app(SlotGenerationService::class)->generateSlotsForCounselor($Counselor);
-            app(SlotGenerationService::class)->generateSlotsForCounselor($Counselor,$month);
-            
+            app(SlotGenerationService::class)->generateSlotsForCounselor($Counselor, $month);
         }
         return back()->with(['message' => "Information Saved Successfully"]);
     }
@@ -2929,7 +2912,6 @@ class AdminController extends Controller
         }
         $Counselor->save();
         return response()->json(['status' => 'success', 'message' => 'File Saved Successfully']);
-   
     }
 
     public function storeCounsellor(Request $request)
@@ -2938,13 +2920,12 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:counselors,email',
             'gender' => 'required',
-            'location' => 'required|string', 
-            'language' => 'required|array', 
+            'location' => 'required|string',
+            'language' => 'required|array',
             'language.*' => 'string',
         ]);
         $specilization = [];
-        if(isset($request->tags) && $request->tags != '')
-        {
+        if (isset($request->tags) && $request->tags != '') {
             $specilization = array_map('trim', explode(',', $request->tags));
         }
         $user = Counselor::create([
@@ -3018,7 +2999,7 @@ class AdminController extends Controller
         ]);
 
         try {
-            if ( $request->level == 'admin') {
+            if ($request->level == 'admin') {
                 $recipient = strtolower($request->email);
                 $subject = 'You’ve Been Made an Admin for Mindway EAP';
                 $template = 'emails.become-admin-member';
@@ -3063,8 +3044,7 @@ class AdminController extends Controller
                 if ($employee['email'] && $employee['email'] !== null) {
 
                     $customer = CustomreBrevoData::where('email', $employee['email'])->first();
-                    if (!$customer)
-                    {
+                    if (!$customer) {
                         $customer = new CustomreBrevoData();
                         $customer->email = strtolower($employee['email']);
                         $customer->name = $employee['name'];
@@ -3074,15 +3054,14 @@ class AdminController extends Controller
                         $customer->level = 'member';
                         $customer->save();
                     }
-                    $company_name = $Program->company_name??$customer->company_name??null;
-                    $max_session = $Program->max_session??$customer->max_session??0;
-                    $code = $Program->code??'';
+                    $company_name = $Program->company_name ?? $customer->company_name ?? null;
+                    $max_session = $Program->max_session ?? $customer->max_session ?? 0;
+                    $code = $Program->code ?? '';
                     $brevoService = new BrevoService();
                     $brevoService->addUserToList($employee['email'], $employee['name'], $code, $company_name, $max_session, 9);
                 }
             }
         }
         return back()->with('message', 'Record added successfully');
-        
     }
 }

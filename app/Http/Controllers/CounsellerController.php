@@ -404,13 +404,11 @@ class CounsellerController extends Controller
     $reqSession->save();
 
     try{
-            $brevoData = CustomreBrevoData::where(['program_id'=> $req->programId, 'level' => 'admin'])->get();
+            $brevoData = CustomreBrevoData::where(['program_id'=> $req->programId, 'level' => 'admin','is_email_sent' => 1])->get();
             foreach($brevoData as $custData){
             try{
                 $recipient = $custData->email;
                 if($recipient){
-                    $custData->is_email_sent = 1;
-                    $custData->save();
                     $admin_name = $custData->name;
                     $subject = 'Counseling Session Extension Request';
                     $template = 'emails.request-sessions.to-admin-notification';
@@ -424,8 +422,6 @@ class CounsellerController extends Controller
                     sendDynamicEmailFromTemplate($recipient, $subject, $template, $data);    
                 }
               }catch(\Exception $ex){
-                $custData->is_email_sent = 0;
-                $custData->save();
             }
             }
 

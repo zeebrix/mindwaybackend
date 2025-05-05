@@ -332,6 +332,8 @@ Route::post('/sessions/store', [AdminController::class, 'store'])->name('admin.s
     Route::get('/plus-session/{customerId}/{programId}', [AdminController::class,'PlusSession'])->name('plus-session');
 
 });
+Route::post('/customers/{customer_id}/toggle-email-privilege', [AdminController::class, 'toggleEmailSent'])
+    ->name('customers.toggleEmailPrivilege');
 
 Route::group(['prefix' => 'manage-program'], function () {
     Route::get('/clear', function() {

@@ -1044,10 +1044,6 @@ class ProgramController extends Controller
         $existProgramSession = $program->max_session;
         $program->max_session = $existProgramSession + $req->request_session_count;
         $program->save();
-
-        if($reqSession->program_id){
-            $this->makeZeroInBrevo($reqSession->program_id);
-        }
         
         try{
             if($custBrevoData){
@@ -1087,13 +1083,6 @@ class ProgramController extends Controller
         $reqSession->save();
         return back()->with('message', 'Request Approved Successfully!');
     }
-    public function makeZeroInBrevo($programId){
-        $brevoData = CustomreBrevoData::where(['program_id'=> $programId, 'level' => 'admin'])->get();
-        foreach($brevoData as $custData){
-            $custData->is_email_sent = 0;
-            $custData->save();
-        }
-    }
 
     public function denySession(Request $req){
         $reqId = $req->requestedId;
@@ -1102,9 +1091,6 @@ class ProgramController extends Controller
         $denied_date = now()->format('Y-m-d');
         $reqSession->denied_date = $denied_date; 
         $reqSession->save();
-        if($reqSession->program_id){
-            $this->makeZeroInBrevo($reqSession->program_id);
-        }
         $custBrevoData = CustomreBrevoData::where('id', $reqSession->customre_brevo_data_id)->first();
         $AdminProgram = Auth::guard('programs')->user();
 
