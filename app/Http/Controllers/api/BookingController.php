@@ -41,7 +41,7 @@ class BookingController extends Controller
         $endDateTime = Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 23:59:59', $customer_timezone)
             ->setTimezone('UTC')
             ->format('Y-m-d H:i:s');
-        $month = date('m', strtotime($request->$date));
+        $month = date('m', strtotime($request->date));
         app(SlotGenerationService::class)->restoreAvailableSlots($counselor,$month);
         $slots = Slot::where('counselor_id', $validated['counselor_id'])
             ->whereBetween('start_time', [$startDateTime, $endDateTime])
