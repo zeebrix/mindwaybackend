@@ -103,8 +103,6 @@ class GoogleController extends Controller
         // Fetch latest events
         
         app(SlotGenerationService::class)->removeConflictingSlots($counselor);
-        app(SlotGenerationService::class)->restoreAvailableSlots($counselor);
-
     
         return response()->json(['message' => 'Webhook processed']);
 
@@ -150,7 +148,6 @@ class GoogleController extends Controller
         // Fetch latest events and remove conflicting slots
         try {
             app(SlotGenerationService::class)->removeConflictingSlots($counselor);
-            app(SlotGenerationService::class)->restoreAvailableSlots($counselor);
             Log::info("Google Webhook: Successfully removed conflicting slots for Counselor ID: {$counselor->id}");
         } catch (\Exception $e) {
             Log::error("Google Webhook: Error in removing conflicting slots", [

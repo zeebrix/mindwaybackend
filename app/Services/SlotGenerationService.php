@@ -71,7 +71,6 @@ class SlotGenerationService
             $startDate->addDay();
         }
         $this->removeConflictingSlots($counselor, $month);
-        $this->restoreAvailableSlots($counselor, $month);
         return;
     }
 

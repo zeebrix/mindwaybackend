@@ -39,7 +39,6 @@ class UpdateCounselorAvailability extends Command
         foreach ($counselors as $counselor) {
             try {
                 app(SlotGenerationService::class)->removeConflictingSlots($counselor);
-                app(SlotGenerationService::class)->restoreAvailableSlots($counselor);
                 Log::info("Google Webhook: Successfully removed conflicting slots for Counselor ID: {$counselor->id}");
             } catch (\Exception $e) {
                 Log::error("Google Webhook: Error in removing conflicting slots", [
