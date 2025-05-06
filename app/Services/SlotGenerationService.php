@@ -239,16 +239,19 @@ class SlotGenerationService
             );
 
             // Convert event times to UTC
-            foreach ($events as &$event) {
+            foreach ($events as $key => $event) {
                 try {
-                    $event['start_time'] = Carbon::parse($event['start_time'], $event['start_timezone'] ?? $timezone)->setTimezone('UTC');
-                    $event['end_time'] = Carbon::parse($event['end_time'], $event['end_timezone'] ?? $timezone)->setTimezone('UTC');
+                    $startTz = !empty($event['start_timezone']) ? $event['start_timezone'] : $timezone;
+                    $endTz = !empty($event['end_timezone']) ? $event['end_timezone'] : $timezone;
+            
+                    $events[$key]['start_time'] = Carbon::parse($event['start_time'], $startTz)->setTimezone('UTC');
+                    $events[$key]['end_time'] = Carbon::parse($event['end_time'], $endTz)->setTimezone('UTC');
+            
                 } catch (\Exception $e) {
-                    \Log::error("Error parsing event times for event ID: {$event['event_id']}");
+                    \Log::error("Error parsing event times for event ID: {$event['event_id']}. Error: {$e->getMessage()}");
                     continue;
                 }
             }
-            unset($event);
             $currentEventIds = collect($events)->pluck('event_id')->toArray();
             // Fetch previously deleted slots from logs for this counselor within the date range
             $logs = DeletedSlotLog::where('counselor_id', $counselor->id)
