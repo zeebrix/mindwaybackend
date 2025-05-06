@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\RemoveConflictingSlotsJob;
 use App\Models\Counselor;
 use App\Services\SlotGenerationService;
 use Illuminate\Console\Command;
@@ -34,21 +35,13 @@ class UpdateCounselorAvailability extends Command
      */
     public function handle()
     {
-        $counselors = Counselor::whereNotNull('google_id')->get();
-
-        foreach ($counselors as $counselor) {
-            try {
-                app(SlotGenerationService::class)->removeConflictingSlots($counselor);
-                Log::info("Google Webhook: Successfully removed conflicting slots for Counselor ID: {$counselor->id}");
-            } catch (\Exception $e) {
-                Log::error("Google Webhook: Error in removing conflicting slots", [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString(),
-                ]);
-                return response()->json(['message' => 'Error processing Command'], 500);
+        Counselor::whereNotNull('google_id')->chunk(50, function ($counselors) {
+            foreach ($counselors as $counselor) {
+                dispatch(new RemoveConflictingSlotsJob($counselor));
             }
-        }
-
+        });
+    
+        $this->info('Dispatched jobs for all counselors.');
         return Command::SUCCESS;
     }
 }

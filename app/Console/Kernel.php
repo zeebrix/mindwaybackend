@@ -18,6 +18,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+        $schedule->command('update:counselor-availability')->everyTenMinutes();
         $schedule->call(function () {
             $counselors = Counselor::all();
             foreach ($counselors as $counselor)
@@ -28,7 +29,6 @@ class Kernel extends ConsoleKernel
             }
         })->daily();
         $schedule->command('update:google-tokens')->everyTenMinutes();
-        $schedule->command('update:counselor-availability')->everyTenMinutes();
         $schedule->command('sync:brevo-contacts')->everyMinute();
         $schedule->command('release:reserved-slot')->everyFiveMinutes();
         $schedule->command('delete:garbage-slots')->daily();
