@@ -42,6 +42,7 @@ class BookingController extends Controller
             ->setTimezone('UTC')
             ->format('Y-m-d H:i:s');
         $month = date('m', strtotime($request->date));
+        app(SlotGenerationService::class)->removeConflictingSlots($counselor,$month);
         app(SlotGenerationService::class)->restoreAvailableSlots($counselor,$month);
         $slots = Slot::where('counselor_id', $validated['counselor_id'])
             ->whereBetween('start_time', [$startDateTime, $endDateTime])
