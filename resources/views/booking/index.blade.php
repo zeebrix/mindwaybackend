@@ -188,11 +188,15 @@
     function getValidTimezone(tz) {
         const timezoneMap = {
             'PKT': 'Asia/Karachi',
+            'PKT': 'Asia/Karachi',
             'NZST': 'Pacific/Auckland',
             'GMT': 'Etc/GMT',
             'AWST': 'Australia/Perth',
             'AEDT': 'Australia/Sydney',
-            'AEST': 'Australia/Sydney'
+            'AEST': 'Australia/Sydney',
+            'ACST': 'Australia/Adelaide',
+            'PST' : 'America/Los_Angeles',
+            'NZDT' : 'Pacific/Auckland',
         };
 
         // If it's a valid IANA timezone, return it
