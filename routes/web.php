@@ -121,7 +121,13 @@ Route::post('/availability-save', [CounsellerController::class, 'setAvailability
 Route::get('/fetch-counsellor-availability', [CounsellerController::class, 'fetchCounsellorAvailability'])->name('counseller.availabilitySave');
 
 Route::get('/', function () {
-  return redirect ("/manage-admin/login");
+  return view('mw-1.home');
+});
+Route::get('/terms-of-use', function () {
+  return view('mw-1.terms-of-use');
+});
+Route::get('/privacy-policy', function () {
+  return view('mw-1.privacy-policy');
 });
 Route::get('/login', function () {
     return redirect ("/manage-admin/login");
