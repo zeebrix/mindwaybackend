@@ -5,27 +5,83 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - Mindway EAP</title>
     <style>
+        /* Base Styles */
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
             padding: 30px;
+            margin: 0;
+            background-color: #f9f9f9;
         }
-        h1 {
-            text-align: center;
-            font-size: 2em;
-        }
-        h2 {
-            margin-top: 40px;
-        }
-        p {
-            margin-bottom: 20px;
-        }
-        ul {
-            margin-left: 20px;
-        }
+
         .content {
             max-width: 800px;
             margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            margin-top: 40px;
+            font-size: 1.5em;
+        }
+
+        h3 {
+            margin-top: 30px;
+            font-size: 1.3em;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        ul {
+            margin-left: 20px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        a {
+            color: #3366cc;
+            word-break: break-word;
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            h2 {
+                font-size: 1.3em;
+            }
+
+            h3 {
+                font-size: 1.2em;
+            }
+
+            p, li {
+                font-size: 0.95rem;
+            }
         }
     </style>
 </head>
